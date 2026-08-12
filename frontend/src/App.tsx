@@ -1,15 +1,17 @@
 import { NavLink, Route, Routes } from 'react-router-dom'
-import { Wrench, FolderTree, Settings } from 'lucide-react'
+import { Wrench, FolderTree, Settings, Smartphone } from 'lucide-react'
 import ToolsPage from './pages/ToolsPage'
 import WorkspacesPage from './pages/WorkspacesPage'
 import WorkspaceDetailPage from './pages/WorkspaceDetailPage'
 import SettingsPage from './pages/SettingsPage'
+import RemoteControlPage from './pages/RemoteControlPage'
 import DownloadManager from './components/downloads/DownloadManager'
 import { cn } from './lib/utils'
 
 const nav = [
   { to: '/', label: 'Tools', icon: Wrench },
   { to: '/workspaces', label: 'Workspaces', icon: FolderTree },
+  { to: '/remote', label: 'Remote', icon: Smartphone },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
@@ -48,6 +50,7 @@ export default function App() {
           <Route path="/workspaces" element={<WorkspacesPage />} />
           <Route path="/workspaces/:id" element={<WorkspaceDetailPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/remote" element={<RemoteControlPage />} />
         </Routes>
       </main>
       <DownloadManager />

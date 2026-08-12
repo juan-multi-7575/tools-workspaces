@@ -180,4 +180,18 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ package: packageName, approved: true }),
     }),
+  getRemoteInfo: () =>
+    request<{ token: string; connect_url: string; host: string }>('/api/remote/info'),
+  remoteEnqueue: (payload: Record<string, unknown>) =>
+    request<{ id: string; status: string }>('/api/remote/downloads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  remoteCancel: (taskId: string, token: string) =>
+    request<{ cancelled: boolean }>(`/api/remote/downloads/${taskId}/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token }),
+    }),
 }

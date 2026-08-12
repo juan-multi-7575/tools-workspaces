@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 
 import asyncio
 import json
@@ -8,6 +8,7 @@ import json
 import app.tools  # noqa: F401 - registers tool drivers
 from app.deps import check_dependencies, upgrade_package
 from app.download_manager import get_manager
+from app.remote import get_token, regenerate_token
 from app.paths import ensure_layout, run_dir, workspace_runs_dir, workspace_root
 from app.pipeline import run_pipeline, validate_chain
 from app.registry import get, list_manifests
@@ -37,6 +38,7 @@ async def lifespan(app: FastAPI):
     mgr = get_manager()
     settings = load_settings()
     mgr.set_max_concurrent(settings["download"]["max_concurrent"])
+    regenerate_token()
     app.state.dep_check = check_dependencies()
     task = asyncio.create_task(mgr.start())
     yield
@@ -206,6 +208,28 @@ async def cancel_download(task_id: str):
     mgr = get_manager()
     ok = mgr.cancel(task_id)
     return {"cancelled": ok}
+
+
+@app.get("/api/remote/info")
+async def remote_info(request: Request):
+    base = str(request.base_url).rstrip("/")
+    return {"token": get_token(), "connect_url": f"{base}/remote", "host": base}
+
+
+@app.post("/api/remote/downloads")
+async def remote_enqueue(payload: dict):
+    if payload.get("token") != get_token():
+        raise HTTPException(status_code=403, detail="invalid token")
+    params = {k: v for k, v in payload.items() if k != "token"}
+    task = get_manager().enqueue(params)
+    return {"id": task.id, "status": task.status}
+
+
+@app.post("/api/remote/downloads/{task_id}/cancel")
+async def remote_cancel(task_id: str, payload: dict):
+    if payload.get("token") != get_token():
+        raise HTTPException(status_code=403, detail="invalid token")
+    return {"cancelled": get_manager().cancel(task_id)}
 
 
 @app.get("/api/settings/download")

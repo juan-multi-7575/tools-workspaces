@@ -4,11 +4,11 @@
 
 **Blocked by:** 04 — Downloader: full options, SSE progress, cancel, drawer
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The downloader page shows a QR code and plain URL for the remote page
-- [ ] Scanning the QR opens a minimal mobile page where the user pastes a URL and chooses download options
-- [ ] The download runs on the host and the phone shows live SSE progress
-- [ ] Remote actions without a valid token are rejected
-- [ ] The token is regenerated on each boot
-- [ ] **Testing:** API-level tests assert the token gate (non-token requests rejected), the enqueue path with a stubbed manager, and the QR/info endpoint shape
+- [x] The downloader page shows a QR code and plain URL for the remote page
+- [x] Scanning the QR opens a minimal mobile page where the user pastes a URL and chooses download options
+- [x] The download runs on the host and the phone shows live SSE progress
+- [x] Remote actions without a valid token are rejected
+- [x] The token is regenerated on each boot
+- [x] **Testing:** API-level tests assert the token gate (non-token requests rejected), the enqueue path with a stubbed manager, and the QR/info endpoint shape
