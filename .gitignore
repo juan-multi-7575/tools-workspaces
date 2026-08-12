@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Runtime data (never commit keys/secrets)
+config/
+downloads/
+workspaces/
+
+# Node
+node_modules/
+dist/
