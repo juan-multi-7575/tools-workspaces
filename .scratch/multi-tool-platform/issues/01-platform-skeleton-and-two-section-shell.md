@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] The app starts locally and initializes the on-disk storage layout (`downloads/`, `workspaces/`) safely
 - [ ] The UI shows two top-level sections — Tools and Workspaces — with clear navigation
