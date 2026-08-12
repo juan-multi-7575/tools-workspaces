@@ -4,7 +4,7 @@
 
 **Blocked by:** 03 — Workspace pipelines & versioned runs
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] A user browses the Workspace's runs and the artifacts each run produced
 - [ ] Each artifact row offers Preview, Download (copy), and Delete actions

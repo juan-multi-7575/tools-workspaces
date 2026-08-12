@@ -11,8 +11,18 @@ from app.paths import ensure_layout, run_dir, workspace_runs_dir, workspace_root
 from app.pipeline import run_pipeline, validate_chain
 from app.registry import get, list_manifests
 from app.tools.base import ToolRunContext
-from app.workspaces import create_workspace, list_workspaces, list_runs
-from fastapi.responses import StreamingResponse
+from app.workspaces import (
+    artifact_path,
+    create_workspace,
+    delete_artifact,
+    delete_run,
+    delete_workspace,
+    export_workspace_zip,
+    list_artifacts as list_ws_artifacts,
+    list_workspaces,
+    list_runs,
+)
+from fastapi.responses import FileResponse, StreamingResponse
 
 
 @asynccontextmanager
@@ -57,12 +67,7 @@ async def get_workspace(workspace_id: str):
 
 @app.get("/api/workspaces/{workspace_id}/runs/{run_id}/artifacts")
 async def list_artifacts(workspace_id: str, run_id: str):
-    base = run_dir(workspace_id, run_id)
-    files = [
-        {"name": p.name, "path": str(p.relative_to(base)), "size": p.stat().st_size}
-        for p in base.iterdir()
-        if p.is_file()
-    ]
+    files = list_ws_artifacts(workspace_id, run_id)
     return {"run_id": run_id, "artifacts": files}
 
 
@@ -91,6 +96,43 @@ async def run_workspace_pipeline(workspace_id: str, payload: dict):
 @app.get("/api/workspaces/{workspace_id}/runs")
 async def get_runs(workspace_id: str):
     return {"runs": list_runs(workspace_id)}
+
+
+@app.get("/api/workspaces/{workspace_id}/runs/{run_id}/artifacts/{artifact_name}/preview")
+async def preview_artifact(workspace_id: str, run_id: str, artifact_name: str):
+    target = artifact_path(workspace_id, run_id, artifact_name)
+    if target is None:
+        return {"error": "not found"}
+    return FileResponse(target)
+
+
+@app.get("/api/workspaces/{workspace_id}/runs/{run_id}/artifacts/{artifact_name}/download")
+async def download_artifact(workspace_id: str, run_id: str, artifact_name: str):
+    target = artifact_path(workspace_id, run_id, artifact_name)
+    if target is None:
+        return {"error": "not found"}
+    return FileResponse(target, filename=target.name, media_type="application/octet-stream")
+
+
+@app.delete("/api/workspaces/{workspace_id}/runs/{run_id}/artifacts/{artifact_name}")
+async def remove_artifact(workspace_id: str, run_id: str, artifact_name: str):
+    return {"deleted": delete_artifact(workspace_id, run_id, artifact_name)}
+
+
+@app.delete("/api/workspaces/{workspace_id}/runs/{run_id}")
+async def remove_run(workspace_id: str, run_id: str):
+    return {"deleted": delete_run(workspace_id, run_id)}
+
+
+@app.get("/api/workspaces/{workspace_id}/export")
+async def export_workspace(workspace_id: str):
+    zip_path = export_workspace_zip(workspace_id)
+    return FileResponse(zip_path, filename=f"{workspace_id}-artifacts.zip", media_type="application/zip")
+
+
+@app.delete("/api/workspaces/{workspace_id}")
+async def remove_workspace(workspace_id: str):
+    return {"deleted": delete_workspace(workspace_id)}
 
 
 @app.post("/api/downloads")

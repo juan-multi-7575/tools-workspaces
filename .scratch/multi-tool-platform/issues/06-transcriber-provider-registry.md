@@ -4,7 +4,7 @@
 
 **Blocked by:** 02 — Audio processor tool end-to-end
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] A user transcribes recorded microphone audio, a single uploaded file, or a batch of uploaded files
 - [ ] A user selects a provider and a model per call; the choice is honored
