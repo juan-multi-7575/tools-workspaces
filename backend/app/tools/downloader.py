@@ -71,10 +71,33 @@ def _to_cli(ydl_opts: dict) -> list[str]:
     return cmd
 
 
+_RAW_ARGS_DENYLIST = ("--exec", "--config", "--config-location", "--loader")
+
+
+def validate_raw_args(raw: str) -> tuple[bool, str]:
+    if any(ch in raw for ch in (";", "|", "&", "$", "`", "<", ">", "\n", "\r")):
+        return False, "raw args contain shell metacharacters"
+    for token in raw.split():
+        if token in _RAW_ARGS_DENYLIST:
+            return False, f"raw args contain forbidden flag: {token}"
+    return True, ""
+
+
+def split_raw_args(raw: str) -> list[str]:
+    return raw.split()
+
+
 def execute_ydl(url: str, params: dict, outdir: Path, progress_queue: Any = None, cancel_event: Any = None) -> list[Path]:
     outtmpl = str(outdir / "%(title)s.%(ext)s")
     ydl_opts = build_ydl_opts(params, outtmpl)
-    cmd = _to_cli(ydl_opts) + [url]
+    cmd = _to_cli(ydl_opts)
+    raw = params.get("raw_args")
+    if raw:
+        ok, err = validate_raw_args(raw)
+        if not ok:
+            raise ValueError(err)
+        cmd += split_raw_args(raw)
+    cmd += [url]
     produced: list[Path] = []
 
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
@@ -133,7 +156,21 @@ class DownloaderTool(Tool):
         description="Download media via yt-dlp.",
         input_kinds=[PortKind.any],
         output_kinds=[PortKind.any],
-        parameters_schema={"url": {"type": "string"}},
+        parameters_schema={
+            "url": {"type": "string"},
+            "format_preset": {"type": "string", "enum": ["best", "1080p", "720p", "480p", "audio", "h264", "vp9", "av1"]},
+            "extract_audio": {"type": "boolean"},
+            "audio_format": {"type": "string", "enum": ["best", "mp3", "m4a", "ogg", "wav", "flac"]},
+            "audio_quality": {"type": "string", "enum": ["best", "128", "192", "256", "320"]},
+            "writesubtitles": {"type": "boolean"},
+            "subtitleslangs": {"type": "string"},
+            "writeautomaticsub": {"type": "boolean"},
+            "playlist_items": {"type": "string"},
+            "merge_output_format": {"type": "string", "enum": ["mp4", "mkv", "webm", "ogg"]},
+            "limit_rate": {"type": "string"},
+            "output_template": {"type": "string"},
+            "raw_args": {"type": "string"},
+        },
     )
 
     async def execute(self, context: ToolRunContext) -> ToolResult:

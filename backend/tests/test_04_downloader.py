@@ -11,6 +11,8 @@ from app.tools.downloader import (
     _to_cli,
     build_ydl_opts,
     execute_ydl,
+    validate_raw_args,
+    split_raw_args,
 )
 from app.tools.base import ToolRunContext
 
@@ -162,3 +164,51 @@ def test_download_concurrency_configurable(client):
     assert resp["max_concurrent"] == 4
     resp = client.get("/api/settings/download").json()
     assert resp["max_concurrent"] == 4
+
+
+def test_validate_raw_args():
+    assert validate_raw_args("--no-mtime --embed-thumbnail")[0] is True
+    assert validate_raw_args("--exec rm -rf /")[0] is False
+    assert validate_raw_args("url; rm -rf /")[0] is False
+    assert validate_raw_args("a | b")[0] is False
+    assert split_raw_args("--no-mtime --embed-thumbnail") == ["--no-mtime", "--embed-thumbnail"]
+
+
+def test_execute_ydl_passes_valid_raw_args_through(tmp_path):
+    captured: dict = {}
+
+    class FakeProc:
+        def __init__(self, *a, **k):
+            captured["args"] = a[0]
+            self.stdout = iter(["[download] 100.0% of 1MiB at 1MiB/s ETA 00:00"])
+            self.returncode = 0
+
+        def wait(self):
+            return 0
+
+        def terminate(self):
+            pass
+
+    import app.tools.downloader as dl
+
+    orig = dl.subprocess.Popen
+    dl.subprocess.Popen = FakeProc
+    try:
+        execute_ydl(
+            "http://example.com/v",
+            {"raw_args": "--no-mtime --embed-thumbnail"},
+            tmp_path,
+        )
+    finally:
+        dl.subprocess.Popen = orig
+
+    assert "--no-mtime" in captured["args"]
+    assert "--embed-thumbnail" in captured["args"]
+    assert "http://example.com/v" in captured["args"]
+
+
+def test_execute_ydl_rejects_invalid_raw_args(tmp_path):
+    import pytest
+
+    with pytest.raises(ValueError):
+        execute_ydl("http://example.com/v", {"raw_args": "--exec bad"}, tmp_path)

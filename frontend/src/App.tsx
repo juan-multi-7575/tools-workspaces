@@ -4,6 +4,7 @@ import ToolsPage from './pages/ToolsPage'
 import WorkspacesPage from './pages/WorkspacesPage'
 import WorkspaceDetailPage from './pages/WorkspaceDetailPage'
 import SettingsPage from './pages/SettingsPage'
+import DownloadManager from './components/downloads/DownloadManager'
 import { cn } from './lib/utils'
 
 const nav = [
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>
+      <DownloadManager />
     </div>
   )
 }

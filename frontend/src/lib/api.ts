@@ -40,6 +40,13 @@ export interface ProviderInfo {
   needs_key: boolean
 }
 
+export interface DownloadTask {
+  id: string
+  status: string
+  progress: Record<string, unknown>
+  error?: string | null
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init)
   if (!res.ok) {
@@ -137,7 +144,7 @@ export const api = {
       body: JSON.stringify({ max_concurrent: maxConcurrent }),
     }),
   listDownloads: () =>
-    request<{ downloads: { id: string; status: string; progress: Record<string, unknown> }[] }>(
+    request<{ downloads: DownloadTask[] }>(
       '/api/downloads',
     ),
   enqueueDownload: (params: Record<string, unknown>) =>
