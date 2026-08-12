@@ -4,7 +4,7 @@
 
 **Blocked by:** 07 — Artifact operations & run browser
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] Running the CLI with no args lists the subcommands generated from the registry
 - [ ] Each registered tool is invocable from the CLI with its full option set
