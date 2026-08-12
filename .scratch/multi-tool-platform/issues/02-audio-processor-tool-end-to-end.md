@@ -4,10 +4,10 @@
 
 **Blocked by:** 01 — Platform skeleton & two-section shell
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A user runs the audio processor standalone with a file and format/sample-rate options and receives the converted output in the downloads area
-- [ ] A user runs the same tool inside a Workspace and the output lands in that Workspace's artifact store
-- [ ] Parameters are validated (unknown or invalid options are rejected with a clear error)
-- [ ] Tools are executed asynchronously with a terminal state and the produced artifacts are visible
-- [ ] **Testing:** API-level tests execute the tool standalone and workspace-bound and assert the output file and its destination on disk; invalid parameters are rejected
+- [x] A user runs the audio processor standalone with a file and format/sample-rate options and receives the converted output in the downloads area
+- [x] A user runs the same tool inside a Workspace and the output lands in that Workspace's artifact store
+- [x] Parameters are validated (unknown or invalid options are rejected with a clear error)
+- [x] Tools are executed asynchronously with a terminal state and the produced artifacts are visible
+- [x] **Testing:** API-level tests execute the tool standalone and workspace-bound and assert the output file and its destination on disk; invalid parameters are rejected

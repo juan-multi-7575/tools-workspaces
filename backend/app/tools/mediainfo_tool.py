@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from app.tools.base import Tool, ToolManifest, ToolRunContext, ToolResult, Artifact, PortKind
 from app.paths import tool_downloads_dir, run_dir
 
