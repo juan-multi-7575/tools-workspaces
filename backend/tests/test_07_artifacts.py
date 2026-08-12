@@ -128,3 +128,18 @@ def test_missing_artifact_returns_not_found(client, workspace_with_run):
     ws_id, run_id = workspace_with_run
     assert client.get(f"/api/workspaces/{ws_id}/runs/{run_id}/artifacts/nope.mp3/preview").json() == {"error": "not found"}
     assert client.delete(f"/api/workspaces/{ws_id}/runs/{run_id}/artifacts/nope.mp3").json() == {"deleted": False}
+
+
+def test_trim_artifact_produces_segments(client, workspace_with_run):
+    ws_id, run_id = workspace_with_run
+    resp = client.post(
+        f"/api/workspaces/{ws_id}/runs/{run_id}/artifacts/source.mp3/trim",
+        json={"regions": [{"start": 0, "end": 1}, {"start": 1, "end": 2}]},
+    )
+    assert resp.status_code == 200
+    names = resp.json()["artifacts"]
+    assert len(names) == 2
+    assert all("_seg_" in n for n in names)
+
+    listed = {a["name"] for a in client.get(f"/api/workspaces/{ws_id}/runs/{run_id}/artifacts").json()["artifacts"]}
+    assert all(n in listed for n in names)

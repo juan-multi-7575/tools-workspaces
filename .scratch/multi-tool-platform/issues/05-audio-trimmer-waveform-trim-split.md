@@ -4,10 +4,10 @@
 
 **Blocked by:** 02 — Audio processor tool end-to-end
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A user loads an audio artifact and sees a waveform with a scrollable duration ruler that tracks playback and region markers
-- [ ] A user marks one region and trims — the tool produces one clipped output
-- [ ] A user marks multiple regions and splits — the tool produces segment files for each marked region
-- [ ] Region marking and splitting work standalone and inside a Workspace pipeline
-- [ ] **Testing:** API-level tests trim and split an audio fixture and assert the resulting clips/segments and their timestamps on disk
+- [x] A user loads an audio artifact and sees a waveform with a scrollable duration ruler that tracks playback and region markers
+- [x] A user marks one region and trims — the tool produces one clipped output
+- [x] A user marks multiple regions and splits — the tool produces segment files for each marked region
+- [x] Region marking and splitting work standalone and inside a Workspace pipeline
+- [x] **Testing:** API-level tests trim and split an audio fixture and assert the resulting clips/segments and their timestamps on disk

@@ -3,6 +3,12 @@ import { useParams } from 'react-router-dom'
 import { RefreshCw, Trash2, Download, Eye, FileArchive, Workflow } from 'lucide-react'
 import { api, type Run, type ArtifactFile, type ToolManifest } from '../lib/api'
 import PipelineCanvas from '../components/pipeline/PipelineCanvas'
+import WaveformEditor from '../components/waveform/WaveformEditor'
+import { X, Scissors } from 'lucide-react'
+
+function isAudio(name: string): boolean {
+  return /\.(mp3|wav|ogg|flac|m4a|aac)$/i.test(name)
+}
 
 export default function WorkspaceDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -11,6 +17,7 @@ export default function WorkspaceDetailPage() {
   const [runs, setRuns] = useState<Run[]>([])
   const [selectedRun, setSelectedRun] = useState<string | null>(null)
   const [artifacts, setArtifacts] = useState<ArtifactFile[]>([])
+  const [trimTarget, setTrimTarget] = useState<string | null>(null)
 
   const refreshRuns = useCallback(() => {
     if (!id) return
@@ -175,6 +182,15 @@ export default function WorkspaceDetailPage() {
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
+                          {isAudio(art.name) && id && selectedRun && (
+                            <button
+                              onClick={() => setTrimTarget(art.name)}
+                              title="Trim / split"
+                              className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-garage-800 hover:text-port-in"
+                            >
+                              <Scissors className="h-4 w-4" />
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
@@ -183,6 +199,34 @@ export default function WorkspaceDetailPage() {
               </ul>
             )}
           </section>
+        </div>
+      )}
+
+      {trimTarget && id && selectedRun && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setTrimTarget(null)} />
+          <div className="relative w-full max-w-3xl rounded-2xl border border-garage-800 bg-garage-950 p-5 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">
+                Trim / split — {trimTarget}
+              </h3>
+              <button
+                onClick={() => setTrimTarget(null)}
+                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-garage-800 hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <WaveformEditor
+              audioUrl={api.artifactPreviewUrl(id, selectedRun, trimTarget)}
+              onTrim={async (regions) => {
+                await api.trimArtifact(id, selectedRun, trimTarget, regions)
+                setTrimTarget(null)
+                const { artifacts: next } = await api.listArtifacts(id, selectedRun)
+                setArtifacts(next)
+              }}
+            />
+          </div>
         </div>
       )}
     </div>

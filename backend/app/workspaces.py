@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import subprocess
 import tempfile
 import zipfile
 from pathlib import Path
@@ -121,6 +122,29 @@ def delete_artifact(workspace_id: str, run_id: str, artifact_name: str) -> bool:
         return False
     target.unlink()
     return True
+
+
+def trim_artifact(workspace_id: str, run_id: str, artifact_name: str, regions: list[dict[str, Any]]) -> list[str] | None:
+    src = artifact_path(workspace_id, run_id, artifact_name)
+    if src is None:
+        return None
+    dest = paths.run_dir(workspace_id, run_id)
+    src_path = Path(src)
+    produced: list[str] = []
+    for i, region in enumerate(regions):
+        start = region.get("start", 0)
+        end = region.get("end", 0)
+        out = dest / f"{src_path.stem}_seg_{i}{src_path.suffix}"
+        try:
+            subprocess.run(
+                ["ffmpeg", "-y", "-i", str(src_path), "-ss", str(start), "-to", str(end), str(out)],
+                check=True,
+                capture_output=True,
+            )
+        except Exception:
+            continue
+        produced.append(out.name)
+    return produced
 
 
 def delete_run(workspace_id: str, run_id: str) -> bool:

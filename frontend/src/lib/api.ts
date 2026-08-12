@@ -81,6 +81,15 @@ export const api = {
       `/api/workspaces/${workspaceId}/runs/${runId}/artifacts/${encodeURIComponent(name)}`,
       { method: 'DELETE' },
     ),
+  trimArtifact: (workspaceId: string, runId: string, name: string, regions: { start: number; end: number }[]) =>
+    request<{ artifacts: string[] }>(
+      `/api/workspaces/${workspaceId}/runs/${runId}/artifacts/${encodeURIComponent(name)}/trim`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regions }),
+      },
+    ),
   exportWorkspace: (workspaceId: string) =>
     `/api/workspaces/${workspaceId}/export`,
   artifactPreviewUrl: (workspaceId: string, runId: string, name: string) =>

@@ -23,6 +23,7 @@ from app.workspaces import (
     list_templates,
     save_template,
     delete_template,
+    trim_artifact,
     list_artifacts as list_ws_artifacts,
     list_workspaces,
     list_runs,
@@ -140,8 +141,17 @@ async def download_artifact(workspace_id: str, run_id: str, artifact_name: str):
 
 
 @app.delete("/api/workspaces/{workspace_id}/runs/{run_id}/artifacts/{artifact_name}")
-async def remove_artifact(workspace_id: str, run_id: str, artifact_name: str):
+async def delete_artifact_route(workspace_id: str, run_id: str, artifact_name: str):
     return {"deleted": delete_artifact(workspace_id, run_id, artifact_name)}
+
+
+@app.post("/api/workspaces/{workspace_id}/runs/{run_id}/artifacts/{artifact_name}/trim")
+async def trim_artifact_route(workspace_id: str, run_id: str, artifact_name: str, payload: dict):
+    regions = payload.get("regions", [])
+    produced = trim_artifact(workspace_id, run_id, artifact_name, regions)
+    if produced is None:
+        return {"error": "not found"}
+    return {"artifacts": produced}
 
 
 @app.delete("/api/workspaces/{workspace_id}/runs/{run_id}")
