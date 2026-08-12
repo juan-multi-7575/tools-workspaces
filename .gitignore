@@ -12,3 +12,6 @@ workspaces/
 # Node
 node_modules/
 dist/
+
+# Large binary assets
+*.zip
