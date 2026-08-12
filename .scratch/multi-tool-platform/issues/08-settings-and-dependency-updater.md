@@ -6,9 +6,9 @@
 
 **Status:** resolved
 
-- [ ] A user configures download-queue settings (e.g. max concurrent downloads) in Settings and the downloader honors them
-- [ ] A user adds/removes cloud provider API keys in Settings; keys persist locally and are never committed
-- [ ] On start the app reports which pinned dependencies have newer versions available
-- [ ] A user triggers a dependency check on demand and approves an upgrade, which then runs
-- [ ] Upgrades never run without explicit user approval
-- [ ] **Testing:** API-level tests assert settings persist across a restart, provider keys are stored locally and absent from repo-visible files, and the dependency check/update flow works against a mocked package index with the approval gate enforced
+- [x] A user configures download-queue settings (e.g. max concurrent downloads) in Settings and the downloader honors them
+- [x] A user adds/removes cloud provider API keys in Settings; keys persist locally and are never committed
+- [x] On start the app reports which pinned dependencies have newer versions available
+- [x] A user triggers a dependency check on demand and approves an upgrade, which then runs
+- [x] Upgrades never run without explicit user approval
+- [x] **Testing:** API-level tests assert settings persist across a restart, provider keys are stored locally and absent from repo-visible files, and the dependency check/update flow works against a mocked package index with the approval gate enforced
