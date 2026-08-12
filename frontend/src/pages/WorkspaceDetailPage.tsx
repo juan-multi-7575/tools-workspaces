@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { RefreshCw, Trash2, Download, Eye, FileArchive } from 'lucide-react'
-import { api, type Run, type ArtifactFile } from '../lib/api'
+import { RefreshCw, Trash2, Download, Eye, FileArchive, Workflow } from 'lucide-react'
+import { api, type Run, type ArtifactFile, type ToolManifest } from '../lib/api'
+import PipelineCanvas from '../components/pipeline/PipelineCanvas'
 
 export default function WorkspaceDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const [view, setView] = useState<'pipeline' | 'artifacts'>('pipeline')
+  const [tools, setTools] = useState<ToolManifest[]>([])
   const [runs, setRuns] = useState<Run[]>([])
   const [selectedRun, setSelectedRun] = useState<string | null>(null)
   const [artifacts, setArtifacts] = useState<ArtifactFile[]>([])
@@ -16,6 +19,10 @@ export default function WorkspaceDetailPage() {
       if (!selectedRun && runs.length > 0) setSelectedRun(runs[0].id)
     })
   }, [id, selectedRun])
+
+  useEffect(() => {
+    api.listTools().then(({ tools }) => setTools(tools))
+  }, [])
 
   useEffect(refreshRuns, [refreshRuns])
 
@@ -45,7 +52,7 @@ export default function WorkspaceDetailPage() {
           <h1 className="text-2xl font-black tracking-tight text-slate-50">
             Workspace <span className="text-emerald-400">{id}</span>
           </h1>
-          <p className="mt-1 text-sm text-slate-400">Browsing runs and their artifacts.</p>
+          <p className="mt-1 text-sm text-slate-400">Chain tools into pipelines and browse every artifact.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -67,8 +74,31 @@ export default function WorkspaceDetailPage() {
         </div>
       </header>
 
-      {runs.length === 0 ? (
-        <p className="text-sm text-slate-500">No runs yet. Run a pipeline to see artifacts here.</p>
+      <div className="mb-5 flex gap-2">
+        <button
+          onClick={() => setView('pipeline')}
+          className={
+            'inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ' +
+            (view === 'pipeline' ? 'bg-garage-800 text-white' : 'text-slate-400 hover:bg-garage-800/60')
+          }
+        >
+          <Workflow className="h-4 w-4" /> Pipeline editor
+        </button>
+        <button
+          onClick={() => setView('artifacts')}
+          className={
+            'inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ' +
+            (view === 'artifacts' ? 'bg-garage-800 text-white' : 'text-slate-400 hover:bg-garage-800/60')
+          }
+        >
+          Runs & artifacts ({runs.length})
+        </button>
+      </div>
+
+      {view === 'pipeline' ? (
+        <PipelineCanvas workspaceId={id!} tools={tools} onRan={() => { setView('artifacts'); refreshRuns() }} />
+      ) : runs.length === 0 ? (
+        <p className="text-sm text-slate-500">No runs yet. Build a pipeline to see artifacts here.</p>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
           <aside className="space-y-2">

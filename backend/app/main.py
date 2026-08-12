@@ -20,6 +20,9 @@ from app.workspaces import (
     delete_run,
     delete_workspace,
     export_workspace_zip,
+    list_templates,
+    save_template,
+    delete_template,
     list_artifacts as list_ws_artifacts,
     list_workspaces,
     list_runs,
@@ -96,6 +99,23 @@ async def run_workspace_pipeline(workspace_id: str, payload: dict):
     steps = payload.get("steps", [])
     results = await run_pipeline(workspace_id, steps)
     return {"results": results}
+
+
+@app.get("/api/workspaces/{workspace_id}/templates")
+async def get_templates(workspace_id: str):
+    return {"templates": list_templates(workspace_id)}
+
+
+@app.post("/api/workspaces/{workspace_id}/templates")
+async def create_template(workspace_id: str, payload: dict):
+    name = payload.get("name", "template")
+    chain = payload.get("chain", [])
+    return save_template(workspace_id, name, chain)
+
+
+@app.delete("/api/workspaces/{workspace_id}/templates/{template_name}")
+async def remove_template(workspace_id: str, template_name: str):
+    return {"ok": delete_template(workspace_id, template_name)}
 
 
 @app.get("/api/workspaces/{workspace_id}/runs")

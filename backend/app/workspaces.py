@@ -48,6 +48,40 @@ def save_run_meta(workspace_id: str, run_id: str, record: dict[str, Any]) -> Non
     meta_path.write_text(json.dumps(meta, indent=2))
 
 
+def list_templates(workspace_id: str) -> list[dict[str, Any]]:
+    meta_path = paths.workspace_root(workspace_id) / "meta.json"
+    if not meta_path.exists():
+        return []
+    meta = json.loads(meta_path.read_text())
+    return meta.get("templates", [])
+
+
+def save_template(workspace_id: str, name: str, chain: list[str]) -> dict[str, Any]:
+    meta_path = paths.workspace_root(workspace_id) / "meta.json"
+    if meta_path.exists():
+        meta = json.loads(meta_path.read_text())
+    else:
+        meta = {"id": workspace_id, "name": workspace_id, "templates": [], "runs": []}
+    templates = meta.setdefault("templates", [])
+    template = {"name": name, "chain": chain}
+    templates.append(template)
+    meta_path.write_text(json.dumps(meta, indent=2))
+    return template
+
+
+def delete_template(workspace_id: str, name: str) -> bool:
+    meta_path = paths.workspace_root(workspace_id) / "meta.json"
+    if not meta_path.exists():
+        return False
+    meta = json.loads(meta_path.read_text())
+    before = len(meta.get("templates", []))
+    meta["templates"] = [t for t in meta.get("templates", []) if t.get("name") != name]
+    if len(meta["templates"]) == before:
+        return False
+    meta_path.write_text(json.dumps(meta, indent=2))
+    return True
+
+
 def list_runs(workspace_id: str) -> list[dict[str, Any]]:
     runs_dir = paths.workspace_runs_dir(workspace_id)
     out: list[dict[str, Any]] = []

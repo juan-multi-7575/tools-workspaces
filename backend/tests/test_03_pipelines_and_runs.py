@@ -83,3 +83,38 @@ def test_runs_are_versioned(client, tmp_path, tiny_wav):
     assert r1[0]["run_id"] in run_ids
     assert r2[0]["run_id"] in run_ids
     assert r1[0]["run_id"] != r2[0]["run_id"]
+
+
+def test_save_and_list_template(client):
+    ws = client.post("/api/workspaces", json={"name": "Tpl"}).json()
+    ws_id = ws["id"]
+
+    resp = client.post(
+        f"/api/workspaces/{ws_id}/templates",
+        json={"name": "clean-audio", "chain": ["audio_processor", "audio_processor"]},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["name"] == "clean-audio"
+
+    listed = client.get(f"/api/workspaces/{ws_id}/templates").json()["templates"]
+    assert [t["name"] for t in listed] == ["clean-audio"]
+    assert listed[0]["chain"] == ["audio_processor", "audio_processor"]
+
+
+def test_delete_template(client):
+    ws = client.post("/api/workspaces", json={"name": "TplDel"}).json()
+    ws_id = ws["id"]
+    client.post(
+        f"/api/workspaces/{ws_id}/templates",
+        json={"name": "to-remove", "chain": ["audio_processor"]},
+    )
+
+    deleted = client.delete(f"/api/workspaces/{ws_id}/templates/to-remove").json()
+    assert deleted["ok"] is True
+
+    listed = client.get(f"/api/workspaces/{ws_id}/templates").json()["templates"]
+    assert listed == []
+
+    missing = client.delete(f"/api/workspaces/{ws_id}/templates/nope").json()
+    assert missing["ok"] is False
+

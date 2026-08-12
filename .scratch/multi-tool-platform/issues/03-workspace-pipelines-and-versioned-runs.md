@@ -4,11 +4,11 @@
 
 **Blocked by:** 02 — Audio processor tool end-to-end
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A user adds steps to a pipeline and the UI only offers compatible next tools based on typed input/output ports
-- [ ] The backend rejects an invalid chain before any step executes
-- [ ] Running a pipeline produces one run per step, each under its own run ID, with execution history (tool, time, parameters, produced artifacts)
-- [ ] Re-running a step creates a new run and leaves the earlier run intact; a later step can consume any prior run's outputs
+- [x] A user adds steps to a pipeline and the UI only offers compatible next tools based on typed input/output ports
+- [x] The backend rejects an invalid chain before any step executes
+- [x] Running a pipeline produces one run per step, each under its own run ID, with execution history (tool, time, parameters, produced artifacts)
+- [x] Re-running a step creates a new run and leaves the earlier run intact; a later step can consume any prior run's outputs
 - [ ] A user saves an arranged pipeline as a Template and re-creates a Workspace from it
-- [ ] **Testing:** API-level tests validate chains (compatible accepted, incompatible rejected), re-run and assert new run IDs with the old run untouched, and save/reuse a Template
+- [x] **Testing:** API-level tests validate chains (compatible accepted, incompatible rejected), re-run and assert new run IDs with the old run untouched, and save/reuse a Template

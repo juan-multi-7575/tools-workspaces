@@ -113,6 +113,21 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ steps }),
     }),
+  listTemplates: (workspaceId: string) =>
+    request<{ templates: { name: string; chain: string[] }[] }>(
+      `/api/workspaces/${workspaceId}/templates`,
+    ),
+  saveTemplate: (workspaceId: string, name: string, chain: string[]) =>
+    request<{ name: string; chain: string[] }>(`/api/workspaces/${workspaceId}/templates`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, chain }),
+    }),
+  deleteTemplate: (workspaceId: string, name: string) =>
+    request<{ ok: boolean }>(
+      `/api/workspaces/${workspaceId}/templates/${encodeURIComponent(name)}`,
+      { method: 'DELETE' },
+    ),
   getDownloadSettings: () =>
     request<{ max_concurrent: number; persisted: number }>('/api/settings/download'),
   updateDownloadSettings: (maxConcurrent: number) =>
