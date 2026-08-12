@@ -4,7 +4,7 @@
 
 **Blocked by:** 04 — Downloader: full options, SSE progress, cancel, drawer; 06 — Transcriber with provider registry
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 - [ ] A user configures download-queue settings (e.g. max concurrent downloads) in Settings and the downloader honors them
 - [ ] A user adds/removes cloud provider API keys in Settings; keys persist locally and are never committed

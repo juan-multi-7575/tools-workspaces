@@ -6,10 +6,12 @@ import asyncio
 import json
 
 import app.tools  # noqa: F401 - registers tool drivers
+from app.deps import check_dependencies, upgrade_package
 from app.download_manager import get_manager
 from app.paths import ensure_layout, run_dir, workspace_runs_dir, workspace_root
 from app.pipeline import run_pipeline, validate_chain
 from app.registry import get, list_manifests
+from app.settings_store import load_settings, save_settings
 from app.tools.base import ToolRunContext
 from app.workspaces import (
     artifact_path,
@@ -29,6 +31,9 @@ from fastapi.responses import FileResponse, StreamingResponse
 async def lifespan(app: FastAPI):
     ensure_layout()
     mgr = get_manager()
+    settings = load_settings()
+    mgr.set_max_concurrent(settings["download"]["max_concurrent"])
+    app.state.dep_check = check_dependencies()
     task = asyncio.create_task(mgr.start())
     yield
     task.cancel()
@@ -176,7 +181,8 @@ async def cancel_download(task_id: str):
 @app.get("/api/settings/download")
 async def get_download_settings():
     mgr = get_manager()
-    return {"max_concurrent": mgr.max_concurrent}
+    settings = load_settings()
+    return {"max_concurrent": mgr.max_concurrent, "persisted": settings["download"]["max_concurrent"]}
 
 
 @app.post("/api/settings/download")
@@ -184,7 +190,28 @@ async def update_download_settings(payload: dict):
     mgr = get_manager()
     if "max_concurrent" in payload:
         mgr.set_max_concurrent(payload["max_concurrent"])
+        save_settings({"download": {"max_concurrent": mgr.max_concurrent}})
     return {"max_concurrent": mgr.max_concurrent}
+
+
+@app.get("/api/settings/deps")
+async def get_dep_status():
+    return {"dependencies": getattr(app.state, "dep_check", [])}
+
+
+@app.post("/api/settings/deps/check")
+async def run_dep_check():
+    app.state.dep_check = check_dependencies()
+    return {"dependencies": app.state.dep_check}
+
+
+@app.post("/api/settings/deps/update")
+async def run_dep_update(payload: dict):
+    package = payload.get("package")
+    approved = payload.get("approved")
+    if not package or not approved:
+        return {"ok": False, "error": "approval required"}
+    return upgrade_package(package)
 
 
 @app.get("/api/providers")
