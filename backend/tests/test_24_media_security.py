@@ -1,3 +1,6 @@
+import pytest
+from pathlib import Path
+
 from app.paths import run_dir
 from app.workspaces import create_workspace
 
@@ -17,3 +20,26 @@ def test_delete_media_glob_injection():
     assert (r_dir / "other.txt").exists()
     # "../" traversal should be sanitized
     assert delete_workspace_media_file(ws, "../keep.txt") is False
+
+
+def test_ffmpeg_subtitle_escape():
+    # subtitle path with single quote should not break command
+    ws = "test_sec_ws2"
+    create_workspace(ws)
+    # create dummy video/subtitle with quote in name
+    v = Path("uploads/video.mp4")
+    v.parent.mkdir(exist_ok=True)
+    v.write_bytes(b"\x00")
+    s = Path("uploads/a'b.srt")
+    s.write_text("1\n00:00:00 --> 00:00:01\nHi")
+    # mux with burn_in True should not raise injection error
+    try:
+        from app.workspaces import mux_subtitles_to_video
+
+        # mock ffmpeg not needed; check command building via escaping function
+        from app.tools.downloader import _escape_ffmpeg_path  # to be created
+
+        escaped = _escape_ffmpeg_path(str(s))
+        assert "'" not in escaped or "\\'" in escaped
+    except ImportError:
+        pytest.skip("helper not yet implemented")

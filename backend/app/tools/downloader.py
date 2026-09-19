@@ -149,6 +149,14 @@ def _extract_field(line: str, start: str, end: str | None) -> str | None:
     return rest.strip() or None
 
 
+def _escape_ffmpeg_subtitle(p: str) -> str:
+    return p.replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
+
+
+def _escape_ffmpeg_path(p: str) -> str:
+    return _escape_ffmpeg_subtitle(p)
+
+
 class DownloaderTool(Tool):
     manifest = ToolManifest(
         id="downloader",

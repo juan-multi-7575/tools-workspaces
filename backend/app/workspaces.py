@@ -483,6 +483,14 @@ def list_pipeline_runs(workspace_id: str) -> list[dict[str, Any]]:
     return pipeline_list
 
 
+def _escape_ffmpeg_subtitle(p: str) -> str:
+    return p.replace("\\", "\\\\").replace(":", "\\:").replace("'", "\\'")
+
+
+def _escape_ffmpeg_path(p: str) -> str:
+    return _escape_ffmpeg_subtitle(p)
+
+
 def mux_subtitles_to_video(
     workspace_id: str,
     video_path: str,
@@ -508,10 +516,11 @@ def mux_subtitles_to_video(
 
     if burn_in:
         # Hard-burn subtitles onto video frames
+        escaped = _escape_ffmpeg_subtitle(str(s_src))
         cmd = [
             "ffmpeg", "-y",
             "-i", str(v_src),
-            "-vf", f"subtitles='{str(s_src).replace(':', r'\:')}'",
+            "-vf", f"subtitles='{escaped}'",
             "-c:a", "copy",
             str(out_path),
         ]
