@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -34,6 +35,15 @@ def list_workspaces() -> list[dict[str, Any]]:
 
 
 def save_run_meta(workspace_id: str, run_id: str, record: dict[str, Any]) -> None:
+    # 1. Atomic per-run manifest write
+    run_folder = paths.workspace_runs_dir(workspace_id) / run_id
+    run_folder.mkdir(parents=True, exist_ok=True)
+    manifest_path = run_folder / "manifest.json"
+    manifest_data = dict(record)
+    manifest_data.setdefault("timestamp", time.time())
+    manifest_path.write_text(json.dumps(manifest_data, indent=2))
+
+    # 2. Workspace root summary update
     meta_path = paths.workspace_root(workspace_id) / "meta.json"
     if meta_path.exists():
         meta = json.loads(meta_path.read_text())
@@ -49,12 +59,40 @@ def save_run_meta(workspace_id: str, run_id: str, record: dict[str, Any]) -> Non
     meta_path.write_text(json.dumps(meta, indent=2))
 
 
-def list_templates(workspace_id: str) -> list[dict[str, Any]]:
+DEFAULT_STARTER_TEMPLATES: list[dict[str, Any]] = [
+    {
+        "name": "🎬 Video to Subtitles (YouTube ➔ Audio Extractor ➔ Subtitles SRT)",
+        "chain": ["downloader", "audio_processor", "transcriber"],
+    },
+    {
+        "name": "⚡ Direct Video to Subtitles (YouTube ➔ Subtitles SRT)",
+        "chain": ["downloader", "transcriber"],
+    },
+    {
+        "name": "🎵 Video to Audio Extractor (YouTube ➔ WAV/MP3)",
+        "chain": ["downloader", "audio_processor"],
+    },
+    {
+        "name": "📝 Video to Text Summary (YouTube ➔ Transcribe ➔ AI Summary)",
+        "chain": ["downloader", "transcriber", "summarizer"],
+    },
+]
+
+
+def list_templates(workspace_id: str, include_starters: bool = False) -> list[dict[str, Any]]:
+    custom: list[dict[str, Any]] = []
     meta_path = paths.workspace_root(workspace_id) / "meta.json"
-    if not meta_path.exists():
-        return []
-    meta = json.loads(meta_path.read_text())
-    return meta.get("templates", [])
+    if meta_path.exists():
+        try:
+            meta = json.loads(meta_path.read_text())
+            custom = meta.get("templates", [])
+        except Exception:
+            pass
+    if include_starters:
+        custom_names = {t.get("name") for t in custom}
+        starters = [t for t in DEFAULT_STARTER_TEMPLATES if t.get("name") not in custom_names]
+        return starters + custom
+    return custom
 
 
 def save_template(workspace_id: str, name: str, chain: list[str]) -> dict[str, Any]:
@@ -90,12 +128,34 @@ def list_runs(workspace_id: str) -> list[dict[str, Any]]:
         return out
     for run_path in runs_dir.iterdir():
         if run_path.is_dir():
+            art_dir = run_path / "artifacts"
+            target_dir = art_dir if art_dir.exists() else run_path
             artifacts = [
                 {"name": p.name, "size": p.stat().st_size}
-                for p in (run_path / "artifacts").iterdir()
-                if p.is_file()
+                for p in target_dir.iterdir()
+                if p.is_file() and p.name != "manifest.json"
             ]
-            out.append({"id": run_path.name, "artifacts": artifacts})
+            run_item: dict[str, Any] = {
+                "id": run_path.name,
+                "artifacts": artifacts,
+                "timestamp": run_path.stat().st_mtime,
+            }
+            manifest_file = run_path / "manifest.json"
+            if manifest_file.exists():
+                try:
+                    mdata = json.loads(manifest_file.read_text())
+                    run_item["tool_id"] = mdata.get("tool_id")
+                    run_item["status"] = mdata.get("status")
+                    run_item["error"] = mdata.get("error")
+                    run_item["duration_seconds"] = mdata.get("duration_seconds")
+                    if mdata.get("timestamp"):
+                        run_item["timestamp"] = mdata.get("timestamp")
+                    else:
+                        run_item["timestamp"] = manifest_file.stat().st_mtime
+                except Exception:
+                    pass
+            out.append(run_item)
+    out.sort(key=lambda r: r.get("timestamp") or 0, reverse=True)
     return out
 
 
@@ -104,8 +164,56 @@ def list_artifacts(workspace_id: str, run_id: str) -> list[dict[str, Any]]:
     return [
         {"name": p.name, "path": str(p.relative_to(base)), "size": p.stat().st_size}
         for p in base.iterdir()
-        if p.is_file()
+        if p.is_file() and p.name != "manifest.json"
     ]
+
+
+def get_run_manifest(workspace_id: str, run_id: str) -> dict[str, Any] | None:
+    run_folder = paths.workspace_runs_dir(workspace_id) / run_id
+    manifest_file = run_folder / "manifest.json"
+    if manifest_file.exists():
+        try:
+            return json.loads(manifest_file.read_text())
+        except Exception:
+            pass
+    meta_path = paths.workspace_root(workspace_id) / "meta.json"
+    if meta_path.exists():
+        try:
+            m = json.loads(meta_path.read_text())
+            for r in m.get("runs", []):
+                if r.get("id") == run_id or r.get("run_id") == run_id:
+                    return r
+        except Exception:
+            pass
+    return None
+
+
+def branch_from_run(workspace_id: str, run_id: str) -> dict[str, Any]:
+    manifest = get_run_manifest(workspace_id, run_id) or {}
+    art_list = list_artifacts(workspace_id, run_id)
+    base = paths.run_dir(workspace_id, run_id)
+    full_artifacts = [
+        {"name": a["name"], "path": str(base / a["name"]), "size": a["size"]}
+        for a in art_list
+    ]
+    return {
+        "run_id": run_id,
+        "tool_id": manifest.get("tool_id"),
+        "artifacts": full_artifacts,
+        "params": manifest.get("params", {}),
+    }
+
+
+def get_run_logs(workspace_id: str, run_id: str) -> str:
+    run_folder = paths.workspace_runs_dir(workspace_id) / run_id
+    art_folder = paths.run_dir(workspace_id, run_id)
+    candidates = ["execution.log", "output.log", "stdout.log"]
+    for folder in (run_folder, art_folder):
+        for c in candidates:
+            log_file = folder / c
+            if log_file.exists():
+                return log_file.read_text(encoding="utf-8", errors="replace")
+    return "No execution logs recorded for this run."
 
 
 def artifact_path(workspace_id: str, run_id: str, artifact_name: str) -> Path | None:
@@ -122,6 +230,40 @@ def delete_artifact(workspace_id: str, run_id: str, artifact_name: str) -> bool:
         return False
     target.unlink()
     return True
+
+
+def delete_workspace_media_file(workspace_id: str, filename: str) -> bool:
+    """Deletes a file by name across the workspace's runs and media directory."""
+    safe_name = Path(filename).name  # strip dirs, "*" becomes "*"
+    if not safe_name or safe_name in (".", "..") or any(c in safe_name for c in "*?[]!"):
+        # reject globs/traversal; only exact filename
+        return False
+    # reject any filename containing path separators (traversal)
+    if filename != safe_name or "/" in filename or "\\" in filename:
+        return False
+    deleted_any = False
+    ws_root = paths.workspace_root(workspace_id)
+
+    # 1. Search in runs
+    runs_dir = paths.workspace_runs_dir(workspace_id)
+    if runs_dir.exists():
+        for f in runs_dir.glob(f"*/artifacts/{safe_name}"):
+            if f.is_file() or f.is_symlink():
+                f.unlink(missing_ok=True)
+                deleted_any = True
+
+    # 2. Search in media folder
+    media_dir = paths.workspace_media_dir(workspace_id)
+    if media_dir.exists():
+        for f in media_dir.glob(f"**/{safe_name}"):
+            if f.is_file() or f.is_symlink():
+                # ensure exact name match (defense against any residual glob)
+                if f.name != safe_name:
+                    continue
+                f.unlink(missing_ok=True)
+                deleted_any = True
+
+    return deleted_any
 
 
 def trim_artifact(workspace_id: str, run_id: str, artifact_name: str, regions: list[dict[str, Any]]) -> list[str] | None:
@@ -145,6 +287,283 @@ def trim_artifact(workspace_id: str, run_id: str, artifact_name: str, regions: l
             continue
         produced.append(out.name)
     return produced
+
+
+def _categorize_file(name: str) -> str:
+    ext = Path(name).suffix.lower()
+    if ext in (".mp4", ".mkv", ".webm", ".mov", ".avi", ".ts"):
+        return "video"
+    if ext in (".srt", ".vtt", ".sub", ".ass"):
+        return "subtitle"
+    if ext in (".mp3", ".wav", ".flac", ".m4a", ".ogg", ".opus", ".aac"):
+        return "audio"
+    if ext in (".txt", ".md", ".json", ".pdf", ".csv", ".log"):
+        return "document"
+    if ext in (".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"):
+        return "image"
+    if ext in (".zip", ".tar", ".gz", ".7z"):
+        return "package"
+    return "other"
+
+
+def list_workspace_media(workspace_id: str) -> dict[str, Any]:
+    """Return all media files in a workspace categorized by kind and grouped into media packages."""
+    ws_root = paths.workspace_root(workspace_id)
+    runs_dir = paths.workspace_runs_dir(workspace_id)
+    media_dir = paths.workspace_media_dir(workspace_id)
+
+    files_by_category: dict[str, list[dict[str, Any]]] = {
+        "video": [],
+        "subtitle": [],
+        "audio": [],
+        "document": [],
+        "image": [],
+        "package": [],
+        "other": [],
+    }
+    all_files: list[dict[str, Any]] = []
+    seen_paths: set[Path] = set()
+    seen_names: dict[str, dict[str, Any]] = {}
+
+    # 1. Scan runs artifacts — dedup by resolved path AND by filename (keep newest)
+    if runs_dir.exists():
+        for r_dir in sorted(runs_dir.iterdir(), key=lambda d: d.stat().st_mtime, reverse=True):
+            if not r_dir.is_dir():
+                continue
+            run_id = r_dir.name
+            art_dir = r_dir / "artifacts"
+            target_dir = art_dir if art_dir.exists() else r_dir
+
+            manifest_info = {}
+            mfile = r_dir / "manifest.json"
+            if mfile.exists():
+                try:
+                    manifest_info = json.loads(mfile.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
+
+            for f in sorted(target_dir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+                if not f.is_file() or f.name == "manifest.json" or f.suffix in (".part", ".ytd"):
+                    continue
+                # Skip broken symlinks or zero-byte placeholders
+                try:
+                    if f.stat().st_size == 0:
+                        continue
+                    if f.is_symlink() and not f.resolve().exists():
+                        continue
+                except Exception:
+                    continue
+                resolved = f.resolve()
+                if resolved in seen_paths:
+                    continue
+                seen_paths.add(resolved)
+                # Global dedup by filename: keep only the newest occurrence of same name
+                # This prevents the duplicate subtitle cards seen when same video was run twice
+                lower_name = f.name.lower()
+                if lower_name in seen_names:
+                    # Keep the newer (already stored is newer due to reverse mtime sort). Skip older duplicate.
+                    continue
+                cat = _categorize_file(f.name)
+                f_item = {
+                    "name": f.name,
+                    "path": str(f),
+                    "size": f.stat().st_size,
+                    "mtime": f.stat().st_mtime,
+                    "category": cat,
+                    "run_id": run_id,
+                    "tool_id": manifest_info.get("tool_id"),
+                    "pipeline_run_id": manifest_info.get("pipeline_run_id"),
+                    "bundle_name": manifest_info.get("bundle_name"),
+                    "preview_url": f"/api/workspaces/{workspace_id}/runs/{run_id}/artifacts/{f.name}/preview",
+                    "download_url": f"/api/workspaces/{workspace_id}/runs/{run_id}/artifacts/{f.name}/download",
+                }
+                seen_names[lower_name] = f_item
+                files_by_category[cat].append(f_item)
+                all_files.append(f_item)
+
+    # 2. Build smart media packages (pairing video with its subtitles, transcripts, and audio)
+    packages_map: dict[str, dict[str, Any]] = {}
+    for f in all_files:
+        # Determine base title
+        stem = Path(f["name"]).stem
+        for sfx in [".en", ".ko", ".ja", ".zh", ".es", ".fr", ".de", "_en_clean", "_clean", "_en_timestamped", "_timestamped", "_seg_0", "_seg_1"]:
+            if stem.endswith(sfx):
+                stem = stem[: -len(sfx)]
+                break
+
+        pkg = packages_map.setdefault(stem, {
+            "title": stem,
+            "video": None,
+            "subtitles": [],
+            "transcripts": [],
+            "audio": [],
+            "all_files": [],
+        })
+        pkg["all_files"].append(f)
+        if f["category"] == "video" and not pkg["video"]:
+            pkg["video"] = f
+        elif f["category"] == "subtitle":
+            pkg["subtitles"].append(f)
+        elif f["category"] == "audio":
+            pkg["audio"].append(f)
+        elif f["category"] == "document" and f["name"].endswith((".txt", ".md")):
+            pkg["transcripts"].append(f)
+
+    packages = list(packages_map.values())
+    # Sort packages with video first
+    packages.sort(key=lambda p: 1 if p.get("video") else 0, reverse=True)
+
+    return {
+        "workspace_id": workspace_id,
+        "total_files": len(all_files),
+        "categories": files_by_category,
+        "packages": packages,
+        "all_files": all_files,
+    }
+
+
+def list_pipeline_runs(workspace_id: str) -> list[dict[str, Any]]:
+    """Return workspace execution runs grouped into cohesive pipeline execution packages."""
+    raw_runs = list_runs(workspace_id)
+    if not raw_runs:
+        return []
+
+    groups: dict[str, dict[str, Any]] = {}
+    for run in raw_runs:
+        pipe_id = run.get("pipeline_run_id") or run.get("id")
+        grp = groups.setdefault(pipe_id, {
+            "pipeline_run_id": pipe_id,
+            "pipeline_name": run.get("pipeline_name") or f"Run {run.get('tool_id') or pipe_id}",
+            "bundle_name": run.get("bundle_name"),
+            "status": "completed",
+            "timestamp": run.get("timestamp") or 0,
+            "steps": [],
+            "media": {
+                "video": None,
+                "subtitles": [],
+                "transcripts": [],
+                "audio": [],
+                "all_artifacts": [],
+            },
+        })
+        grp["steps"].append(run)
+        if run.get("status") in ("failed", "error"):
+            grp["status"] = "failed"
+        elif run.get("status") == "running" and grp["status"] != "failed":
+            grp["status"] = "running"
+
+        grp["timestamp"] = max(grp["timestamp"], run.get("timestamp") or 0)
+        if run.get("pipeline_name"):
+            grp["pipeline_name"] = run["pipeline_name"]
+
+        for art in run.get("artifacts", []):
+            name = art.get("name", "")
+            cat = _categorize_file(name)
+            art_info = {
+                "name": name,
+                "size": art.get("size", 0),
+                "category": cat,
+                "run_id": run["id"],
+                "tool_id": run.get("tool_id"),
+                "preview_url": f"/api/workspaces/{workspace_id}/runs/{run['id']}/artifacts/{name}/preview",
+                "download_url": f"/api/workspaces/{workspace_id}/runs/{run['id']}/artifacts/{name}/download",
+            }
+            grp["media"]["all_artifacts"].append(art_info)
+            if cat == "video" and not grp["media"]["video"]:
+                grp["media"]["video"] = art_info
+            elif cat == "subtitle":
+                grp["media"]["subtitles"].append(art_info)
+            elif cat == "audio":
+                grp["media"]["audio"].append(art_info)
+            elif cat == "document" and name.endswith((".txt", ".md")):
+                grp["media"]["transcripts"].append(art_info)
+
+    pipeline_list = list(groups.values())
+    pipeline_list.sort(key=lambda g: g.get("timestamp") or 0, reverse=True)
+    return pipeline_list
+
+
+def mux_subtitles_to_video(
+    workspace_id: str,
+    video_path: str,
+    subtitle_path: str,
+    output_name: str | None = None,
+    burn_in: bool = False,
+) -> dict[str, Any]:
+    """Embed or burn subtitles directly into video file via FFmpeg."""
+    v_src = paths.resolve_input_file(video_path)
+    if not v_src or not v_src.exists():
+        raise FileNotFoundError(f"Video file not found: {video_path}")
+    s_src = paths.resolve_input_file(subtitle_path)
+    if not s_src or not s_src.exists():
+        raise FileNotFoundError(f"Subtitle file not found: {subtitle_path}")
+
+    import uuid
+    run_id = uuid.uuid4().hex[:12]
+    dest = paths.run_dir(workspace_id, run_id)
+    dest.mkdir(parents=True, exist_ok=True)
+
+    out_filename = output_name or f"{v_src.stem}_{'burned' if burn_in else 'subtitled'}.mp4"
+    out_path = dest / out_filename
+
+    if burn_in:
+        # Hard-burn subtitles onto video frames
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(v_src),
+            "-vf", f"subtitles='{str(s_src).replace(':', r'\:')}'",
+            "-c:a", "copy",
+            str(out_path),
+        ]
+    else:
+        # Fast soft-mux subtitle track into MP4 container
+        cmd = [
+            "ffmpeg", "-y",
+            "-i", str(v_src),
+            "-i", str(s_src),
+            "-c:v", "copy",
+            "-c:a", "copy",
+            "-c:s", "mov_text",
+            "-metadata:s:s:0", "language=eng",
+            str(out_path),
+        ]
+
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.returncode != 0 or not out_path.exists():
+        raise RuntimeError(f"FFmpeg muxing failed: {proc.stderr[:400]}")
+
+    # Also register in media directory
+    media_folder = paths.workspace_media_dir(workspace_id, v_src.stem)
+    target_link = media_folder / out_filename
+    if not target_link.exists():
+        try:
+            target_link.symlink_to(out_path)
+        except Exception:
+            try:
+                shutil.copy2(out_path, target_link)
+            except Exception:
+                pass
+
+    record = {
+        "id": run_id,
+        "run_id": run_id,
+        "tool_id": "subtitle_muxer",
+        "status": "completed",
+        "error": None,
+        "params": {"video": str(v_src), "subtitle": str(s_src), "burn_in": burn_in},
+        "artifacts": [{"name": out_filename, "path": str(out_path), "size": out_path.stat().st_size, "kind": "video"}],
+        "timestamp": time.time(),
+    }
+    save_run_meta(workspace_id, run_id, record)
+
+    return {
+        "run_id": run_id,
+        "name": out_filename,
+        "path": str(out_path),
+        "size": out_path.stat().st_size,
+        "preview_url": f"/api/workspaces/{workspace_id}/runs/{run_id}/artifacts/{out_filename}/preview",
+        "download_url": f"/api/workspaces/{workspace_id}/runs/{run_id}/artifacts/{out_filename}/download",
+    }
 
 
 def delete_run(workspace_id: str, run_id: str) -> bool:
