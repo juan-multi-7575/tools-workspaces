@@ -123,6 +123,19 @@ export default function WorkspaceDetailPage() {
   useEffect(refreshRuns, [refreshRuns])
 
   useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const handleChange = () => {
+      if (mq.matches) {
+        setPaletteCollapsed(true)
+        setInspectorCollapsed(true)
+      }
+    }
+    handleChange()
+    mq.addEventListener('change', handleChange)
+    return () => mq.removeEventListener('change', handleChange)
+  }, [])
+
+  useEffect(() => {
     if (!id || !selectedRun) return
     api.listArtifacts(id, selectedRun).then(({ artifacts }) => setArtifacts(artifacts)).catch(() => {})
   }, [id, selectedRun])
