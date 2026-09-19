@@ -343,6 +343,8 @@ def list_workspace_media(workspace_id: str) -> dict[str, Any]:
                     pass
 
             for f in sorted(target_dir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+                if "_scratch" in f.name or f.name.startswith("scratch_"):
+                    continue
                 if not f.is_file() or f.name == "manifest.json" or f.suffix in (".part", ".ytd"):
                     continue
                 # Skip broken symlinks or zero-byte placeholders
