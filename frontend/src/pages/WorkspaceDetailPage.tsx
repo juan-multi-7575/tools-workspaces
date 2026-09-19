@@ -1,222 +1,395 @@
-import { useCallback, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { RefreshCw, Trash2, Download, Eye, FileArchive, Workflow } from 'lucide-react'
-import { api, type Run, type ArtifactFile, type ToolManifest } from '../lib/api'
+import { useCallback, useEffect, useState, useRef } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import {
+  RefreshCw,
+  FileArchive,
+  Workflow,
+  ArrowLeft,
+  Scissors,
+  X,
+  CheckCircle2,
+  Film,
+} from 'lucide-react'
+import {
+  api,
+  type Run,
+  type ArtifactFile,
+  type ToolManifest,
+  type PipelineRunGroup,
+} from '../lib/api'
 import PipelineCanvas from '../components/pipeline/PipelineCanvas'
 import WaveformEditor from '../components/waveform/WaveformEditor'
-import { X, Scissors } from 'lucide-react'
-
-function isAudio(name: string): boolean {
-  return /\.(mp3|wav|ogg|flac|m4a|aac)$/i.test(name)
-}
+import ArtifactViewerModal from '../components/artifacts/ArtifactViewerModal'
+import RunDetailsModal from '../components/workspaces/RunDetailsModal'
+import UnifiedMediaRunsHub from '../components/workspaces/UnifiedMediaRunsHub'
+import WorkspaceSwitcherDropdown from '../components/workspaces/WorkspaceSwitcherDropdown'
+import ToolPaletteDrawer from '../components/studio/ToolPaletteDrawer'
+import NodeInspectorPanel from '../components/studio/NodeInspectorPanel'
+import BottomArtifactsDock from '../components/studio/BottomArtifactsDock'
 
 export default function WorkspaceDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const [view, setView] = useState<'pipeline' | 'artifacts'>('pipeline')
+  const [view, setView] = useState<'pipeline' | 'media_hub'>('pipeline')
   const [tools, setTools] = useState<ToolManifest[]>([])
   const [runs, setRuns] = useState<Run[]>([])
+  const [pipelineRuns, setPipelineRuns] = useState<PipelineRunGroup[]>([])
   const [selectedRun, setSelectedRun] = useState<string | null>(null)
-  const [artifacts, setArtifacts] = useState<ArtifactFile[]>([])
+  const [, setArtifacts] = useState<ArtifactFile[]>([])
   const [trimTarget, setTrimTarget] = useState<string | null>(null)
+  const [previewTarget, setPreviewTarget] = useState<{
+    name: string
+    size: number
+    previewUrl: string
+    downloadUrl: string
+  } | null>(null)
+  const [inspectRunId, setInspectRunId] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const [paletteCollapsed, setPaletteCollapsed] = useState(false)
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(false)
+  const [dockExpanded, setDockExpanded] = useState(false)
+  const [selectedCanvasNode, setSelectedCanvasNode] = useState<{
+    id: string
+    toolId: string
+    label: string
+    params: Record<string, unknown>
+    status?: string
+    durationSeconds?: number
+    errorMessage?: string
+    cached?: boolean
+  } | null>(null)
+
+  const addToolRef = useRef<((tool: ToolManifest) => void) | null>(null)
+  const updateParamsRef = useRef<((params: Record<string, unknown>) => void) | null>(null)
+
+  const [justCompletedRunId, setJustCompletedRunId] = useState<string | null>(null)
+  const [outputBanner, setOutputBanner] = useState<{ title: string; subtitle?: string } | null>(null)
+  const prevPipelineIdsRef = useRef<Set<string>>(new Set())
+  const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const refreshRuns = useCallback(() => {
     if (!id) return
-    api.listRuns(id).then(({ runs }) => {
-      setRuns(runs)
-      if (!selectedRun && runs.length > 0) setSelectedRun(runs[0].id)
-    })
+    setRefreshing(true)
+    Promise.all([api.listRuns(id), api.listPipelineRuns(id)])
+      .then(([{ runs }, { pipeline_runs }]) => {
+        // Detect newly arrived pipeline run to trigger focus (uses ref to avoid dep loop)
+        const newRuns = pipeline_runs.filter((p) => !prevPipelineIdsRef.current.has(p.pipeline_run_id))
+        if (prevPipelineIdsRef.current.size > 0 && newRuns.length > 0 && newRuns[0]?.pipeline_run_id) {
+          setJustCompletedRunId(newRuns[0].pipeline_run_id)
+          setOutputBanner({
+            title: newRuns[0].pipeline_name || 'Pipeline completed',
+            subtitle: newRuns[0].bundle_name ? `Bundle: ${newRuns[0].bundle_name}` : undefined,
+          })
+          setView('media_hub')
+          // Auto-dismiss banner after 8s (track timer to avoid leak on workspace switch)
+          if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current)
+          bannerTimerRef.current = setTimeout(() => {
+            setOutputBanner(null)
+            bannerTimerRef.current = null
+          }, 8000)
+        }
+        prevPipelineIdsRef.current = new Set(pipeline_runs.map((p) => p.pipeline_run_id))
+        setRuns(runs)
+        setPipelineRuns(pipeline_runs)
+        if (runs.length > 0) {
+          if (!selectedRun || !runs.some((r) => r.id === selectedRun)) {
+            setSelectedRun(runs[0].id)
+          }
+        }
+        setRefreshing(false)
+      })
+      .catch(() => setRefreshing(false))
   }, [id, selectedRun])
 
   useEffect(() => {
-    api.listTools().then(({ tools }) => setTools(tools))
+    prevPipelineIdsRef.current = new Set()
+    setJustCompletedRunId(null)
+    setOutputBanner(null)
+    if (bannerTimerRef.current) {
+      clearTimeout(bannerTimerRef.current)
+      bannerTimerRef.current = null
+    }
+    return () => {
+      if (bannerTimerRef.current) {
+        clearTimeout(bannerTimerRef.current)
+        bannerTimerRef.current = null
+      }
+    }
+  }, [id])
+
+  useEffect(() => {
+    api.listTools().then(({ tools }) => setTools(tools)).catch(() => {})
   }, [])
 
   useEffect(refreshRuns, [refreshRuns])
 
   useEffect(() => {
     if (!id || !selectedRun) return
-    api.listArtifacts(id, selectedRun).then(({ artifacts }) => setArtifacts(artifacts))
+    api.listArtifacts(id, selectedRun).then(({ artifacts }) => setArtifacts(artifacts)).catch(() => {})
   }, [id, selectedRun])
 
   const removeRun = async (runId: string) => {
     if (!id) return
-    await api.deleteRun(id, runId)
-    setSelectedRun(null)
-    setArtifacts([])
-    refreshRuns()
+    if (confirm(`Delete run ${runId} and its artifacts?`)) {
+      await api.deleteRun(id, runId)
+      setSelectedRun(null)
+      setArtifacts([])
+      refreshRuns()
+    }
   }
 
-  const removeArtifact = async (name: string) => {
-    if (!id || !selectedRun) return
-    await api.deleteArtifact(id, selectedRun, name)
-    setArtifacts(artifacts.filter((a) => a.name !== name))
+  const removeMediaItem = async (filename: string) => {
+    if (!id) return
+    if (confirm(`Permanently delete media file ${filename}?`)) {
+      await api.deleteWorkspaceMedia(id, filename)
+      refreshRuns()
+    }
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-50">
-            Workspace <span className="text-emerald-400">{id}</span>
+    <div className="mx-auto max-w-7xl space-y-6 text-[#4E220F]">
+      {/* Top Breadcrumbs & Workspace Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#B0BA99] pb-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Link
+              to="/workspaces"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[#7C5339] hover:text-[#4E220F] transition-colors"
+            >
+              <ArrowLeft className="size-3.5" />
+              Workspaces
+            </Link>
+            <span className="text-[#B0BA99]">/</span>
+            <WorkspaceSwitcherDropdown currentWorkspaceId={id} />
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-[#4E220F] flex items-center gap-2">
+            Workbench
+            <span className="h-2 w-2 rounded-full bg-[#9D6638]" />
           </h1>
-          <p className="mt-1 text-sm text-slate-400">Chain tools into pipelines and browse every artifact.</p>
         </div>
+
+        {/* Action bar */}
         <div className="flex items-center gap-2">
           <button
             onClick={refreshRuns}
-            className="inline-flex items-center gap-2 rounded-lg border border-garage-700 bg-garage-900 px-3 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-garage-800"
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-3.5 py-1.5 text-xs font-semibold text-[#4E220F] transition-all hover:bg-[#B0BA99]/40 active:scale-95 disabled:opacity-50 shadow-2xs"
           >
-            <RefreshCw className="h-3.5 w-3.5" />
+            <RefreshCw className={`size-3.5 ${refreshing ? 'animate-spin text-[#9D6638]' : ''}`} />
             Refresh
           </button>
           {id && (
             <a
               href={api.exportWorkspace(id)}
-              className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-3 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-cyan-400"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-3.5 py-1.5 text-xs font-bold text-[#FDFBF7] shadow-sm transition-all hover:bg-[#86542C] active:scale-95"
             >
-              <FileArchive className="h-3.5 w-3.5" />
+              <FileArchive className="size-3.5" />
               Export ZIP
             </a>
           )}
         </div>
-      </header>
-
-      <div className="mb-5 flex gap-2">
-        <button
-          onClick={() => setView('pipeline')}
-          className={
-            'inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ' +
-            (view === 'pipeline' ? 'bg-garage-800 text-white' : 'text-slate-400 hover:bg-garage-800/60')
-          }
-        >
-          <Workflow className="h-4 w-4" /> Pipeline editor
-        </button>
-        <button
-          onClick={() => setView('artifacts')}
-          className={
-            'inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ' +
-            (view === 'artifacts' ? 'bg-garage-800 text-white' : 'text-slate-400 hover:bg-garage-800/60')
-          }
-        >
-          Runs & artifacts ({runs.length})
-        </button>
       </div>
 
-      {view === 'pipeline' ? (
-        <PipelineCanvas workspaceId={id!} tools={tools} onRan={() => { setView('artifacts'); refreshRuns() }} />
-      ) : runs.length === 0 ? (
-        <p className="text-sm text-slate-500">No runs yet. Build a pipeline to see artifacts here.</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
-          <aside className="space-y-2">
-            <h2 className="px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">Runs</h2>
-            {runs.map((run) => (
-              <div
-                key={run.id}
-                onClick={() => setSelectedRun(run.id)}
-                className={
-                  'group flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 transition-colors ' +
-                  (selectedRun === run.id
-                    ? 'border-port-in/60 bg-garage-800'
-                    : 'border-garage-800 bg-garage-900/40 hover:bg-garage-800/60')
-                }
-              >
-                <div>
-                  <p className="font-mono text-xs text-slate-200">{run.id}</p>
-                  <p className="text-[11px] text-slate-500">{run.artifacts.length} artifacts</p>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    removeRun(run.id)
-                  }}
-                  className="rounded-md p-1 text-slate-500 opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
-                  title="Delete run"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
-          </aside>
-
-          <section>
-            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Artifacts
-            </h2>
-            {artifacts.length === 0 ? (
-              <p className="text-sm text-slate-500">No artifacts in this run.</p>
-            ) : (
-              <ul className="space-y-2">
-                {artifacts.map((art) => (
-                  <li
-                    key={art.name}
-                    className="flex items-center justify-between rounded-xl border border-garage-800 bg-garage-900/40 px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-slate-100">{art.name}</p>
-                      <p className="text-xs text-slate-500">{formatSize(art.size)}</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {id && selectedRun && (
-                        <>
-                          <a
-                            href={api.artifactPreviewUrl(id, selectedRun, art.name)}
-                            target="_blank"
-                            rel="noreferrer"
-                            title="Preview"
-                            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-garage-800 hover:text-port-in"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </a>
-                          <a
-                            href={api.artifactDownloadUrl(id, selectedRun, art.name)}
-                            title="Download"
-                            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-garage-800 hover:text-emerald-400"
-                          >
-                            <Download className="h-4 w-4" />
-                          </a>
-                          <button
-                            onClick={() => removeArtifact(art.name)}
-                            title="Delete"
-                            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-garage-800 hover:text-red-400"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                          {isAudio(art.name) && id && selectedRun && (
-                            <button
-                              onClick={() => setTrimTarget(art.name)}
-                              title="Trim / split"
-                              className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-garage-800 hover:text-port-in"
-                            >
-                              <Scissors className="h-4 w-4" />
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+      {/* Post-run outputs focus banner */}
+      {outputBanner && (
+        <div className="rounded-2xl border-2 border-[#9D6638]/50 bg-[#9D6638] px-5 py-3 flex items-center justify-between gap-4 shadow-md animate-in slide-in-from-top-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="flex size-8 items-center justify-center rounded-xl bg-[#FDFBF7] text-[#9D6638] shrink-0">
+              <CheckCircle2 className="size-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-[#FDFBF7] truncate">{outputBanner.title} — Outputs ready</p>
+              <p className="text-xs text-[#FDFBF7]/80 truncate">{outputBanner.subtitle || 'Switched to Media, Runs & Assets. Latest outputs highlighted below.'}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => setView('media_hub')}
+              className="rounded-xl bg-[#FDFBF7] px-3.5 py-1.5 text-xs font-bold text-[#9D6638] hover:bg-[#EDE5CD] transition-colors"
+            >
+              View Outputs
+            </button>
+            <button onClick={() => setOutputBanner(null)} className="text-[#FDFBF7]/80 hover:text-[#FDFBF7] p-1">
+              <X className="size-4" />
+            </button>
+          </div>
         </div>
       )}
 
+      {/* Segmented View Switcher: 2 Clean Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#B0BA99]/60 pb-3">
+        <div className="inline-flex flex-wrap rounded-xl border border-[#B0BA99] bg-[#EDE5CD]/70 p-1 gap-1">
+          <button
+            onClick={() => setView('pipeline')}
+            className={
+              'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all ' +
+              (view === 'pipeline'
+                ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
+                : 'text-[#4E220F] hover:bg-[#EDE5CD]')
+            }
+          >
+            <Workflow className="size-3.5" />
+            Pipeline Canvas
+          </button>
+
+          <button
+            onClick={() => setView('media_hub')}
+            className={
+              'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition-all ' +
+              (view === 'media_hub'
+                ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
+                : 'text-[#4E220F] hover:bg-[#EDE5CD]')
+            }
+          >
+            <Film className="size-3.5" />
+            Media, Runs & Assets
+            <span
+              className={`font-mono text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                view === 'media_hub'
+                  ? 'bg-[#FDFBF7]/25 text-[#FDFBF7]'
+                  : 'bg-[#B0BA99]/40 text-[#4E220F]'
+              }`}
+            >
+              {pipelineRuns.length}
+            </span>
+          </button>
+        </div>
+
+        <div className="hidden sm:flex items-center gap-2 font-mono text-[11px] text-[#7C5339]">
+          <span>PIPELINE ENGINE:</span>
+          <span className="text-[#4E220F] font-bold flex items-center gap-1">
+            <CheckCircle2 className="size-3.5 text-[#9D6638]" />
+            READY
+          </span>
+        </div>
+      </div>
+
+      {/* 1. Integrated Studio Workbench View */}
+      <div style={{ display: view === 'pipeline' ? 'block' : 'none' }}>
+        <div className="rounded-2xl border-2 border-[#B0BA99] bg-[#FFFFFF] shadow-xs overflow-hidden flex flex-col">
+          {/* Main Studio Horizontal Split: Left Palette + Center Canvas + Right Inspector */}
+          <div className="flex flex-1 min-h-[620px] relative overflow-hidden">
+            {/* Left Tool Palette Drawer */}
+            <ToolPaletteDrawer
+              tools={tools}
+              onAddTool={(tool) => {
+                if (addToolRef.current) addToolRef.current(tool)
+              }}
+              collapsed={paletteCollapsed}
+              onToggleCollapse={() => setPaletteCollapsed(!paletteCollapsed)}
+            />
+
+            {/* Center Canvas */}
+            <div className="flex-1 p-3 overflow-hidden flex flex-col bg-[#F7F1DE]/40">
+              <PipelineCanvas
+                workspaceId={id!}
+                tools={tools}
+                onRan={() => {
+                  refreshRuns()
+                }}
+                onSelectNode={(node) => setSelectedCanvasNode(node)}
+                selectedNodeId={selectedCanvasNode?.id}
+                externalAddToolRef={addToolRef}
+                externalUpdateParamsRef={updateParamsRef}
+              />
+            </div>
+
+            {/* Right Node Inspector Panel */}
+            <NodeInspectorPanel
+              selectedNode={selectedCanvasNode}
+              toolManifest={tools.find((t) => t.id === selectedCanvasNode?.toolId)}
+              workspaceId={id!}
+              onUpdateParams={(newParams) => {
+                if (selectedCanvasNode) {
+                  setSelectedCanvasNode({
+                    ...selectedCanvasNode,
+                    params: newParams,
+                  })
+                }
+                if (updateParamsRef.current) updateParamsRef.current(newParams)
+              }}
+              collapsed={inspectorCollapsed}
+              onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
+              onStepFinished={refreshRuns}
+            />
+          </div>
+
+          {/* Bottom Dockable Artifacts & Media Drawer */}
+          <BottomArtifactsDock
+            workspaceId={id!}
+            onPreviewArtifact={(name, size, previewUrl, downloadUrl) =>
+              setPreviewTarget({ name, size, previewUrl, downloadUrl })
+            }
+            dockExpanded={dockExpanded}
+            onToggleExpand={() => setDockExpanded(!dockExpanded)}
+          />
+        </div>
+      </div>
+
+      {/* 2. Unified Media, Runs & Assets Hub View */}
+      <div style={{ display: view === 'media_hub' ? 'block' : 'none' }}>
+        <UnifiedMediaRunsHub
+          workspaceId={id!}
+          pipelineRuns={pipelineRuns}
+          runs={runs}
+          onRefresh={refreshRuns}
+          highlightRunId={justCompletedRunId}
+          onPreviewArtifact={(name, size, previewUrl, downloadUrl) =>
+            setPreviewTarget({ name, size, previewUrl, downloadUrl })
+          }
+          onInspectRun={(runId) => setInspectRunId(runId)}
+          onRemoveRun={(runId) => removeRun(runId)}
+          onRemoveMediaItem={(filename) => removeMediaItem(filename)}
+        />
+      </div>
+
+      {/* In-App Artifact Viewer Modal */}
+      {previewTarget && (
+        <ArtifactViewerModal
+          name={previewTarget.name}
+          size={previewTarget.size}
+          previewUrl={previewTarget.previewUrl}
+          downloadUrl={previewTarget.downloadUrl}
+          onClose={() => setPreviewTarget(null)}
+        />
+      )}
+
+      {/* In-App Run Details & Logs Modal */}
+      {inspectRunId && id && (
+        <RunDetailsModal
+          workspaceId={id}
+          runId={inspectRunId}
+          onBranch={() => {
+            setInspectRunId(null)
+            setView('pipeline')
+          }}
+          onClose={() => setInspectRunId(null)}
+        />
+      )}
+
+      {/* Trim Waveform Modal */}
       {trimTarget && id && selectedRun && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setTrimTarget(null)} />
-          <div className="relative w-full max-w-3xl rounded-2xl border border-garage-800 bg-garage-950 p-5 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-200">
-                Trim / split — {trimTarget}
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#4E220F]/30 backdrop-blur-[3px]">
+          <div className="relative w-full max-w-3xl rounded-2xl border-2 border-[#B0BA99] bg-[#F7F1DE] p-6 shadow-2xl space-y-4 text-[#4E220F]">
+            <div className="flex items-center justify-between border-b border-[#B0BA99]/60 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="flex size-8 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7]">
+                  <Scissors className="size-4" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[#4E220F]">
+                    Trim & Split Studio
+                  </h3>
+                  <p className="font-mono text-[10px] text-[#7C5339]">{trimTarget}</p>
+                </div>
+              </div>
               <button
                 onClick={() => setTrimTarget(null)}
-                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-garage-800 hover:text-white"
+                className="rounded-lg p-1.5 text-[#7C5339] hover:bg-[#B0BA99]/30 hover:text-[#4E220F] transition-colors"
               >
-                <X className="h-4 w-4" />
+                <X className="size-4" />
               </button>
             </div>
+
             <WaveformEditor
               audioUrl={api.artifactPreviewUrl(id, selectedRun, trimTarget)}
               onTrim={async (regions) => {
@@ -231,10 +404,4 @@ export default function WorkspaceDetailPage() {
       )}
     </div>
   )
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
