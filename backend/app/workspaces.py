@@ -148,6 +148,12 @@ def list_runs(workspace_id: str) -> list[dict[str, Any]]:
                     run_item["status"] = mdata.get("status")
                     run_item["error"] = mdata.get("error")
                     run_item["duration_seconds"] = mdata.get("duration_seconds")
+                    if mdata.get("pipeline_run_id"):
+                        run_item["pipeline_run_id"] = mdata.get("pipeline_run_id")
+                    if mdata.get("pipeline_name"):
+                        run_item["pipeline_name"] = mdata.get("pipeline_name")
+                    if mdata.get("bundle_name"):
+                        run_item["bundle_name"] = mdata.get("bundle_name")
                     if mdata.get("timestamp"):
                         run_item["timestamp"] = mdata.get("timestamp")
                     else:
@@ -481,6 +487,8 @@ def list_pipeline_runs(workspace_id: str) -> list[dict[str, Any]]:
                 grp["media"]["transcripts"].append(art_info)
 
     pipeline_list = list(groups.values())
+    for grp in pipeline_list:
+        grp["steps"].sort(key=lambda s: s.get("timestamp") or 0, reverse=True)
     pipeline_list.sort(key=lambda g: g.get("timestamp") or 0, reverse=True)
     return pipeline_list
 

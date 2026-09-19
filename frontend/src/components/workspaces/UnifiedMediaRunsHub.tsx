@@ -466,7 +466,7 @@ export default function UnifiedMediaRunsHub({
                             </div>
                           )}
                           <div className="flex flex-wrap items-center gap-1.5">
-                            {group.steps.map((st, idx) => (
+                            {[...group.steps].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).map((st, idx) => (
                               <span key={st.id} className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-mono font-bold border ${st.status === 'completed' ? 'bg-[#FFFFFF] border-[#2E6B47]/30 text-[#2E6B47]' : st.status === 'failed' ? 'bg-[#A83232] text-[#FDFBF7] border-[#A83232]' : 'bg-[#FFFFFF] border-[#B0BA99]'}`}>
                                 {idx + 1}. {st.tool_id} <span className={`size-1.5 rounded-full ${st.status === 'completed' ? 'bg-[#2E6B47]' : st.status === 'failed' ? 'bg-[#FDFBF7]' : 'bg-amber-400'}`} />
                               </span>

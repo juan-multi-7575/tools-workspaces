@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from app.paths import run_dir
-from app.workspaces import create_workspace, list_workspace_media, save_run_meta
+from app.workspaces import create_workspace, list_pipeline_runs, list_workspace_media, save_run_meta
 
 
 def test_scratch_hidden():
@@ -49,3 +49,31 @@ def test_scratch_prefix_hidden():
     names = [f["name"] for f in res["all_files"]]
     assert "scratch_video.wav" not in names
     assert "keep.mp4" in names
+
+
+def test_pipeline_grouping():
+    ws = "test_group"
+    create_workspace(ws)
+    # simulate DAG with 3 steps sharing same pipeline_run_id
+    for i, tool in enumerate(["downloader", "audio_processor", "transcriber"]):
+        rid = f"run_{i}"
+        r = run_dir(ws, rid)
+        r.mkdir(parents=True, exist_ok=True)
+        (r / "out.txt").write_bytes(b"x")
+        save_run_meta(
+            ws,
+            rid,
+            {
+                "id": rid,
+                "tool_id": tool,
+                "status": "completed",
+                "pipeline_run_id": "pipe_123",
+                "pipeline_name": "YouTube\u2192English",
+                "timestamp": 1000 + i,
+                "artifacts": [],
+            },
+        )
+    res = list_pipeline_runs(ws)
+    assert len(res) == 1
+    assert res[0]["pipeline_run_id"] == "pipe_123"
+    assert len(res[0]["steps"]) == 3
