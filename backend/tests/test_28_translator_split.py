@@ -8,4 +8,6 @@ def test_translator_split_ids_exist(client):
 def test_old_translator_alias_still_listed(client):
     r = client.get("/api/tools")
     ids = [t["id"] for t in r.json()["tools"]]
-    assert "subtitle_translator" in ids or "sys.health.check" in ids
+    assert "subtitle_translator" in ids
+    assert "text.translate.llm" in ids
+    assert "ai_model_health_check" in ids

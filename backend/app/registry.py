@@ -42,4 +42,18 @@ def get(tool_id: str) -> Any:
 
 
 def list_manifests() -> list[Any]:
-    return [t.manifest for t in REGISTRY.values()]
+    seen: set[str] = set()
+    out: list[Any] = []
+    for t in REGISTRY.values():
+        mid = t.manifest.id
+        if mid in seen:
+            continue
+        seen.add(mid)
+        out.append(t.manifest)
+    for old_id, new_id in _ALIASES.items():
+        if old_id in seen:
+            continue
+        m = REGISTRY[new_id].manifest.model_copy(update={"id": old_id})
+        m = m.model_copy(update={"id": old_id, "description": (m.description or "") + " [deprecated alias]"})
+        out.append(m)
+    return out
