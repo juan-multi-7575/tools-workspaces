@@ -4,11 +4,18 @@ from fastapi import FastAPI, HTTPException, Request
 
 import asyncio
 import json
+from pathlib import Path
+from typing import Any
 
 import app.tools  # noqa: F401 - registers tool drivers
+from app.core.dag import DAGPipelineSpec, validate_dag
+from app.core.scheduler import execute_dag_pipeline, stop_dag_pipeline
+from app.core.cache import detect_existing_artifacts
+from app.core.canvas import get_workspace_canvas, save_workspace_canvas, reset_workspace_canvas
 from app.deps import check_dependencies, upgrade_package
 from app.download_manager import get_manager
 from app.remote import get_token, regenerate_token
+from app import paths
 from app.paths import ensure_layout, run_dir, workspace_runs_dir, workspace_root
 from app.pipeline import run_pipeline, validate_chain
 from app.registry import get, list_manifests
@@ -18,6 +25,7 @@ from app.workspaces import (
     artifact_path,
     create_workspace,
     delete_artifact,
+    delete_workspace_media_file,
     delete_run,
     delete_workspace,
     export_workspace_zip,
@@ -28,8 +36,23 @@ from app.workspaces import (
     list_artifacts as list_ws_artifacts,
     list_workspaces,
     list_runs,
+    list_workspace_media,
+    list_pipeline_runs,
+    mux_subtitles_to_video,
+    get_run_logs,
+    get_run_manifest,
+    branch_from_run,
 )
 from fastapi.responses import FileResponse, StreamingResponse
+
+
+async def _background_dep_check(app: FastAPI):
+    loop = asyncio.get_running_loop()
+    try:
+        deps = await loop.run_in_executor(None, check_dependencies)
+        app.state.dep_check = deps
+    except Exception:
+        pass
 
 
 @asynccontextmanager
@@ -39,13 +62,25 @@ async def lifespan(app: FastAPI):
     settings = load_settings()
     mgr.set_max_concurrent(settings["download"]["max_concurrent"])
     regenerate_token()
-    app.state.dep_check = check_dependencies()
+    app.state.dep_check = check_dependencies(index=lambda u: None)
     task = asyncio.create_task(mgr.start())
+    bg_dep_task = asyncio.create_task(_background_dep_check(app))
     yield
+    bg_dep_task.cancel()
     task.cancel()
 
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(title="Multi-Tool Platform", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/api/tools")
@@ -82,16 +117,204 @@ async def list_artifacts(workspace_id: str, run_id: str):
     return {"run_id": run_id, "artifacts": files}
 
 
+@app.get("/api/tools/ai_model_health_check/providers")
+async def get_detected_model_providers():
+    from app.tools.model_health_tool import get_detected_providers_summary
+    return {"providers": get_detected_providers_summary()}
+
+
+@app.get("/api/tools/ai_model_health_check/models")
+async def get_provider_models(provider: str = "openai", api_key: str | None = None):
+    from app.tools.model_health_tool import fetch_provider_models
+    return await fetch_provider_models(provider, api_key=api_key)
+
+
+@app.get("/api/tools/downloader/info")
+async def get_downloader_media_info(url: str):
+    if not url or not url.strip():
+        raise HTTPException(status_code=400, detail="URL is required")
+    clean_url = url.strip()
+
+    import urllib.request
+    import urllib.parse
+
+    # 1. Rapid oEmbed for YouTube links (<100ms)
+    if "youtube.com" in clean_url or "youtu.be" in clean_url:
+        oembed_url = f"https://www.youtube.com/oembed?url={urllib.parse.quote(clean_url)}&format=json"
+        try:
+            req = urllib.request.Request(oembed_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=3.5) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    return {
+                        "title": data.get("title"),
+                        "author_name": data.get("author_name"),
+                        "thumbnail_url": data.get("thumbnail_url"),
+                        "provider_name": data.get("provider_name", "YouTube"),
+                    }
+        except Exception:
+            pass
+
+    # 2. Fallback to lightweight yt-dlp metadata extraction
+    try:
+        cmd = ["yt-dlp", "--dump-single-json", "--flat-playlist", "--no-download", clean_url]
+        proc = await asyncio.create_subprocess_exec(
+            *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+        )
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=5.0)
+        if proc.returncode == 0 and stdout:
+            info = json.loads(stdout.decode("utf-8"))
+            return {
+                "title": info.get("title"),
+                "author_name": info.get("uploader") or info.get("channel"),
+                "thumbnail_url": info.get("thumbnail"),
+                "duration": info.get("duration"),
+                "provider_name": info.get("extractor_key") or "Media",
+            }
+    except Exception:
+        pass
+
+    return {"title": None}
+
+
 @app.post("/api/tools/{tool_id}/execute")
 async def execute_tool(tool_id: str, payload: dict):
     tool = get(tool_id)
+    params = payload.get("params", {})
+    if isinstance(params, dict) and tool.manifest.parameters_schema:
+        for k, v in tool.manifest.parameters_schema.items():
+            if isinstance(v, dict) and "default" in v and (k not in params or params[k] is None or params[k] == ""):
+                params[k] = v["default"]
+        payload["params"] = params
+
     context = ToolRunContext(**payload)
     result = await tool.execute(context)
-    return result.model_dump()
+    res_dict = result.model_dump()
+    if not res_dict.get("data") and not res_dict.get("output_text"):
+        for art in result.artifacts:
+            p = Path(art.path)
+            if p.exists() and p.is_file() and p.stat().st_size < 500_000:
+                if p.suffix == ".json":
+                    try:
+                        res_dict["data"] = json.loads(p.read_text(encoding="utf-8"))
+                        break
+                    except Exception:
+                        pass
+                elif p.suffix in (".txt", ".md", ".log", ".html"):
+                    try:
+                        res_dict["output_text"] = p.read_text(encoding="utf-8")
+                        break
+                    except Exception:
+                        pass
+    return res_dict
+
+
+@app.get("/api/artifacts/content")
+async def get_artifact_content(path: str):
+    p = Path(path).resolve()
+    if not p.exists() or not p.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    if p.suffix in (".json", ".txt", ".md", ".log", ".html", ".csv"):
+        text = p.read_text(encoding="utf-8", errors="replace")
+        return {"content": text, "name": p.name, "size": p.stat().st_size, "kind": p.suffix.replace(".", "")}
+    return FileResponse(p)
+
+
+@app.get("/api/artifacts/recent")
+async def get_recent_artifacts():
+    """List recent media, subtitles, and document artifacts across workspaces and downloads."""
+    out = []
+    ws_base = paths.workspaces_dir()
+    if ws_base.exists():
+        for f in ws_base.glob("*/runs/*/artifacts/*"):
+            if f.is_file() and f.name != "manifest.json":
+                out.append({
+                    "name": f.name,
+                    "path": str(f.resolve()),
+                    "kind": f.suffix.replace(".", "").lower() or "file",
+                    "size": f.stat().st_size,
+                    "mtime": f.stat().st_mtime,
+                })
+    dl_base = paths.downloads_dir()
+    if dl_base.exists():
+        for f in dl_base.glob("*/*"):
+            if f.is_file() and not f.name.endswith(".part"):
+                out.append({
+                    "name": f.name,
+                    "path": str(f.resolve()),
+                    "kind": f.suffix.replace(".", "").lower() or "file",
+                    "size": f.stat().st_size,
+                    "mtime": f.stat().st_mtime,
+                })
+    up_base = paths.uploads_dir()
+    if up_base.exists():
+        for f in up_base.glob("*"):
+            if f.is_file():
+                out.append({
+                    "name": f.name,
+                    "path": str(f.resolve()),
+                    "kind": f.suffix.replace(".", "").lower() or "file",
+                    "size": f.stat().st_size,
+                    "mtime": f.stat().st_mtime,
+                })
+    out.sort(key=lambda x: x["mtime"], reverse=True)
+    return {"artifacts": out[:60]}
+
+
+@app.post("/api/upload")
+async def upload_file(request: Request):
+    """Upload any local file (e.g. subtitle, audio, video) and return its server path."""
+    paths.UPLOADS.mkdir(parents=True, exist_ok=True)
+    content_type = request.headers.get("content-type", "")
+    filename = request.query_params.get("filename") or request.headers.get("x-filename")
+    content = b""
+
+    if "multipart/form-data" in content_type.lower():
+        import email
+        from email import policy
+        body = await request.body()
+        msg_header = f"Content-Type: {content_type}\r\n\r\n".encode("utf-8")
+        msg = email.message_from_bytes(msg_header + body, policy=policy.default)
+        for part in msg.walk():
+            part_filename = part.get_filename()
+            if part_filename:
+                filename = part_filename
+                payload = part.get_payload(decode=True)
+                if payload is not None:
+                    content = payload
+                break
+    else:
+        content = await request.body()
+
+    if not filename:
+        import uuid
+        filename = f"upload_{uuid.uuid4().hex[:8]}"
+
+    from urllib.parse import unquote
+    filename = Path(unquote(filename)).name
+    dest = paths.UPLOADS / filename
+    dest.write_bytes(content)
+
+    return {
+        "name": filename,
+        "path": str(dest.resolve()),
+        "size": len(content),
+        "kind": dest.suffix.replace(".", "").lower() or "file",
+    }
+
+
 
 
 @app.post("/api/workspaces/{workspace_id}/pipeline/validate")
 async def validate_pipeline(workspace_id: str, payload: dict):
+    if "nodes" in payload:
+        try:
+            spec = DAGPipelineSpec(**payload)
+            val = validate_dag(spec)
+            return {"valid": val.valid, "error": val.error, "topological_order": val.topological_order}
+        except Exception as e:
+            return {"valid": False, "error": str(e)}
+
     tool_ids = payload.get("chain", [])
     valid, error = validate_chain(tool_ids)
     return {"valid": valid, "error": error}
@@ -99,14 +322,97 @@ async def validate_pipeline(workspace_id: str, payload: dict):
 
 @app.post("/api/workspaces/{workspace_id}/pipeline/run")
 async def run_workspace_pipeline(workspace_id: str, payload: dict):
+    if "nodes" in payload:
+        spec = DAGPipelineSpec(**payload)
+        results = await execute_dag_pipeline(workspace_id, spec)
+        return {"results": results}
+
     steps = payload.get("steps", [])
-    results = await run_pipeline(workspace_id, steps)
+    pipeline_name = payload.get("pipeline_name")
+    visibility = payload.get("visibility", "success")
+    preset_id = payload.get("preset_id")
+    results = await run_pipeline(workspace_id, steps, pipeline_name=pipeline_name, visibility=visibility, preset_id=preset_id)
     return {"results": results}
 
 
+@app.post("/api/workspaces/{workspace_id}/pipeline/run-stream")
+async def run_workspace_pipeline_stream(workspace_id: str, payload: dict):
+    """Executes DAG pipeline and streams node lifecycle events via Server-Sent Events (SSE)."""
+    if "nodes" not in payload:
+        raise HTTPException(status_code=400, detail="'nodes' specification required for streaming pipeline")
+
+    spec = DAGPipelineSpec(**payload)
+    event_queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+
+    async def _progress_cb(evt: dict[str, Any]):
+        await event_queue.put(evt)
+
+    async def run_task():
+        try:
+            results = await execute_dag_pipeline(workspace_id, spec, progress_callback=_progress_cb)
+            # Check if any step failed to determine overall status
+            any_failed = any(r.get("status") == "failed" for r in results)
+            await event_queue.put({
+                "type": "pipeline_finished",
+                "status": "failed" if any_failed else "completed",
+                "results": results,
+            })
+        except Exception as e:
+            await event_queue.put({
+                "type": "pipeline_error",
+                "status": "failed",
+                "error": str(e),
+            })
+
+    # Start background execution
+    asyncio.create_task(run_task())
+
+    async def event_generator():
+        while True:
+            msg = await event_queue.get()
+            yield f"data: {json.dumps(msg)}\n\n"
+            if msg.get("type") in ("pipeline_finished", "pipeline_error"):
+                break
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
+
+@app.post("/api/workspaces/{workspace_id}/pipeline/check-existing")
+async def check_pipeline_existing(workspace_id: str, payload: dict):
+    """Inspects pipeline nodes to detect if any inputs or derived artifacts already exist in this workspace."""
+    nodes = payload.get("nodes", [])
+    params_by_node = payload.get("params_by_node", {})
+    return detect_existing_artifacts(workspace_id, nodes, params_by_node)
+
+
+@app.post("/api/workspaces/{workspace_id}/pipeline/stop")
+async def stop_pipeline_route(workspace_id: str):
+    """Stops and cancels the currently running DAG pipeline in this workspace."""
+    stopped = stop_dag_pipeline(workspace_id)
+    return {"stopped": stopped}
+
+
+@app.get("/api/workspaces/{workspace_id}/canvas")
+async def get_workspace_canvas_route(workspace_id: str):
+    """Get persisted canvas nodes, edges, positions and params for this workspace session."""
+    return get_workspace_canvas(workspace_id)
+
+
+@app.put("/api/workspaces/{workspace_id}/canvas")
+async def save_workspace_canvas_route(workspace_id: str, payload: dict):
+    """Persist the current canvas state (nodes, edges, parameters, viewport) for this workspace."""
+    return save_workspace_canvas(workspace_id, payload)
+
+
+@app.post("/api/workspaces/{workspace_id}/canvas/reset")
+async def reset_workspace_canvas_route(workspace_id: str):
+    """Reset the canvas state for this workspace session."""
+    return reset_workspace_canvas(workspace_id)
+
+
 @app.get("/api/workspaces/{workspace_id}/templates")
-async def get_templates(workspace_id: str):
-    return {"templates": list_templates(workspace_id)}
+async def get_templates(workspace_id: str, starters: bool = False):
+    return {"templates": list_templates(workspace_id, include_starters=starters)}
 
 
 @app.post("/api/workspaces/{workspace_id}/templates")
@@ -124,6 +430,49 @@ async def remove_template(workspace_id: str, template_name: str):
 @app.get("/api/workspaces/{workspace_id}/runs")
 async def get_runs(workspace_id: str):
     return {"runs": list_runs(workspace_id)}
+
+
+@app.get("/api/workspaces/{workspace_id}/pipeline-runs")
+async def get_pipeline_runs(workspace_id: str):
+    return {"pipeline_runs": list_pipeline_runs(workspace_id)}
+
+
+@app.get("/api/workspaces/{workspace_id}/media")
+async def get_workspace_media_route(workspace_id: str):
+    return list_workspace_media(workspace_id)
+
+
+@app.post("/api/workspaces/{workspace_id}/mux-subtitles")
+async def mux_subtitles_route(workspace_id: str, payload: dict):
+    video_path = payload.get("video_path")
+    subtitle_path = payload.get("subtitle_path")
+    if not video_path or not subtitle_path:
+        raise HTTPException(status_code=400, detail="video_path and subtitle_path are required")
+    burn_in = bool(payload.get("burn_in", False))
+    output_name = payload.get("output_name")
+    try:
+        res = mux_subtitles_to_video(workspace_id, video_path, subtitle_path, output_name, burn_in)
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/workspaces/{workspace_id}/runs/{run_id}/manifest")
+async def get_run_manifest_route(workspace_id: str, run_id: str):
+    manifest = get_run_manifest(workspace_id, run_id)
+    if manifest is None:
+        raise HTTPException(status_code=404, detail="Run manifest not found")
+    return {"manifest": manifest}
+
+
+@app.get("/api/workspaces/{workspace_id}/runs/{run_id}/logs")
+async def get_run_logs_route(workspace_id: str, run_id: str):
+    return {"logs": get_run_logs(workspace_id, run_id)}
+
+
+@app.post("/api/workspaces/{workspace_id}/runs/{run_id}/branch")
+async def branch_run_route(workspace_id: str, run_id: str):
+    return branch_from_run(workspace_id, run_id)
 
 
 @app.get("/api/workspaces/{workspace_id}/runs/{run_id}/artifacts/{artifact_name}/preview")
@@ -147,6 +496,12 @@ async def delete_artifact_route(workspace_id: str, run_id: str, artifact_name: s
     return {"deleted": delete_artifact(workspace_id, run_id, artifact_name)}
 
 
+@app.delete("/api/workspaces/{workspace_id}/media/{filename}")
+async def delete_workspace_media_route(workspace_id: str, filename: str):
+    """Deletes a media item and its corresponding symlinks/artifacts across the workspace."""
+    return {"deleted": delete_workspace_media_file(workspace_id, filename)}
+
+
 @app.post("/api/workspaces/{workspace_id}/runs/{run_id}/artifacts/{artifact_name}/trim")
 async def trim_artifact_route(workspace_id: str, run_id: str, artifact_name: str, payload: dict):
     regions = payload.get("regions", [])
@@ -165,6 +520,15 @@ async def remove_run(workspace_id: str, run_id: str):
 async def export_workspace(workspace_id: str):
     zip_path = export_workspace_zip(workspace_id)
     return FileResponse(zip_path, filename=f"{workspace_id}-artifacts.zip", media_type="application/zip")
+
+
+@app.get("/api/workspaces/{workspace_id}/pipeline_runs/{pipeline_run_id}/download")
+async def download_pipeline_run(workspace_id: str, pipeline_run_id: str):
+    from app.workspaces import export_pipeline_run_zip
+    zip_path = export_pipeline_run_zip(workspace_id, pipeline_run_id)
+    if not zip_path or not zip_path.exists():
+        raise HTTPException(status_code=404, detail="Pipeline run not found or no artifacts")
+    return FileResponse(zip_path, filename=f"{pipeline_run_id}.zip", media_type="application/zip")
 
 
 @app.delete("/api/workspaces/{workspace_id}")
@@ -208,6 +572,20 @@ async def cancel_download(task_id: str):
     mgr = get_manager()
     ok = mgr.cancel(task_id)
     return {"cancelled": ok}
+
+
+@app.delete("/api/downloads/{task_id}")
+async def remove_download_task(task_id: str):
+    mgr = get_manager()
+    ok = mgr.remove_task(task_id)
+    return {"deleted": ok}
+
+
+@app.delete("/api/downloads")
+async def clear_download_history():
+    mgr = get_manager()
+    cleared = mgr.clear_history()
+    return {"cleared": cleared}
 
 
 @app.get("/api/remote/info")
@@ -263,9 +641,27 @@ async def run_dep_check():
 async def run_dep_update(payload: dict):
     package = payload.get("package")
     approved = payload.get("approved")
+    channel = payload.get("channel", "stable")
     if not package or not approved:
         return {"ok": False, "error": "approval required"}
-    return upgrade_package(package)
+    try:
+        res = upgrade_package(package, channel=channel)
+    except TypeError:
+        res = upgrade_package(package)
+    app.state.dep_check = check_dependencies(index=lambda u: None)
+    return res
+
+
+@app.get("/api/settings/ytdlp")
+async def get_ytdlp_settings():
+    s = load_settings()
+    return s.get("ytdlp", {})
+
+
+@app.post("/api/settings/ytdlp")
+async def update_ytdlp_settings(payload: dict):
+    saved = save_settings({"ytdlp": payload})
+    return saved.get("ytdlp", {})
 
 
 @app.get("/api/providers")
@@ -307,3 +703,24 @@ async def delete_key(provider_id: str):
 
     sk(provider_id, "")
     return {"saved": True}
+
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.paths import ROOT
+
+frontend_dist = ROOT / "frontend" / "dist"
+
+@app.exception_handler(StarletteHTTPException)
+async def spa_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404 and not request.url.path.startswith("/api") and frontend_dist.exists():
+        index_file = frontend_dist / "index.html"
+        if index_file.exists():
+            return FileResponse(index_file)
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")
+
+
