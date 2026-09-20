@@ -82,7 +82,8 @@ DEFAULT_STARTER_TEMPLATES: list[dict[str, Any]] = [
         "chain": [
             "media.download.resolve",
             "media.download.format_select",
-            "media.thumbnail.get",
+            # NOTE: media.thumbnail.get is a branch alternative after format_select
+            # (takes video input), not a linear step — subtitle.fetch outputs document.
             "media.subtitle.fetch",
         ],
     },

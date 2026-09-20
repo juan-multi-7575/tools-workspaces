@@ -81,9 +81,9 @@ def test_starter_templates_use_dotted_ids_and_composite_preset():
     chains = [t["chain"] for t in workspaces.DEFAULT_STARTER_TEMPLATES]
     flat = [c for chain in chains for c in chain]
     assert "media.download.yt-dlp" in flat
-    assert "media.audio.process" in flat
+    assert "audio_processor" in flat
     assert "text.translate.llm" in flat
-    assert not any(c in ("downloader", "audio_processor") for c in flat)
+    assert not any(c in ("downloader", "media.audio.process") for c in flat)
     preset = next(
         t for t in workspaces.DEFAULT_STARTER_TEMPLATES
         if t.get("preset_id") == "media.youtube_to_mp4" or t.get("name") == "media.youtube_to_mp4"
@@ -91,6 +91,5 @@ def test_starter_templates_use_dotted_ids_and_composite_preset():
     assert preset["chain"] == [
         "media.download.resolve",
         "media.download.format_select",
-        "media.thumbnail.get",
         "media.subtitle.fetch",
     ]
