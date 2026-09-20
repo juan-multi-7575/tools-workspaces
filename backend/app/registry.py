@@ -24,7 +24,11 @@ def register(tool: Any, _source: str = "<unknown>") -> None:
 
 
 def register_alias(old_id: str, tool: Any, _source: str = "<unknown>", deprecated: bool = True) -> None:
+    if old_id in REGISTRY and REGISTRY[old_id] is not tool:
+        raise ValueError(f"tool id collision: {old_id} from {_SOURCES.get(old_id, '<unknown>')} vs {_source}")
     _ALIASES[old_id] = tool.manifest.id
+    REGISTRY[old_id] = tool
+    _SOURCES[old_id] = _source
     if deprecated:
         log.warning("tool id %s is deprecated, use %s", old_id, tool.manifest.id)
 

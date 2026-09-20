@@ -159,7 +159,7 @@ def _escape_ffmpeg_path(p: str) -> str:
 
 class DownloaderTool(Tool):
     manifest = ToolManifest(
-        id="downloader",
+        id="media.download.yt-dlp",
         name="Downloader",
         description="Download media via yt-dlp.",
         input_kinds=[PortKind.any],
