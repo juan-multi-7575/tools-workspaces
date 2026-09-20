@@ -62,7 +62,7 @@ def save_run_meta(workspace_id: str, run_id: str, record: dict[str, Any]) -> Non
 DEFAULT_STARTER_TEMPLATES: list[dict[str, Any]] = [
     {
         "name": "🎬 Video to Subtitles (YouTube ➔ Audio Extractor ➔ Subtitles SRT)",
-        "chain": ["media.download.yt-dlp", "media.audio.process", "transcriber"],
+        "chain": ["media.download.yt-dlp", "audio_processor", "transcriber"],
     },
     {
         "name": "⚡ Direct Video to Subtitles (YouTube ➔ Subtitles SRT)",
@@ -70,7 +70,7 @@ DEFAULT_STARTER_TEMPLATES: list[dict[str, Any]] = [
     },
     {
         "name": "🎵 Video to Audio Extractor (YouTube ➔ WAV/MP3)",
-        "chain": ["media.download.yt-dlp", "media.audio.process"],
+        "chain": ["media.download.yt-dlp", "audio_processor"],
     },
     {
         "name": "📝 Video to Text Summary (YouTube ➔ Transcribe ➔ AI Summary)",
