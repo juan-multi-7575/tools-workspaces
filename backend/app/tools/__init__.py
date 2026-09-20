@@ -13,10 +13,23 @@ from app.tools.mediainfo_tool import (
     GallerydlTool,
     DemucsTool,
 )
+from app.tools.doc_tools import PandocTool, PdfTools
+from app.tools.image_tools import ImageMagickTool, ExifScrubberTool
+from app.tools.security_tools import CodecTool
+from app.tools.ai_tools import SummarizerTool
+from app.tools.translator_tool import SubtitleTranslatorTool
+from app.tools.model_health_tool import ModelHealthCheckTool
+from app.tools.script_runner import ScriptRunnerTool
 
 _downloader_instance = DownloaderTool()
 
-for tool in [
+ALL_TOOLS = [
+    # Newly added & Featured Tools (Top Priority)
+    ModelHealthCheckTool(),
+    SubtitleTranslatorTool(),
+    ScriptRunnerTool(),
+    SummarizerTool(),
+    # Media & Audio
     AudioProcessorTool(),
     _downloader_instance,
     TrimmerTool(),
@@ -28,7 +41,17 @@ for tool in [
     SoxTool(),
     GallerydlTool(),
     DemucsTool(),
-]:
+    # Documents
+    PandocTool(),
+    PdfTools(),
+    # Images
+    ImageMagickTool(),
+    ExifScrubberTool(),
+    # Security
+    CodecTool(),
+]
+
+for tool in ALL_TOOLS:
     register(tool)
 
 for atomic in (
@@ -40,3 +63,23 @@ for atomic in (
     register(atomic, _source=__file__)
 
 register_alias("downloader", _downloader_instance)
+
+# Auto-discover and register any custom or future tools dropped into app/tools/custom/
+import importlib
+import inspect
+from pathlib import Path
+from app.tools.base import Tool
+
+custom_dir = Path(__file__).parent / "custom"
+if custom_dir.exists():
+    for f in custom_dir.glob("*.py"):
+        if f.stem.startswith("_"):
+            continue
+        try:
+            mod = importlib.import_module(f"app.tools.custom.{f.stem}")
+            for attr_name in dir(mod):
+                cls = getattr(mod, attr_name)
+                if inspect.isclass(cls) and issubclass(cls, Tool) and cls is not Tool and hasattr(cls, "manifest"):
+                    register(cls())
+        except Exception:
+            pass

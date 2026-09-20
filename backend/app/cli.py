@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import signal
 import sys
 from pathlib import Path
+from typing import Any
 
 import click
 from click.exceptions import NoArgsIsHelpError
@@ -14,28 +17,47 @@ from app.tools.base import ToolRunContext
 PARTIAL_SUFFIXES = {".part", ".ytd"}
 
 
-def _coerce(spec: dict, value):
+def _coerce(spec: dict[str, Any], value: Any) -> Any:
     if value is None:
         return None
-    if spec.get("type") == "array":
-        return json.loads(value)
-    if spec.get("type") == "number":
-        return float(value)
+    spec_type = spec.get("type", "string")
+    if spec_type == "array":
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except Exception:
+                return [v.strip() for v in value.split(",") if v.strip()]
+        return value
+    if spec_type in ("number", "float"):
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return value
+    if spec_type in ("integer", "int"):
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            return value
+    if spec_type == "boolean":
+        if isinstance(value, str):
+            return value.lower() in ("true", "1", "yes", "y")
+        return bool(value)
     return value
 
 
 def _make_command(tool):
     manifest = tool.manifest
-    input_param = tool.input_param
+    input_param = getattr(tool, "input_param", "input_path")
     params = [
         click.Option(["--destination"], default=None, help="Output directory (default: downloads/<tool>)"),
     ]
-    if manifest.id != "downloader" and input_param not in manifest.parameters_schema:
+    if manifest.id not in ("downloader", "media.download.yt-dlp") and input_param not in manifest.parameters_schema:
         flag = f"--{input_param.replace('_', '-')}"
-        params.append(click.Option([flag], default=None, type=click.STRING, help="Input file"))
+        params.append(click.Option([flag], default=None, type=click.STRING, help="Input file / artifact"))
+
     for name, spec in manifest.parameters_schema.items():
         flag = f"--{name.replace('_', '-')}"
-        params.append(click.Option([flag], default=None, type=click.STRING, help=name))
+        params.append(click.Option([flag], default=None, type=click.STRING, help=spec.get("description", name)))
 
     def callback(**kwargs):
         params_dict = {
@@ -43,14 +65,14 @@ def _make_command(tool):
             for name in manifest.parameters_schema
             if kwargs.get(name) is not None
         }
-        if manifest.id != "downloader" and input_param not in manifest.parameters_schema:
+        if manifest.id not in ("downloader", "media.download.yt-dlp") and input_param not in manifest.parameters_schema:
             if kwargs.get(input_param) is not None:
                 params_dict[input_param] = kwargs.get(input_param)
         return run_tool(manifest.id, params_dict, kwargs.get("destination"))
 
     return click.Command(
         name=manifest.id,
-        help=manifest.description,
+        help=f"[{manifest.category}] {manifest.name}\n\n{manifest.description}",
         params=params,
         callback=callback,
     )
@@ -59,14 +81,16 @@ def _make_command(tool):
 def build_cli() -> click.Group:
     @click.group()
     def cli():
-        """Multi-Tool Platform CLI — subcommands generated from the tool registry."""
+        """Universal Multi-Tool Platform CLI — execute any utility standalone."""
 
-    for tool in REGISTRY.values():
-        cli.add_command(_make_command(tool))
+    for key, tool in REGISTRY.items():
+        cmd = _make_command(tool)
+        cmd.name = key
+        cli.add_command(cmd)
     return cli
 
 
-async def _pump(queue) -> None:
+async def _pump(queue: asyncio.Queue[dict[str, Any]]) -> None:
     while True:
         msg = await queue.get()
         status = msg.get("status")
@@ -101,7 +125,7 @@ async def _run_async(tool, params: dict, dest: Path, cancel_event, progress_queu
     return result
 
 
-def _drain(queue) -> None:
+def _drain(queue: asyncio.Queue[dict[str, Any]]) -> None:
     while not queue.empty():
         msg = queue.get_nowait()
         if msg.get("status") == "downloading":
