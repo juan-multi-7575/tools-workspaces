@@ -143,3 +143,15 @@ def test_trim_artifact_produces_segments(client, workspace_with_run):
 
     listed = {a["name"] for a in client.get(f"/api/workspaces/{ws_id}/runs/{run_id}/artifacts").json()["artifacts"]}
     assert all(n in listed for n in names)
+
+
+def test_get_recent_artifacts(client, workspace_with_run):
+    resp = client.get("/api/artifacts/recent")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "artifacts" in data
+    assert isinstance(data["artifacts"], list)
+    # The workspace_with_run fixture generated source.mp3
+    names = [a["name"] for a in data["artifacts"]]
+    assert "source.mp3" in names
+

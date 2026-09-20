@@ -44,8 +44,22 @@ def test_build_ydl_opts_subtitles_and_playlist():
 def test_to_cli_builds_flags():
     cli = _to_cli({"format": "best", "writesubtitles": True, "subtitleslangs": ["en"]})
     assert "yt-dlp" in cli
-    assert "--format" in cli
-    assert "--writesubtitles" in cli
+    assert "-f" in cli
+    assert "best" in cli
+    assert "--write-subs" in cli
+    assert "--sub-langs" in cli
+    assert "en" in cli
+
+
+def test_download_mode_audio_and_video_only():
+    audio_opts = build_ydl_opts({"download_mode": "audio_only", "audio_format": "mp3", "audio_quality": "320"}, "tmpl")
+    assert audio_opts["extractaudio"] is True
+    assert audio_opts["audioformat"] == "mp3"
+    assert audio_opts["audioquality"] == "320"
+
+    video_only_opts = build_ydl_opts({"download_mode": "video_only", "format_preset": "1080p"}, "tmpl")
+    assert "bestvideo[height<=1080]" in video_only_opts["format"]
+    assert "extractaudio" not in video_only_opts
 
 
 def test_execute_ydl_parses_progress_and_emits_completed(tmp_path):
@@ -131,7 +145,7 @@ def test_downloader_tool_failed_url(client):
 def test_enqueue_list_and_cancel_download(client, tmp_path, monkeypatch):
     import app.tools.downloader as dl
 
-    def fake_execute_ydl(url, params, outdir, progress_queue=None, cancel_event=None):
+    def fake_execute_ydl(url, params, outdir, progress_queue=None, cancel_event=None, *args, **kwargs):
         if progress_queue is not None:
             for pct in (0, 50, 100):
                 progress_queue.put_nowait({"status": "downloading", "percent": pct})
@@ -212,3 +226,164 @@ def test_execute_ydl_rejects_invalid_raw_args(tmp_path):
 
     with pytest.raises(ValueError):
         execute_ydl("http://example.com/v", {"raw_args": "--exec bad"}, tmp_path)
+
+
+def test_execute_ydl_captures_error_lines_on_failure(tmp_path):
+    lines = [
+        "[youtube] Extracting URL...",
+        "ERROR: [youtube] Video unavailable",
+        "ERROR: Private video",
+    ]
+
+    class FakeErrorProc:
+        def __init__(self, *a, **k):
+            self.stdout = iter(lines)
+            self.returncode = 1
+
+        def wait(self):
+            return 1
+
+        def terminate(self):
+            pass
+
+    import app.tools.downloader as dl
+
+    orig = dl.subprocess.Popen
+    dl.subprocess.Popen = FakeErrorProc
+    try:
+        with pytest.raises(RuntimeError) as exc_info:
+            execute_ydl("http://example.com/bad", {}, tmp_path)
+        err = str(exc_info.value)
+        assert "yt-dlp exited with code 1" in err
+        assert "ERROR: [youtube] Video unavailable" in err
+        assert "ERROR: Private video" in err
+    finally:
+        dl.subprocess.Popen = orig
+
+
+def test_downloader_tool_returns_informative_error_string(tmp_path):
+    class FakeErrorProc:
+        def __init__(self, *a, **k):
+            self.stdout = iter(["ERROR: Unsupported URL"])
+            self.returncode = 1
+
+        def wait(self):
+            return 1
+
+        def terminate(self):
+            pass
+
+    import app.tools.downloader as dl
+
+    orig = dl.subprocess.Popen
+    dl.subprocess.Popen = FakeErrorProc
+    try:
+        tool = DownloaderTool()
+        ctx = ToolRunContext(kind="standalone", destination=str(tmp_path), params={"url": "http://example.com/bad"})
+        res = asyncio.run(tool.execute(ctx))
+        assert res.status == "failed"
+        assert "yt-dlp exited with code 1: ERROR: Unsupported URL" in res.error
+    finally:
+        dl.subprocess.Popen = orig
+
+
+def test_build_ydl_opts_cookies_and_anti_403_flags():
+    params = {
+        "cookies_from_browser": "chrome",
+        "cookies_file": "/tmp/test_cookies.txt",
+        "extractor_args": "youtube:player_client=ios,web",
+        "user_agent": "CustomUA/1.0",
+    }
+    opts = build_ydl_opts(params, "test.%(ext)s")
+    cli = _to_cli(opts)
+    assert "--cookies-from-browser" in cli
+    assert "chrome" in cli
+    assert "--cookies" in cli
+    assert "/tmp/test_cookies.txt" in cli
+    assert "--extractor-args" in cli
+    assert "youtube:player_client=ios,web" in cli
+    assert "--user-agent" in cli
+    assert "CustomUA/1.0" in cli
+
+
+def test_validate_raw_args_allows_anti_403_flags():
+    ok, err = validate_raw_args("--cookies-from-browser chrome --extractor-args youtube:player_client=mweb")
+    assert ok, f"expected valid raw args, got: {err}"
+
+
+def test_downloader_info_endpoint():
+    from app.main import app
+    from starlette.testclient import TestClient
+
+    client = TestClient(app)
+    # Missing URL should 400
+    res = client.get("/api/tools/downloader/info")
+    assert res.status_code == 422 or res.status_code == 400
+
+    # Non-YouTube URL fallback
+    res = client.get("/api/tools/downloader/info?url=https://example.com/video")
+    assert res.status_code == 200
+    assert "title" in res.json()
+
+
+def test_execute_ydl_artifact_isolation(tmp_path):
+    # Create pre-existing file in outdir
+    old_file = tmp_path / "old_song.mp3"
+    old_file.write_text("old content")
+    # Set mtime in past
+    import os
+    import time
+    past = time.time() - 100
+    os.utime(str(old_file), (past, past))
+
+    class FakeProc:
+        returncode = 0
+        stdout = ["[download] 100% of 1.00MiB in 00:01"]
+
+        def __init__(self, *args, **kwargs):
+            # Simulate newly created file during download
+            new_file = tmp_path / "new_video.mp4"
+            new_file.write_text("video content")
+
+        def wait(self):
+            return 0
+
+    import app.tools.downloader as dl
+    orig = dl.subprocess.Popen
+    dl.subprocess.Popen = FakeProc
+    try:
+        produced = execute_ydl("http://example.com/test", {}, tmp_path)
+        assert len(produced) == 1
+        assert produced[0].name == "new_video.mp4"
+    finally:
+        dl.subprocess.Popen = orig
+
+
+def test_execute_ydl_already_downloaded(tmp_path):
+    existing_file = tmp_path / "already_here.mp4"
+    existing_file.write_text("existing content")
+    import os
+    import time
+    past = time.time() - 3600
+    os.utime(str(existing_file), (past, past))
+
+    class FakeAlreadyProc:
+        returncode = 0
+        stdout = [f"[download] {str(existing_file)} has already been downloaded"]
+
+        def wait(self):
+            return 0
+
+    import app.tools.downloader as dl
+    orig = dl.subprocess.Popen
+    dl.subprocess.Popen = lambda *args, **kwargs: FakeAlreadyProc()
+    try:
+        produced = execute_ydl("http://example.com/test", {}, tmp_path)
+        assert len(produced) == 1
+        assert produced[0].name == "already_here.mp4"
+    finally:
+        dl.subprocess.Popen = orig
+
+
+
+

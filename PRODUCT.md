@@ -4,33 +4,50 @@
 
 **Product Name:** Multi-Tool Platform  
 **Stage:** Active development  
-**Primary user:** Single local user; optionally controlling downloads from a phone on the same network  
-**License / Cost:** Local-first, no accounts, no cloud dependency required  
+**Primary user:** Single local user; developers, tinkerers, researchers, power users, and creators who build, test, and chain tools; optionally controlling tasks via LAN remote control  
+**License / Cost:** Local-first, open-source, no accounts, no cloud dependency required  
 **Source of truth:** `CONTEXT.md` + `docs/adr/`
 
-A local-first media utility platform that lets users chain standalone tools into named workspaces. Each tool runs independently or inside a workspace, and pipeline steps wire together through typed ports so output artifacts flow from one tool to the next.
+The Multi-Tool Platform is an extensible, local-first **universal workbench, empty shell, and pipeline orchestration engine**. It provides an unconstrained runtime environment where **any tool of any type, domain, quality, quantity, or maturity**—from quick personal bash/python scripts, custom-built experimental frameworks, and ad-hoc test utilities to full-featured open-source binaries and API clients—can be registered into a central catalog, executed standalone, and chained into automated, validated pipelines inside isolated, filesystem-backed workspaces.
 
 ---
 
 ## Problem Space
 
-Media producers, podcasters, and audio researchers currently patch together downloads, trimming, transcription, and post-processing with ad-hoc scripts or closed SaaS pipelines. Those scripts are brittle, hard to inspect, and tied to one vendor's API. Closed pipelines also make it hard to branch an earlier step and rerun only part of the chain.
+Developers and power users constantly experiment with, build, and utilize a wide array of tools and frameworks across countless domains (media processing, web scraping, document scanning, image manipulation, network diagnostics, security auditing, AI research, interactive tutoring, reverse engineering, custom data wrangling, and beyond).
 
-This platform solves that by making every tool inspectable on disk, chainable without vendor lock-in, and runnable standalone or inside an isolated workspace.
+Currently, this workflow is hampered by:
+1. **Scattered, Ad-Hoc Tooling:** Custom scripts, experimental binaries, and one-off tools live scattered across arbitrary folders, lacking a unified launcher, parameter interface, or logging.
+2. **Glue-Script Friction:** Connecting the output of one tool (whether a battle-tested binary or a half-finished custom script) into another requires writing disposable, brittle wrapper scripts over and over.
+3. **Lost Intermediates & Zero Traceability:** Ad-hoc executions overwrite files in `/tmp` or cluttered directories, making it difficult to inspect, debug, branch, or rerun individual steps in an experimental pipeline.
+4. **Tool Gatekeeping in Existing Platforms:** Traditional workflow engines impose rigid plugin architectures, heavy abstractions, or closed domain-specific silos that discourage dropping in quick personal scripts, hacky test utilities, or new frameworks under evaluation.
+
+This platform solves this by offering an **open, opinion-free workbench shell**: any tool you write, test, or install can be immediately dropped in, executed standalone, or wired into a multi-step workspace pipeline with full artifact inspection and versioned run history.
 
 ---
 
-## Vision & Value Proposition
+## Core Philosophy & Value Proposition
 
-A general-purpose, filesystem-backed media-tool platform where:
+### 1. Unconstrained Tool Horizon (Zero Gatekeeping)
+The platform is intentionally domain-agnostic and agnostic to tool pedigree:
+- **Any Tool, Any Origin:** Personal one-off scripts, experimental AI frameworks under test, internal developer utilities, hacky prototype parsers, or production CLI binaries all receive first-class support.
+- **No Quality or Quantity Limits:** Register 5 tools or 500 tools; run polished tools or rough, WIP developer experiments.
+- **Tinkering-Friendly:** If you are testing a new library, CLI, or custom-built framework today, you can wrap it in a manifest and have it immediately available in your UI catalog, CLI, and pipelines.
 
-- **Tools** are discoverable utilities registered in a central catalog
-- **Workspaces** are isolated project containers with their own artifact store
-- **Pipelines** are validated, typed chains inside workspaces
-- **Everything** is local-first, single-user, and account-free
-- The same backend exposes both a local UI and a LAN controller for a phone
+### 2. The Platform is an Empty Shell & Runtime
+The core platform provides runtime scaffolding—a tool catalog, pipeline validator, background job queue, parameter forms, SSE live streaming, and filesystem workspace storage. What tools are installed and what domain they serve is entirely up to the user.
 
-The value is composability without configuration debt: users build pipelines visually, rerun or delete any step, and inspect every artifact directly in the filesystem.
+### 3. Isolated Workspaces & Versioned Runs
+- **Workspaces** are isolated project containers with their own disk space.
+- **Pipelines** wire tools together via typed input/output ports.
+- **Runs** are non-destructive and versioned by run ID. Every intermediate artifact is preserved on disk for instant inspection, debugging, or branching.
+
+### 4. Dual Execution Context
+- **Standalone Execution:** Quick one-off execution writing directly to global tool download folders.
+- **Workspace Execution:** Multi-step pipeline execution saving versioned artifacts inside a project's artifact store.
+
+### 5. Local-First & Account-Free
+- 100% offline capability, zero database dependencies, plain filesystem storage, and optional LAN remote control.
 
 ---
 
@@ -38,114 +55,90 @@ The value is composability without configuration debt: users build pipelines vis
 
 | Term | Definition | Avoid |
 |---|---|---|
-| **Tool** | A standalone media-processing utility registered in the tool catalog | module, handler, service |
+| **Tool** | Any executable utility, script, binary, custom framework, or API wrapper registered in the catalog with declared ports and parameters | module, handler, service |
 | **Workspace** | A named, filesystem-backed container holding an isolated artifact store and chained tool runs | project, dataset, corpus, session |
-| **Pipeline** | An ordered chain of Tool steps whose outputs feed the next step's inputs | workflow, recipe, chain |
-| **Template** | A saved, reusable Pipeline arrangement; the app ships empty and users create their own | category preset, project type |
-| **Model** | A specific speech-to-text model offered by a Provider | engine, provider |
-| **Port** | A Tool's typed input/output slot (audio, video, text, folder, any) | field, channel, endpoint |
-| **Artifact** | A file or folder produced by a Tool run, stored in a workspace or the global downloads area | output, result, source, chunk |
-| **Region** | A user-marked selection on a waveform | selection, marker |
-| **Segment** | A time-delimited slice of audio produced from a Region | chunk, clip |
-| **Run** | A single execution of a Tool, versioned by run ID | task, job |
-| **Provider** | A speech-to-text backend registered in the transcriber registry | engine, model |
-| **Standalone execution** | Running a Tool outside any Workspace; output goes to the global downloads area | one-off, ad-hoc mode |
-| **Workspace execution** | Running a Tool inside a Workspace; output goes to that workspace's artifact store | dataset mode, pipeline mode |
-| **Downloads area** | Global directory where standalone executions write | media, uploads, dataset dir |
-| **Artifact store** | Per-Workspace directory organized by run ID holding everything a workspace's runs produce | source folder, chunks folder |
+| **Pipeline** | An ordered chain of Tool steps inside a Workspace where each step's output feeds the next step's input | workflow, recipe, chain |
+| **Template** | A saved, reusable Pipeline configuration; the app ships empty and users save custom arrangements | category preset, project type |
+| **Port** | A Tool's typed input or output slot (`audio`, `video`, `text`, `image`, `document`, `code`, `binary`, `folder`, `any`, or custom user types) | field, channel, endpoint |
+| **Artifact** | Any file, folder, or structured data produced by a Tool run, stored on disk and available as input to downstream steps | output, result, source, chunk |
+| **Run** | A single execution of a Tool (standalone or workspace-bound), versioned by a unique run ID | task, job |
+| **Category** | An open, user-defined tag or grouping for organizing tools in the catalog (e.g., Media, Docs, Web, Network, Security, AI/Tutoring, Custom/Experimental) | genre, section |
+| **Provider** | A pluggable backend engine, model, or service variant for a tool (e.g., local subprocess vs. cloud API) | engine, model |
+| **Standalone execution** | Running a Tool outside any Workspace; output writes to the global tool downloads area | one-off, ad-hoc mode |
+| **Workspace execution** | Running a Tool inside a Workspace; output is versioned into that workspace's artifact store | pipeline mode, batch mode |
+| **Downloads area** | The global directory where standalone tool executions write outputs | media, uploads, scratch dir |
+| **Artifact store** | The per-Workspace directory organized by run ID holding all artifacts produced by workspace runs | source folder, runs folder |
 
 ---
 
-## Product Scope
+## Open Tool Taxonomy & Example Domains
 
-### In Scope
+The platform supports an infinite variety of tools. Categories and examples below are purely illustrative:
 
-- Download manager with concurrent queue, progress streaming, and cancellation
-- Audio processor with waveform visualization, Regions, trimming, and splitting
-- Transcriber with pluggable Providers (faster-whisper local, Groq, OpenAI Whisper API)
-- Tool registry with typed Ports and parameter schemas
-- Workspace CRUD with isolated artifact stores
-- Pipeline builder with port-compatibility validation and chained execution
-- Run history per workspace with versioned, user-deletable storage
-- LAN remote control from a phone via per-boot token gating
-- Settings for download concurrency
-- Provider/key management for cloud transcription backends
-
-### Out of Scope
-
-- Multi-user auth, accounts, or roles
-- TTS dataset building, voice cloning, or audio training handoff
-- Closed recipe-only tool catalog
-- Cloud sync or hosted workspace storage
-- Closed Port type enum — file kinds are intentionally open-ended
+- **Media & Audio/Video:** yt-dlp, FFmpeg, HandBrake, audio processors, waveform editors, Whisper/STT, Demucs stem splitters, Streamlink live capturers.
+- **Documents, PDF & OCR:** Doc scanners, Tesseract OCR, OCRmyPDF, Pandoc converters, Poppler utilities (`pdftotext`, `pdfimages`), Typst/LaTeX compilers, Calibre converters.
+- **Image Processing & Computer Vision:** ImageMagick, libvips, Real-ESRGAN upscalers, ExifTool metadata scrubbers, format converters, background removers.
+- **Web, Browser & Scraping:** Headless Chrome scrapers, DOM snapshotters, `gallery-dl`, `aria2` parallel downloaders, custom web crawlers, API extractors.
+- **Computer Networking & Diagnostics:** Port scanners (nmap), ping/traceroute testers, DNS diagnostics (`dig`), curl/HTTP probes, bandwidth and packet analysis scripts.
+- **Cybersecurity, Forensics & Audit:** File hashers/checksum verifiers (SHA-256, BLAKE3), secret/credential scanners, SSL/TLS cert analyzers, encoding/decoding utilities (Base64, Hex, JWT), vulnerability check scripts.
+- **AI, Knowledge & Tutoring:** Flashcard & quiz generators, document/code summarizers, automated tutoring assistants, concept explainers, knowledge graph builders.
+- **Developer, Code & Data Engineering:** JSON/CSV/YAML/SQL transformers (`jq`, `yq`), code formatters/linters, diff generators, 7-Zip/zstd archivers, build artifact packagers.
+- **Personal Scripts & Experimental Frameworks:** Custom in-house scripts, machine learning models under test, prototype scrapers, or arbitrary CLI binaries being evaluated.
 
 ---
 
 ## Architecture
 
-### High-Level System
+### System Diagram
 
 ```
-┌─────────────────────────────┐
-│         Frontend (UI)       │
-│  Tools / Workspaces / Runs  │
-└──────────────┬──────────────┘
-               │  FastAPI REST + SSE
-┌──────────────▼──────────────┐
-│         Backend             │
-│  ┌───────────────────────┐  │
-│  │  Tool Registry        │  │
-│  │  (manifest catalog)   │  │
-│  └──────────┬────────────┘  │
-│  ┌──────────▼────────────┐  │
-│  │  Pipeline Engine      │  │
-│  │  validate_chain()     │  │
-│  │  run_pipeline()       │  │
-│  └──────────┬────────────┘  │
-│  ┌──────────▼────────────┐  │
-│  │  Tool Drivers         │  │
-│  │  Downloader           │  │
-│  │  AudioProcessor       │  │
-│  │  Transcriber          │  │
-│  └──────────┬────────────┘  │
-│  ┌──────────▼────────────┐  │
-│  │  Workspace Manager    │  │
-│  │  Filesystem-backed    │  │
-│  └───────────────────────┘  │
-└─────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│                    Web UI / CLI / Remote                │
+│         Tools Catalog  │  Workspaces  │  Pipelines      │
+└────────────────────────────┬────────────────────────────┘
+                             │ FastAPI REST + SSE
+┌────────────────────────────▼────────────────────────────┐
+│                  Universal Platform Shell               │
+│  ┌───────────────────────────────────────────────────┐  │
+│  │ Open Tool Registry (Manifests, Ports & Schemas)   │  │
+│  │ (Any tool, script, binary, framework, or API)     │  │
+│  └─────────────────────────┬─────────────────────────┘  │
+│  ┌─────────────────────────▼─────────────────────────┐  │
+│  │ Pipeline Engine (Compatibility & Artifact Wiring) │  │
+│  └─────────────────────────┬─────────────────────────┘  │
+│  ┌─────────────────────────▼─────────────────────────┐  │
+│  │ Universal Subprocess & Driver Execution Engine    │  │
+│  │ (Async execution, live SSE progress, cancel hooks)│  │
+│  └─────────────────────────┬─────────────────────────┘  │
+│  ┌─────────────────────────▼─────────────────────────┐  │
+│  │ Filesystem Workspace & Artifact Manager           │  │
+│  │ (Versioned runs, zero database, on-disk state)    │  │
+│  └───────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Backend Design
+### Key Technical Pillars
 
-The backend is a single FastAPI service. On startup it ensures the filesystem layout (`downloads/`, `workspaces/`) and starts the download manager background task. Each endpoint maps directly to a filesystem operation or a tool execution.
+1. **Universal Tool Driver Interface (`app/tools/base.py`)**
+   - Any executable is wrapped with a simple `Tool` class and a `ToolManifest`.
+   - Manifests declare ID, display name, description, category, accepted input `PortKind`s, produced output `PortKind`s, and a JSON parameter schema.
+   - Built-in support for async subprocess execution, stdout/stderr parsing, progress streaming, and cancellation.
 
-**Tool Registry (`app/registry.py`)**  
-Central catalog of manifests. Each tool driver imports itself at module load time (`import app.tools`), registering its `ToolManifest` and driver instance. The registry exposes `list_manifests()` and `get(tool_id)`.
+2. **Open Port Compatibility & Auto-Wiring (`app/pipeline.py`)**
+   - Ports carry typed Artifacts (`audio`, `video`, `text`, `image`, `document`, `folder`, `any`, etc.).
+   - Custom port kinds are first-class strings.
+   - Pipeline engine automatically matches compatible output artifacts from prior steps to downstream tool inputs.
 
-**Pipeline Engine (`app/pipeline.py`)**  
-Two operations:
-- `validate_chain(tool_ids)` — checks output/input port compatibility between consecutive tools
-- `run_pipeline(workspace_id, steps)` — executes steps sequentially, auto-wiring compatible artifacts from previous steps into the next step's input parameter
+3. **Filesystem as the Sole Source of Truth (`app/workspaces.py` & `app/paths.py`)**
+   - No SQL/NoSQL database required.
+   - State is stored in clear directory hierarchies:
+     - `downloads/<tool_id>/` for standalone runs.
+     - `workspaces/<workspace_id>/runs/<run_id>/` for workspace pipeline runs.
+   - Every run stores its parameters, artifacts, and metadata in `meta.json`.
 
-Port compatibility is open-ended: two kinds match if they are equal, or either side is `any`.
-
-**Workspace Manager (`app/workspaces.py`)**  
-Creates workspace folders, lists workspaces, and persists run metadata as JSON files under each workspace's `runs/` directory. Every run gets a unique `run_id` and writes into `workspaces/<id>/runs/<run_id>/`.
-
-**Paths (`app/paths.py`)**  
-Single source of truth for all filesystem roots: `downloads/`, `workspaces/`, `run_dir()`, `workspace_root()`, `workspace_runs_dir()`.
-
-**Providers (`app/providers.py`)**  
-Transcriber provider registry. Each provider declares API-key storage location and available models. Local providers (faster-whisper) are auto-detected from host caches; cloud providers require a saved key.
-
-### Frontend (Overview)
-
-The frontend is not yet documented in detail, but it maps to two top-level sections matching the two-section platform:
-
-- **Tools section:** catalog browsing, standalone execution, download queue
-- **Workspaces section:** workspace list, pipeline builder, run history, artifact browser
-
-LAN remote control is surfaced as a phone-friendly subset of these endpoints, gated by a per-boot token.
+4. **Background Task Queue & SSE Streaming (`app/download_manager.py`)**
+   - Concurrency-managed task runner for long-running processes (downloads, transcode jobs, scans, batch conversions).
+   - Real-time Server-Sent Events stream progress percentage, speed, status, and cancellation events to the UI.
 
 ---
 
@@ -154,7 +147,8 @@ LAN remote control is surfaced as a phone-friendly subset of these endpoints, ga
 ```
 tools-workspaces/
 ├── CONTEXT.md                         # Ubiquitous language glossary
-├── AGENTS.md                          # Agent conventions
+├── AGENTS.md                          # Agent conventions & guidelines
+├── PRODUCT.md                         # Product specification (this document)
 ├── docs/
 │   ├── agents/
 │   │   ├── domain.md                  # Domain docs guide
@@ -169,145 +163,55 @@ tools-workspaces/
 │   │   ├── 0006-versioned-user-deletable-run-storage.md
 │   │   └── 0007-provider-pluggable-transcription.md
 │   └── research/
-│       ├── speech-transcription-providers.md
-│       └── tool-catalog-ideas.md
+│       ├── tool-catalog-ideas.md
+│       └── speech-transcription-providers.md
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                    # FastAPI entrypoint, all routes
-│   │   ├── registry.py                # Tool manifest catalog
-│   │   ├── pipeline.py                # Chain validation + execution
-│   │   ├── workspaces.py              # Workspace/run CRUD
-│   │   ├── paths.py                   # Filesystem root helpers
-│   │   ├── providers.py               # Transcription provider registry
-│   │   ├── download_manager.py        # Background download queue
-│   │   └── tools/
-│   │       ├── __init__.py            # Imports all tool drivers for registration
-│   │       ├── base.py                # Tool, ToolManifest, Artifact, ToolRunContext
-│   │       ├── downloader.py          # Download tool driver
-│   │       ├── audio_processor.py     # Audio tool driver (trim/split/waveform)
-│   │       └── mediainfo_tool.py      # Media inspection tool driver
-│   └── tests/
-│       ├── conftest.py
-│       ├── test_01_skeleton.py
-│       ├── test_02_audio_processor.py
-│       ├── test_03_pipelines_and_runs.py
-│       ├── test_04_downloader.py
-│       ├── test_05_trimmer.py
-│       └── test_06_transcriber.py
-├── frontend/
-│   └── (UI implementation — see issue tracker for current state)
-├── config/
-│   └── (provider keys and app config)
-├── .scratch/
-│   └── (local issue tracker markdown files)
-└── .venv/
-    └── (Python virtual environment)
+│   │   ├── main.py                    # FastAPI entrypoint, HTTP API & SSE routes
+│   │   ├── registry.py                # Universal Tool manifest catalog
+│   │   ├── pipeline.py                # Pipeline validation & chained execution
+│   │   ├── workspaces.py              # Workspace and run filesystem CRUD
+│   │   ├── paths.py                   # Filesystem paths single source of truth
+│   │   ├── deps.py                    # System dependencies checker & updater
+│   │   ├── cli.py                     # Auto-generated CLI interface
+│   │   ├── providers.py               # Pluggable provider registry
+│   │   ├── download_manager.py        # Background task queue & progress manager
+│   │   └── tools/                     # Modular tool drivers
+│   │       ├── __init__.py            # Manifest loader & auto-registration
+│   │       ├── base.py                # Base Tool, Manifest, PortKind, Artifact definitions
+│   │       ├── downloader.py          # yt-dlp media downloader driver
+│   │       ├── audio_processor.py     # Audio convert, resample & process driver
+│   │       └── mediainfo_tool.py      # Media inspection & probe driver
+│   └── tests/                         # Full automated test suite
+├── workspaces/                        # Workspace directories & versioned runs
+└── downloads/                         # Global downloads area for standalone executions
 ```
 
 ---
 
-## Architectural Decision Records
+## Architectural Decision Records Summary
 
-### ADR-0001 — Two-section platform with dual execution context
-
-The product is split into two top-level sections: **Tools** (standalone catalog) and **Workspaces** (named containers with isolated artifact stores and chained tool runs). Every tool runs in one of two contexts: standalone (output to the global downloads area) or workspace-bound (output into the workspace's artifact store).
-
-**Rejected:** tools-only catalog with no way to chain outputs across steps; a single monolithic pipeline with no standalone use.
-
-### ADR-0002 — Filesystem is the source of truth; no database
-
-All state lives in the on-disk folder tree (`downloads/`, `workspaces/<id>/runs/<run_id>/`). There is no database and no global in-memory session.
-
-**Rejected:** SQLite metadata store — adds a second source of truth for a single-user local app and makes the workspace harder to inspect and back up.
-
-**Consequence:** anything the UI shows must be derivable from the folder tree.
-
-### ADR-0003 — Local-first single user with LAN remote control, no accounts
-
-The app runs locally for a single user with no authentication. To let a phone on the same network trigger downloads, the backend binds to `0.0.0.0` and gates remote actions behind a per-boot random token.
-
-**Rejected:** strict localhost (loses the phone controller); full multi-user auth (out of scope).
-
-### ADR-0004 — Generic multi-tool platform, not a TTS/audio-training platform
-
-The product is a general media-tool platform, not a TTS dataset builder or audio-training-focused application. TTS-oriented concepts (voices, model types, training handoff, corpora) are explicitly out; the five tools are positioned as generic utilities.
-
-**Rejected:** framing the catalog as a decomposed TTS pipeline, which would lock terminology and roadmap to training-centric concerns.
-
-### ADR-0005 — Tools are a registry with typed ports; pipelines are validated chains
-
-Tools are registered in a central catalog; each tool declares its name, parameter schema, accepted input kinds, and produced output kinds. A Pipeline in a Workspace is an ordered chain where consecutive steps connect an output port to a compatible input port. The UI offers only compatible next tools and rejects invalid chains.
-
-Port types follow an open file-kind model (`audio`, `video`, `text`, `folder`, `any` — subkinds included) rather than a closed enum.
-
-**Rejected:** curated recipes only (too rigid); unconstrained free chaining (users wire incompatible tools); closed type enum (too rigid for an open catalog).
-
-**Adding a tool** is a developer action: a manifest plus a driver, registered in the repo.
-
-### ADR-0006 — Versioned, user-deletable run storage
-
-Each Run writes into its own storage keyed by a clear run ID; later steps may consume any prior run's outputs, and re-running a step never overwrites an older run. Runs are not append-only: the user may delete runs, and deleting a Workspace deletes its runs.
-
-**Rejected:** overwrite-in-place (loses history and the ability to branch from an earlier state); append-only immutability (leaks disk and frustrates cleanup).
-
-**Consequence:** artifact references must carry run IDs, and cleanup is a user action.
-
-### ADR-0007 — Provider-pluggable transcription
-
-The transcriber tool is backed by a provider registry rather than a single hardcoded service. Each provider registers its own API-key slot (stored in a local config, never committed) and its model list; local providers are auto-detected from the host's model caches.
-
-Initial providers: faster-whisper (local), Groq, and OpenAI Whisper API.
-
-**Rejected:** hardcoding Groq (locks users into one vendor and no offline path); supporting no cloud providers (loses fast remote transcription).
+- **ADR-0001: Two-section platform with dual execution context**  
+  Clean separation between standalone tool execution (quick one-off jobs to global downloads) and workspace pipeline execution (isolated multi-step project artifact stores).
+- **ADR-0002: Filesystem is the source of truth; no database**  
+  All state is plain files and JSON metadata in the folder tree. Fully portable, human-readable, backup-friendly.
+- **ADR-0003: Local-first single user with LAN remote control**  
+  No accounts or cloud logins. LAN remote access gated by a per-boot token.
+- **ADR-0004: Universal multi-tool platform shell**  
+  Domain-agnostic pipeline engine supporting any tool, framework, script, or binary across arbitrary domains with zero gatekeeping on quality or quantity.
+- **ADR-0005: Tools are a registry with typed ports; pipelines are validated chains**  
+  Open port type system prevents invalid wiring while allowing flexible inter-tool connections.
+- **ADR-0006: Versioned, user-deletable run storage**  
+  Every run creates a distinct run directory. Runs can be branched from, audited, or deleted.
+- **ADR-0007: Pluggable provider registries**  
+  Tools supporting multiple engines (e.g. speech-to-text, OCR, AI models) use a pluggable provider abstraction with local-first precedence.
 
 ---
 
-## Product Roadmap
+## Technical Constraints & Design Principles
 
-### Current State
-
-- Backend API complete for workspaces, tools, pipelines, downloads, providers
-- Three tool drivers implemented: Downloader, Audio Processor, Media Info
-- Transcriber scaffolded; provider registry and keys API in place
-- Pipeline validation and chained execution functional
-- Test suite covers skeleton, audio processor, pipelines/runs, downloader, trimmer, transcriber
-
-### Near-Term Priorities
-
-- Frontend implementation for Tools and Workspaces sections
-- Transcriber tool driver integration with provider registry
-- Pipeline UI with drag-to-reorder and visual port validation
-- Waveform waveform/Region interaction in the frontend
-- Template save/load UX
-- LAN remote controller view for phone
-
-### Not Planned
-
-- Multi-user auth or cloud hosting
-- TTS/audio-training workflows
-- Closed recipe catalog
-
----
-
-## Technical Constraints
-
-- **No database.** All state is derivable from the filesystem.
-- **Single user.** No accounts, no roles, no multi-user guarantees.
-- **Local-first.** Core functionality works offline; cloud providers are optional.
-- **LAN remote control only.** Phone access requires being on the same network; access is gated by a per-boot token.
-- **Provider keys stored locally.** API keys are saved in local config and never committed.
-- **Open port kinds.** File kinds are intentionally extensible; adding a new kind does not require schema migrations.
-
----
-
-## Key Files for Onboarding
-
-| File | Purpose |
-|---|---|
-| `CONTEXT.md` | Ubiquitous language glossary |
-| `docs/adr/0001` through `0007` | All architectural decisions |
-| `backend/app/main.py` | API surface — read this to understand every route |
-| `backend/app/tools/base.py` | Tool contract: manifest, context, result, port kinds |
-| `backend/app/pipeline.py` | Chain validation and execution logic |
-| `backend/app/workspaces.py` | Filesystem-backed workspace and run storage |
-| `backend/app/providers.py` | Transcription provider registry and key management |
+1. **Zero Database Dependency:** State must always be reconstructible from the filesystem.
+2. **Infinite Horizon Extensibility:** Adding a new tool (whether a 5-line script or complex framework) requires only declaring a `ToolManifest` and implementing the `Tool` runner.
+3. **Robust Subprocess Execution:** CLI tools run via async subprocesses with clean stdout/stderr streaming, timeout handling, and cancellation signals.
+4. **Open Port Extensibility:** Port kinds are open strings allowing any data format (`audio`, `video`, `text`, `image`, `document`, `code`, `binary`, `folder`, `any`, etc.).
+5. **Cross-Platform:** Runs on Linux, macOS, and Windows.

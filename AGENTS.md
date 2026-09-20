@@ -19,4 +19,7 @@ Five canonical labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-f
 Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
 ## Instructions when using grill-me, grilling, grill-with docs:
+
 - If there are multiple questions to ask the user, and there is a choice to pick, then use question tool to make it easy.
+
+# 

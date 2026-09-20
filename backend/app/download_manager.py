@@ -1,4 +1,5 @@
 import asyncio
+import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Any
@@ -14,6 +15,9 @@ class DownloadTask:
     cancel_event: asyncio.Event = field(default_factory=asyncio.Event)
     progress_queue: asyncio.Queue = field(default_factory=lambda: asyncio.Queue(maxsize=50))
     result: dict[str, Any] | None = None
+    created_at: float = field(default_factory=time.time)
+    started_at: float | None = None
+    completed_at: float | None = None
 
 
 class DownloadManager:
@@ -41,9 +45,37 @@ class DownloadManager:
                 "status": t.status,
                 "progress": t.progress,
                 "error": t.error,
+                "params": {
+                    "url": t.params.get("url", ""),
+                    "format_preset": t.params.get("format_preset"),
+                    "download_mode": t.params.get("download_mode"),
+                },
+                "result": t.result,
+                "created_at": t.created_at,
+                "started_at": t.started_at,
+                "completed_at": t.completed_at,
             }
             for t in self.tasks.values()
         ]
+
+    def clear_history(self) -> int:
+        to_delete = [
+            tid for tid, t in self.tasks.items()
+            if t.status in ("completed", "failed", "cancelled")
+        ]
+        for tid in to_delete:
+            del self.tasks[tid]
+        return len(to_delete)
+
+    def remove_task(self, task_id: str) -> bool:
+        task = self.tasks.get(task_id)
+        if task is None:
+            return False
+        if task.status in ("running", "queued"):
+            self.cancel(task_id)
+        if task_id in self.tasks:
+            del self.tasks[task_id]
+        return True
 
     def cancel(self, task_id: str) -> bool:
         task = self.tasks.get(task_id)
@@ -52,6 +84,7 @@ class DownloadManager:
         task.cancel_event.set()
         if task.status == "queued":
             task.status = "cancelled"
+            task.completed_at = time.time()
         return True
 
     def active_count(self) -> int:
@@ -71,6 +104,7 @@ class DownloadManager:
         from app.tools.base import ToolRunContext
         from app.tools.downloader import DownloaderTool
 
+        task.started_at = time.time()
         tool = DownloaderTool()
         if task.progress_queue is None:
             task.progress_queue = asyncio.Queue(maxsize=50)
@@ -84,6 +118,7 @@ class DownloadManager:
         )
         try:
             result = await tool.execute(ctx)
+            task.completed_at = time.time()
             if task.cancel_event.is_set() and result.status != "completed":
                 task.status = "cancelled"
             else:
@@ -91,6 +126,7 @@ class DownloadManager:
                 task.error = result.error
                 task.result = result.model_dump()
         except Exception as e:
+            task.completed_at = time.time()
             task.status = "failed"
             task.error = str(e)
 

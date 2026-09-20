@@ -1,0 +1,17 @@
+{
+  "name": "agent-query-hub",
+  "version": "1.0.0",
+  "description": "Multi-Model Query and Response Hub with Agent Automation Scripts",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "post": "node scripts/post-query.js",
+    "read": "node scripts/read-responses.js",
+    "export": "node scripts/export-files.js",
+    "fetch": "node scripts/fetch-export.js"
+  },
+  "keywords": ["ai", "agents", "prompt-hub", "llm-comparison"],
+  "author": "",
+  "license": "MIT"
+}

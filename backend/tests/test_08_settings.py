@@ -83,3 +83,34 @@ def test_update_runs_with_approval(client, monkeypatch):
 
 def test_deps_module_upgrade_functions_exist():
     assert callable(upgrade_package)
+
+
+def test_ytdlp_settings_endpoint_get_and_post(client):
+    res_get = client.get("/api/settings/ytdlp").json()
+    assert "cookies_from_browser" in res_get
+    assert "extractor_args" in res_get
+
+    res_post = client.post(
+        "/api/settings/ytdlp",
+        json={"cookies_from_browser": "chrome", "extractor_args": "youtube:player_client=mweb"},
+    ).json()
+    assert res_post["cookies_from_browser"] == "chrome"
+    assert res_post["extractor_args"] == "youtube:player_client=mweb"
+
+
+def test_update_nightly_channel(client, monkeypatch):
+    called = {}
+
+    def fake_upgrade(pkg, channel="stable"):
+        called["pkg"] = pkg
+        called["channel"] = channel
+        return {"ok": True, "package": pkg, "channel": channel}
+
+    monkeypatch.setattr("app.main.upgrade_package", fake_upgrade)
+    resp = client.post(
+        "/api/settings/deps/update",
+        json={"package": "yt-dlp", "approved": True, "channel": "nightly"},
+    )
+    assert resp.json() == {"ok": True, "package": "yt-dlp", "channel": "nightly"}
+    assert called["pkg"] == "yt-dlp"
+    assert called["channel"] == "nightly"

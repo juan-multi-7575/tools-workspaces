@@ -77,3 +77,15 @@ def test_pipeline_grouping():
     assert len(res) == 1
     assert res[0]["pipeline_run_id"] == "pipe_123"
     assert len(res[0]["steps"]) == 3
+
+
+def test_sanitize_api_filename():
+    from app.tools.subtitles import _sanitize_api_filename
+
+    assert _sanitize_api_filename(Path("lecture_&_test.mp3")) == "lecture_test.wav"
+    assert _sanitize_api_filename(Path("장난감 안 사주는 & | .wav")) == "audio.wav"
+    assert _sanitize_api_filename(Path("my-video_01.m4a")) == "my-video_01.wav"
+    assert _sanitize_api_filename(Path("chunk_001.wav")) == "chunk_001.wav"
+    assert _sanitize_api_filename(Path("custom lecture (final).wav")) == "custom_lecture_final.wav"
+    # content is always wav, so mp4 input still yields .wav
+    assert _sanitize_api_filename(Path("video.mp4")) == "video.wav"

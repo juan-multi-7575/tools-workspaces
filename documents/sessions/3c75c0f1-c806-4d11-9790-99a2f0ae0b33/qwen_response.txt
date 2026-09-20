@@ -1,0 +1,335 @@
+Qwen3.7-Plus
+
+I am building a web-based DAG workflow tool with React Flow frontend and FastAPI backend. 1) How to implement real-time per-node execution status updates (SSE vs WebSockets vs polling) so nodes show running/completed/failed states live? 2) How to prevent React Flow canvas state from resetting when switching tabs (unmounting)? Please provide architectural recommendations for both.
+
+I'll provide architectural recommendations for both challenges based on your technical background.
+1. Real-time Per-Node Execution Status Updates
+Recommendation: Server-Sent Events (SSE)
+For your use case, SSE is optimal because:
+Unidirectional (server → client) matches your workflow execution model
+Lower overhead than WebSockets (no bidirectional handshake/maintenance)
+Native reconnection support in browsers
+Simpler implementation with FastAPI
+Architecture
+Backend (FastAPI):
+python
+30
+31
+32
+33
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+async def broadcast_node_status(workflow_id: str, node_id: str, status: str):
+    update = {"node_id": node_id, "status": status, "timestamp": time.time()}
+    for queue in workflow_subscribers.get(workflow_id, []):
+        await queue.put(update)
+from fastapi import FastAPI
+from sse_starlette import EventSourceResponse
+import asyncio
+import json
+app = FastAPI()
+# Store active connections per workflow
+workflow_subscribers: dict[str, list] = {}
+@app.get("/workflows/{workflow_id}/status")
+async def stream_status(workflow_id: str):
+    async def event_generator():
+        queue = asyncio.Queue()
+        workflow_subscribers.setdefault(workflow_id, []).append(queue)
+        
+        try:
+            while True:
+                status_update = await queue.get()
+                yield {
+                    "event": "node_status",
+                    "data": json.dumps(status_update)
+                }
+        finally:
+            workflow_subscribers[workflow_id].remove(queue)
+    
+    return EventSourceResponse(event_generator())
+# Call this when node status changes
+Frontend (React Flow):
+typescript
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+import { useCallback, useEffect, useRef } from 'react';
+import { useReactFlow, useNodesState } from '@xyflow/react';
+function WorkflowCanvas({ workflowId }: { workflowId: string }) {
+  const { setNodes } = useReactFlow();
+  const eventSourceRef = useRef<EventSource | null>(null);
+  useEffect(() => {
+    const es = new EventSource(`/workflows/${workflowId}/status`);
+    eventSourceRef.current = es;
+    es.addEventListener('node_status', (event) => {
+      const { node_id, status } = JSON.parse(event.data);
+      
+      setNodes((nodes) =>
+        nodes.map((node) =>
+          node.id === node_id
+            ? {
+                ...node,
+                data: { ...node.data, status },
+                className: `node-${status}`, // CSS class for visual feedback
+              }
+            : node
+        )
+      );
+    });
+    return () => es.close();
+  }, [workflowId, setNodes]);
+  return <ReactFlow />;
+}
+Why not alternatives:
+Polling: Unnecessary latency + server load for real-time updates
+WebSockets: Overkill for unidirectional status streaming; more complex state management
+2. Prevent Canvas State Reset on Tab Switching
+Problem
+React Flow unmounts when switching tabs, losing:
+Node positions/zoom/pan
+Custom node state
+Selection state
+Solution: State Persistence Layer
+Architecture Pattern:
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+┌─────────────────┐     ┌──────────────────┐
+│   React Flow    │────▶│  State Manager   │
+│   (UI Layer)    │◀────│  (Zustand/Jotai) │
+└─────────────────┘     └────────┬─────────┘
+                                 │
+                          ┌──────▼──────┐
+                          │ Persistence │
+                          │ (localStorage│
+                          │  / IndexedDB)│
+                          └─────────────┘
+Implementation with Zustand:
+typescript
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+// store/workflowStore.ts
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { Node, Edge, Viewport } from '@xyflow/react';
+interface WorkflowState {
+  nodes: Node[];
+  edges: Edge[];
+  viewport: Viewport;
+  setNodes: (nodes: Node[]) => void;
+  setEdges: (edges: Edge[]) => void;
+  setViewport: (viewport: Viewport) => void;
+}
+export const useWorkflowStore = create<WorkflowState>()(
+  persist(
+    (set) => ({
+      nodes: [],
+      edges: [],
+      viewport: { x: 0, y: 0, zoom: 1 },
+      
+      setNodes: (nodes) => set({ nodes }),
+      setEdges: (edges) => set({ edges }),
+      setViewport: (viewport) => set({ viewport }),
+    }),
+    {
+      name: 'workflow-state',
+      storage: createJSONStorage(() => localStorage), // or indexedDB for large graphs
+    }
+  )
+);
+React Flow Integration:
+typescript
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+function WorkflowCanvas({ workflowId }: { workflowId: string }) {
+  const { nodes, edges, viewport, setNodes, setEdges, setViewport } = 
+    useWorkflowStore();
+  
+  const onNodesChange = useCallback(
+    (changes) => {
+      // Apply changes to local state
+      const updatedNodes = applyNodeChanges(changes, nodes);
+      setNodes(updatedNodes);
+    },
+    [nodes, setNodes]
+  );
+  const onMoveEnd = useCallback(
+    (_, viewport) => {
+      setViewport(viewport);
+    },
+    [setViewport]
+  );
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={(changes) => {
+        const updatedEdges = applyEdgeChanges(changes, edges);
+        setEdges(updatedEdges);
+      }}
+      defaultViewport={viewport}
+      onMoveEnd={onMoveEnd}
+    >
+      <Background />
+      <Controls />
+    </ReactFlow>
+  );
+}
+For Large Graphs (>1000 nodes): Use IndexedDB instead of localStorage:
+typescript
+1
+2
+3
+4
+5
+6
+import localforage from 'localforage';
+const persistConfig = {
+  name: 'workflow-state',
+  storage: createJSONStorage(() => localforage),
+};
+Combined Architecture
+1
+2
+3
+4
+5
+6
+7
+┌─────────────────────────────────────────────┐
+│              Frontend (React)               │
+│                                             │
+│  ┌──────────────┐    ┌──────────────────┐  │
+│  │ React Flow   │◀──▶│ Zustand Store    │  │
+│  │ (Visual DAG) │    │ (Persistent)     │  │
+│  └──────────────┘    └────────┬─────────
+Fast
+AI-generated content may not be accurate.

@@ -4,11 +4,11 @@
 
 **Blocked by:** 02 — Audio processor tool end-to-end
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A user downloads media using grouped option sections, search, preset chips, and a raw-yt-dlp-args field — the raw args are validated and passed through
-- [ ] A user sees live percent/speed/ETA progress streamed while a download runs
-- [ ] A user cancels an in-flight download and partial files are removed
-- [ ] The queue limit (max concurrent downloads) is user-configurable, not hardcoded
-- [ ] A global download-manager drawer shows the queue, per-item progress, history, and cancel/retry actions across all download-triggering tools
-- [ ] **Testing:** API-level tests assert option passthrough and raw-args validation, SSE events carry progress before a terminal state, cancel marks the task cancelled and removes partial files, and the concurrency limit is honored
+- [x] A user downloads media using grouped option sections, search, preset chips, and a raw-yt-dlp-args field — the raw args are validated and passed through
+- [x] A user sees live percent/speed/ETA progress streamed while a download runs
+- [x] A user cancels an in-flight download and partial files are removed
+- [x] The queue limit (max concurrent downloads) is user-configurable, not hardcoded
+- [x] A global download-manager drawer shows the queue, per-item progress, history, and cancel/retry actions across all download-triggering tools
+- [x] **Testing:** API-level tests assert option passthrough and raw-args validation, SSE events carry progress before a terminal state, cancel marks the task cancelled and removes partial files, and the concurrency limit is honored

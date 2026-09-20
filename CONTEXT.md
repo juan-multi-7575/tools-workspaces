@@ -1,52 +1,48 @@
 # Multi-Tool Platform
 
-A local-first platform of standalone  utilities (Tools) and named, filesystem-backed workspaces that chain tool outputs into isolated artifact stores. Single user, no accounts; optionally reachable from a phone on the same network for download control.
+A local-first, unconstrained universal workbench and pipeline orchestration shell. The platform provides runtime scaffolding to register, run, and chain **any tool, script, binary, or custom experimental framework** across any domain (Media, Documents, Images, Web Scraping, Networking, Security, AI & Tutoring, Developer Utilities, and ad-hoc personal scripts) with no restrictions on quality or quantity. Single user, no accounts; optionally reachable from a phone on the same network for remote control.
 
 ## Language
 
 **Tool**:
-A standalone media-processing utility registered in the tool catalog, runnable without any workspace context.
+Any executable utility, script, binary, framework, or API wrapper registered in the tool catalog with declared parameters and typed ports, runnable standalone or inside a workspace.
 _Avoid_: module, handler, service
+
+**Category**:
+An open, user-defined tag or grouping for organizing tools in the catalog (e.g., Media, Documents, Images, Web, Network, Security, AI & Tutoring, Data, Custom/Experimental).
+_Avoid_: genre, section
 
 **Workspace**:
 A named, filesystem-backed container in the workspaces section, holding an isolated artifact store and zero or more chained tool runs.
 _Avoid_: project, dataset, corpus, session
 
 **Pipeline**:
-An ordered chain of Tool steps inside a Workspace where each step's output feeds the next step's input, ending in a final output. Pipelines must obey compatibility constraints between consecutive tools.
+An ordered chain of Tool steps inside a Workspace where each step's output feeds the next step's input, ending in a final output. Pipelines obey compatibility constraints between consecutive tools.
 _Avoid_: workflow, recipe, chain
 
 **Template**:
 A reusable starting point for a Workspace. The app ships only an empty Workspace; users save arranged Pipelines as their own Templates.
 _Avoid_: category preset, project type
 
-**Model**:
-A specific speech-to-text model offered by a Provider (e.g. a Whisper size, or a provider's named model).
-_Avoid_: engine, provider
-
 **Port**:
-A Tool's input or output slot, typed by file kind (e.g. audio, video, text, folder, any). Pipeline steps connect one step's output port to a compatible input port of the next step. Ports carry Artifacts; they are distinct from parameters, which configure a run.
+A Tool's typed input or output slot (e.g., `audio`, `video`, `text`, `image`, `document`, `code`, `binary`, `folder`, `any`, or custom kinds). Pipeline steps connect one step's output port to a compatible input port of the next step. Ports carry Artifacts; they are distinct from parameters, which configure a run.
 _Avoid_: field, channel, endpoint
 
 **Artifact**:
-A file or folder of any kind produced by a Tool run, stored in a Workspace's artifact store or the global downloads area, and available as input to later steps.
+Any file, folder, or structured data produced by a Tool run, stored in a Workspace's artifact store or the global downloads area, and available as input to downstream steps.
 _Avoid_: output, result, source, chunk
 
-**Region**:
-A user-marked selection on the waveform in the audio tool. One Region becomes a trimmed segment when cut, or a slice when split.
-_Avoid_: selection (ambiguous), marker
-
-**Segment**:
-A time-delimited slice of an audio Artifact produced from a marked Region by the audio tool's split action.
-_Avoid_: chunk, clip
-
 **Run**:
-A single execution of a Tool — standalone or inside a Workspace — recorded under its own run ID with its parameters and the artifacts it produced. Runs are versioned and never silently overwritten; the user may delete runs, and deleting a Workspace deletes its runs.
+A single execution of a Tool — standalone or inside a Workspace — recorded under its own run ID with its parameters, logs, and the artifacts it produced. Runs are versioned and never silently overwritten; the user may delete runs, and deleting a Workspace deletes its runs.
 _Avoid_: task, job
 
 **Provider**:
-A speech-to-text backend registered in the transcriber's provider registry — a cloud API (with a key) or a local model auto-detected on the host.
+A pluggable backend engine, model, or service registered for a specific multi-engine tool (e.g., a local subprocess vs. a cloud API).
 _Avoid_: engine, model (a Provider offers one or more Models)
+
+**Model**:
+A specific model or engine variant offered by a Provider (e.g., a Whisper size, LLM checkpoint, OCR engine).
+_Avoid_: engine, provider
 
 **Standalone execution**:
 Running a Tool with no Workspace context; output is written to the global downloads area.

@@ -341,13 +341,21 @@ export default function UniversalPipelineRunModal({
                         <FileCheck className="size-3" /> Ready on disk
                       </span>
                     </div>
-                    <ul className="text-[11px] font-mono text-[#7C5339] list-disc list-inside">
-                      {m.artifacts.map((a) => (
-                        <li key={a.name} className="truncate" title={a.name}>
-                          {a.name} ({(a.size / (1024 * 1024)).toFixed(1)} MB)
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+                      {m.artifacts.map((a) => {
+                        const ext = a.name.split('.').pop()?.toLowerCase() || 'file'
+                        const typeLabel = ext.length > 5 ? 'file' : ext
+                        return (
+                          <div key={a.name} className="flex items-start gap-2 rounded-lg border border-[#B0BA99]/40 bg-[#F7F1DE]/50 p-2">
+                            <span className="shrink-0 rounded-md bg-[#9D6638] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#FDFBF7]">{typeLabel}</span>
+                            <div className="min-w-0 flex-1">
+                              <p className="break-all text-[11px] font-mono font-medium leading-tight text-[#4E220F]" title={a.name}>{a.name}</p>
+                              <p className="text-[10px] font-mono text-[#7C5339]">{(a.size / 1024).toFixed(1)} KB • {a.path}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 ))}
               </div>

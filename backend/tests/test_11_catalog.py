@@ -23,34 +23,38 @@ def _run(client, tool_id, params):
     ).json()
 
 
-def test_mediainfo_standalone(client):
-    body = _run(client, "mediainfo", {"path": "/tmp/source.wav"})
+def test_mediainfo_standalone(client, tiny_wav):
+    body = _run(client, "mediainfo", {"path": str(tiny_wav)})
     assert body["status"] == "completed"
-    assert body["artifacts"][0]["name"].endswith("_info.txt")
+    assert body["artifacts"][0]["name"].endswith("_info.json")
 
 
 def test_streamlink_standalone(client):
     body = _run(client, "streamlink", {"url": "http://example.com/live"})
-    assert body["status"] == "completed"
-    assert body["artifacts"][0]["name"] == "stream.mp4"
+    # No fabricated stream: a URL that cannot be captured must fail truthfully.
+    assert body["status"] == "failed"
+    assert body["error"]
 
 
 def test_ocrmypdf_standalone(client):
     body = _run(client, "ocrmypdf", {"input_pdf": "/tmp/doc.pdf"})
-    assert body["status"] == "completed"
-    assert body["artifacts"][0]["name"] == "ocr.pdf"
+    # No fabricated PDF: a missing input must fail before running.
+    assert body["status"] == "failed"
+    assert "input file not found" in body["error"]
 
 
 def test_gallery_dl_standalone(client):
     body = _run(client, "gallery-dl", {"url": "http://example.com/gallery"})
-    assert body["status"] == "completed"
-    assert body["artifacts"][0]["name"] == "gallery.zip"
+    # No fabricated images/zip: an unsupported URL must fail truthfully.
+    assert body["status"] == "failed"
+    assert body["error"]
 
 
 def test_demucs_standalone(client):
     body = _run(client, "demucs", {"input_path": "/tmp/source.wav"})
-    assert body["status"] == "completed"
-    assert body["artifacts"][0]["name"] == "stems.zip"
+    # No fabricated stems: a missing input must fail before running.
+    assert body["status"] == "failed"
+    assert "input file not found" in body["error"]
 
 
 @pytest.mark.skipif(shutil.which("sox") is None, reason="sox binary not installed")
@@ -66,15 +70,15 @@ def test_catalog_tools_registered(client):
         assert tid in ids
 
 
-def test_mediainfo_runs_in_workspace_pipeline(client):
+def test_mediainfo_runs_in_workspace_pipeline(client, tiny_wav):
     ws = client.post("/api/workspaces", json={"name": "CatPipe"}).json()["id"]
     resp = client.post(
         f"/api/workspaces/{ws}/pipeline/run",
-        json={"steps": [{"tool_id": "mediainfo", "params": {"input_path": "/tmp/source.wav"}}]},
+        json={"steps": [{"tool_id": "mediainfo", "params": {"input_path": str(tiny_wav)}}]},
     ).json()["results"]
     assert resp[0]["status"] == "completed"
     assert len(resp[0]["artifacts"]) == 1
 
     run_id = resp[0]["run_id"]
     artifacts = client.get(f"/api/workspaces/{ws}/runs/{run_id}/artifacts").json()["artifacts"]
-    assert any(a["name"].endswith("_info.txt") for a in artifacts)
+    assert any(a["name"].endswith("_info.json") for a in artifacts)

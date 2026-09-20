@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { api, type DownloadTask } from '../../lib/api'
-import { X, Plus, ArrowDownToLine, Ban } from 'lucide-react'
-import DownloadOptionsForm, { type DownloadOptions, cleanOptions } from './DownloadOptions'
+import { cleanOptions } from '../../lib/utils'
+import { X, Plus, ArrowDownToLine, Ban, CheckCircle2, AlertCircle, Clock, Loader2, Link2, Clipboard } from 'lucide-react'
+import DownloadOptionsForm, { type DownloadOptions } from './DownloadOptions'
 
 const STATUS_LABEL: Record<string, string> = {
   queued: 'Queued',
-  running: 'Running',
+  running: 'Downloading',
   completed: 'Completed',
   failed: 'Failed',
   cancelled: 'Cancelled',
@@ -26,6 +27,7 @@ export default function DownloadManager() {
   const [tasks, setTasks] = useState<DownloadTask[]>([])
   const [url, setUrl] = useState('')
   const [options, setOptions] = useState<DownloadOptions>({})
+  const [adding, setAdding] = useState(false)
   const sources = useRef<Record<string, EventSource>>({})
 
   const refresh = () => api.listDownloads().then(({ downloads }) => setTasks(downloads))
@@ -63,10 +65,15 @@ export default function DownloadManager() {
 
   const add = async () => {
     if (!url.trim()) return
-    await api.enqueueDownload({ url: url.trim(), ...cleanOptions(options) })
-    setUrl('')
-    setOptions({})
-    refresh()
+    setAdding(true)
+    try {
+      await api.enqueueDownload({ url: url.trim(), ...cleanOptions(options) })
+      setUrl('')
+      setOptions({})
+      refresh()
+    } finally {
+      setAdding(false)
+    }
   }
 
   const cancel = async (id: string) => {
@@ -78,51 +85,121 @@ export default function DownloadManager() {
 
   return (
     <>
+      {/* Floating Minimalist Status Pill */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full bg-cyan-500 px-4 py-3 text-sm font-semibold text-slate-950 shadow-2xl transition-colors hover:bg-cyan-400"
-        title="Download manager"
+        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/90 px-3.5 py-2 text-xs font-medium text-zinc-200 shadow-2xl backdrop-blur-md transition-all duration-150 hover:bg-zinc-800 hover:border-zinc-700 active:scale-[0.99] group"
+        title="Open Download Manager"
       >
-        <ArrowDownToLine className="h-4 w-4" />
-        Downloads
-        {active > 0 && (
-          <span className="ml-1 rounded-full bg-slate-950 px-2 py-0.5 text-xs text-cyan-300">{active}</span>
+        <ArrowDownToLine className="size-3.5 text-[#3ef50b]" />
+        <span className="tracking-tight">Downloads</span>
+        {active > 0 ? (
+          <span className="flex items-center gap-1.5 font-mono text-[10px] text-[#3ef50b] bg-[#3ef50b]/10 border border-[#3ef50b]/20 px-2 py-0.5 rounded-full">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#3ef50b] animate-pulse" />
+            {active} active
+          </span>
+        ) : (
+          <span className="font-mono text-[10px] text-zinc-500">
+            {tasks.length}
+          </span>
         )}
       </button>
 
+      {/* Slide-over Drawer */}
       {open && (
-        <div className="fixed inset-0 z-50 flex justify-end">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-          <aside className="relative flex h-full w-[420px] max-w-[92vw] flex-col border-l border-garage-800 bg-garage-950 shadow-2xl">
-            <header className="flex items-center justify-between border-b border-garage-800 px-5 py-4">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-200">Download manager</h2>
-              <button onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-garage-800 hover:text-white">
-                <X className="h-4 w-4" />
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-[2px]">
+          <div className="absolute inset-0" onClick={() => setOpen(false)} />
+          <aside className="relative flex h-full w-[440px] max-w-[95vw] flex-col border-l border-zinc-800 bg-zinc-950 shadow-2xl">
+            {/* Drawer Header */}
+            <header className="flex items-center justify-between border-b border-zinc-800 px-4 py-3.5 bg-zinc-900/40">
+              <div className="flex items-center gap-2">
+                <div className="flex size-6 items-center justify-center rounded border border-zinc-800 bg-zinc-900 text-[#3ef50b]">
+                  <ArrowDownToLine className="size-3.5" />
+                </div>
+                <div>
+                  <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-100">
+                    Download Manager
+                  </h2>
+                  <p className="font-mono text-[10px] text-zinc-500">{active} active processes</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="rounded-md p-1.5 text-zinc-400 transition-colors duration-150 hover:bg-zinc-800 hover:text-white"
+              >
+                <X className="size-4" />
               </button>
             </header>
 
-            <div className="flex items-center gap-2 border-b border-garage-800 px-5 py-4">
-              <input
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && add()}
-                placeholder="https://… video or playlist URL"
-                className="flex-1 rounded-lg border border-garage-800 bg-garage-900 px-3 py-2 text-sm text-slate-100 outline-none focus:border-port-in"
-              />
-              <button
-                onClick={add}
-                disabled={!url.trim()}
-                className="inline-flex items-center gap-1 rounded-lg bg-cyan-500 px-3 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-cyan-400 disabled:opacity-40"
-              >
-                <Plus className="h-3.5 w-3.5" /> Add
-              </button>
+            {/* Highlighted URL Input Bar */}
+            <div className="border-b border-zinc-800 p-3.5 bg-zinc-950/90">
+              <div className="rounded-xl border-2 border-[#3ef50b]/60 bg-zinc-900/90 p-2.5 shadow-md shadow-[#3ef50b]/5 ring-1 ring-[#3ef50b]/20 focus-within:ring-2 focus-within:ring-[#3ef50b]/40">
+                <div className="flex items-center justify-between mb-1.5 px-0.5">
+                  <label className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-zinc-300">
+                    <Link2 className="size-3 text-[#3ef50b]" />
+                    <span>Target URL</span>
+                    <span className="text-[9px] text-[#3ef50b] bg-[#3ef50b]/10 border border-[#3ef50b]/20 px-1 rounded">
+                      REQUIRED
+                    </span>
+                  </label>
+                  {url && (
+                    <button
+                      onClick={() => setUrl('')}
+                      className="text-[10px] font-mono text-zinc-500 hover:text-red-400"
+                    >
+                      clear
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && add()}
+                      placeholder="Paste video / playlist URL…"
+                      className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#3ef50b] focus:outline-none font-mono"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const text = await navigator.clipboard.readText()
+                        if (text) setUrl(text.trim())
+                      } catch {
+                        /* ignore */
+                      }
+                    }}
+                    className="inline-flex items-center gap-1 rounded-md bg-zinc-800 px-2 py-1.5 text-[11px] font-medium text-zinc-300 hover:bg-zinc-700 hover:text-white border border-zinc-700"
+                    title="Paste from Clipboard"
+                  >
+                    <Clipboard className="size-3 text-[#3ef50b]" />
+                    <span>Paste</span>
+                  </button>
+                  <button
+                    onClick={add}
+                    disabled={!url.trim() || adding}
+                    className="inline-flex items-center gap-1 rounded-md bg-[#3ef50b] px-3 py-1.5 text-xs font-semibold text-zinc-950 transition-all duration-150 hover:bg-[#35d409] active:scale-[0.99] disabled:opacity-40"
+                  >
+                    <Plus className="size-3.5" />
+                    {adding ? 'Queuing…' : 'Enqueue'}
+                  </button>
+                </div>
+              </div>
             </div>
 
+            {/* Collapsible Options Form */}
             <DownloadOptionsForm value={options} onChange={setOptions} />
 
-            <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
+            {/* Task Queue List */}
+            <div className="flex-1 space-y-2.5 overflow-y-auto px-4 py-3">
               {tasks.length === 0 ? (
-                <p className="text-sm text-slate-500">No downloads yet. Paste a URL to start.</p>
+                <div className="p-8 text-center text-zinc-500 text-xs">
+                  <Clock className="mx-auto size-6 text-zinc-700 mb-1.5" />
+                  No downloads queued yet.
+                </div>
               ) : (
                 tasks
                   .slice()
@@ -131,44 +208,65 @@ export default function DownloadManager() {
                     const pct = progressPercent(t)
                     const live = t.status === 'running' || t.status === 'queued'
                     return (
-                      <div key={t.id} className="rounded-xl border border-garage-800 bg-garage-900/50 p-3">
-                        <div className="mb-2 flex items-center justify-between gap-2">
-                          <span className="truncate font-mono text-xs text-slate-300">{t.id}</span>
-                          <div className="flex items-center gap-2">
+                      <div
+                        key={t.id}
+                        className="rounded-lg border border-zinc-800/80 bg-zinc-900/60 p-3 space-y-2 transition-all duration-150 hover:border-zinc-700"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate font-mono text-xs font-semibold text-zinc-200">{t.id}</span>
+                          <div className="flex items-center gap-1.5">
                             <span
                               className={
-                                'rounded-full px-2 py-0.5 text-[11px] font-medium ' +
+                                'font-mono text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 ' +
                                 (t.status === 'completed'
-                                  ? 'bg-emerald-500/15 text-emerald-400'
+                                  ? 'bg-[#3ef50b]/10 text-[#3ef50b] border border-[#3ef50b]/20'
                                   : t.status === 'failed'
-                                    ? 'bg-red-500/15 text-red-400'
+                                    ? 'bg-[#f5220b]/10 text-[#f5220b] border border-[#f5220b]/20'
                                     : t.status === 'cancelled'
-                                      ? 'bg-slate-500/15 text-slate-400'
-                                      : 'bg-cyan-500/15 text-cyan-300')
+                                      ? 'bg-zinc-800 text-zinc-400'
+                                      : 'bg-[#3ef50b]/15 text-[#3ef50b] border border-[#3ef50b]/30')
                               }
                             >
+                              {t.status === 'running' && <Loader2 className="size-2.5 animate-spin text-[#3ef50b]" />}
+                              {t.status === 'completed' && <CheckCircle2 className="size-2.5 text-[#3ef50b]" />}
+                              {t.status === 'failed' && <AlertCircle className="size-2.5 text-[#f5220b]" />}
                               {STATUS_LABEL[t.status] ?? t.status}
                             </span>
                             {live && (
                               <button
                                 onClick={() => cancel(t.id)}
-                                className="rounded-md p-1 text-slate-500 transition-colors hover:bg-garage-800 hover:text-red-400"
-                                title="Cancel"
+                                className="rounded p-1 text-zinc-500 transition-colors duration-150 hover:bg-[#f5220b]/10 hover:text-[#f5220b]"
+                                title="Cancel Task"
                               >
-                                <Ban className="h-3.5 w-3.5" />
+                                <Ban className="size-3.5" />
                               </button>
                             )}
                           </div>
                         </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-garage-800">
+
+                        {/* Progress bar */}
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
                           <div
-                            className={'h-full rounded-full transition-all ' + (t.status === 'failed' ? 'bg-red-500' : 'bg-cyan-500')}
+                            className={
+                              'h-full rounded-full transition-all duration-200 ' +
+                              (t.status === 'failed'
+                                ? 'bg-[#f5220b]'
+                                : t.status === 'cancelled'
+                                  ? 'bg-zinc-600'
+                                  : 'bg-[#3ef50b]')
+                            }
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        {t.error && <p className="mt-2 text-xs text-red-400">{t.error}</p>}
+
+                        {t.error && (
+                          <p className="font-mono text-[11px] text-[#f5220b] leading-tight break-all">{t.error}</p>
+                        )}
                         {t.status === 'running' && (
-                          <p className="mt-1 text-[11px] text-slate-500">{JSON.stringify(t.progress)}</p>
+                          <div className="flex items-center justify-between font-mono text-[10px] text-zinc-500">
+                            <span>PROGRESS: {pct}%</span>
+                            <span className="text-zinc-400">DOWNLOADING</span>
+                          </div>
                         )}
                       </div>
                     )

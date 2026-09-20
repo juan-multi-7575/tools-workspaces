@@ -6,6 +6,13 @@ from app import paths
 
 DEFAULTS: dict[str, Any] = {
     "download": {"max_concurrent": 2},
+    "ytdlp": {
+        "cookies_from_browser": "none",
+        "cookies_file_path": "",
+        "extractor_args": "",
+        "user_agent": "",
+        "update_channel": "stable",
+    },
 }
 
 

@@ -4,6 +4,12 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 
+@pytest.fixture(params=["asyncio"])
+def anyio_backend(request):
+    """Restrict anyio-based tests to the asyncio backend (AsyncSubprocessRunner is asyncio-only)."""
+    return request.param
+
+
 @pytest.fixture(autouse=True)
 def _reset_layout(tmp_path, monkeypatch):
     monkeypatch.setattr("app.paths.ROOT", tmp_path)

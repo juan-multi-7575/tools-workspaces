@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Response Hub — Editorial Zine Edition</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📰</text></svg>">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    height: 100%;
+    font-size: 15px; /* Boosted base font scale */
+  }
+  body {
+    font-family: 'Space Mono', 'Courier Prime', monospace;
+    background-color: #DDD8CE;
+    color: #181818;
+  }
+  .font-typewriter {
+    font-family: 'Courier Prime', 'Space Mono', monospace;
+  }
+  .font-mono-tight {
+    font-family: 'JetBrains Mono', 'Space Mono', monospace;
+  }
+  /* Neo-brutalist / Zine paper scrollbars */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #DDD8CE;
+    border-left: 2px solid #181818;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #FAF8F3;
+    border: 2px solid #181818;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #EDE8DC;
+  }
+  .sticker-btn {
+    transition: transform 0.08s ease, box-shadow 0.08s ease;
+  }
+  .sticker-btn:hover {
+    transform: translate(1.5px, 1.5px);
+    box-shadow: 1px 1px 0px #181818 !important;
+  }
+  .sticker-btn:active {
+    transform: translate(3px, 3px);
+    box-shadow: 0px 0px 0px #181818 !important;
+  }
+  .toast-in {
+    animation: toastIn .2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  ::selection {
+    background: #181818;
+    color: #FAF8F3;
+  }
+  /* Resizer handle styling */
+  #sidebarResizer:hover div {
+    background-color: #181818;
+  }
+  .resizing body {
+    cursor: col-resize !important;
+    user-select: none !important;
+  }
+</style>
+</head>
+<body class="antialiased selection:bg-black selection:text-white">
+
+<div class="h-screen flex flex-col">
+
+  <!-- ══════════ TOP HEADER ══════════ -->
+  <header class="h-16 shrink-0 border-b-2 border-black bg-[#DDD8CE] flex items-center gap-3 px-4 z-30">
+    <button id="toggleSidebarBtn" class="lg:hidden p-2 rounded-none bg-[#FAF8F3] border-2 border-black shadow-[2px_2px_0px_#181818] text-[#181818]" aria-label="Toggle sidebar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+
+    <!-- Brand / Title Badge -->
+    <div class="flex items-center gap-3">
+      <div class="inline-flex items-center gap-2.5 px-3.5 py-1.5 bg-[#FAF8F3] border-2 border-black shadow-[3px_3px_0px_#181818] -rotate-1">
+        <span class="w-5 h-5 rounded-full border-2 border-black flex items-center justify-center text-xs font-black leading-none bg-[#EDE8DC]">☺</span>
+        <span class="text-xs sm:text-base font-black tracking-wider uppercase">AGENT <span class="font-normal font-mono">RESPONSE</span> HUB</span>
+      </div>
+      <span id="syncBadge" class="hidden sm:inline-flex text-xs font-black px-2.5 py-0.5 bg-[#EDE8DC] border-2 border-black text-[#181818] uppercase tracking-wider">
+        ● SYNCED
+      </span>
+    </div>
+
+    <!-- Project Name (Typewriter) -->
+    <div class="hidden md:flex items-center gap-2.5 ml-4 pl-4 border-l-2 border-black/30">
+      <span class="text-xs uppercase tracking-widest text-[#524F49] font-bold">PROJECT:</span>
+      <input id="projectName" class="bg-transparent text-sm font-bold text-[#181818] outline-none border-b-2 border-black hover:border-black/60 focus:border-black w-56 transition-colors uppercase placeholder-[#7A766F]" placeholder="PROJECT NAME">
+    </div>
+
+    <!-- Right Controls -->
+    <div class="ml-auto flex items-center gap-2 sm:gap-3">
+      <!-- Stats tally -->
+      <div class="hidden sm:flex items-center gap-2.5 text-xs sm:text-sm font-bold border-2 border-black bg-[#FAF8F3] px-3.5 py-1 shadow-[2px_2px_0px_#181818]">
+        <span><b id="statQueries">0</b> Q</span>
+        <span>•</span>
+        <span><b id="statResponses">0</b> RESP</span>
+        <span>•</span>
+        <span id="statPct" class="text-[#2D5A27]">0%</span>
+      </div>
+
+      <button id="saveNowBtn" class="sticker-btn px-3.5 py-1.5 bg-[#FAF8F3] border-2 border-black shadow-[2px_2px_0px_#181818] text-xs sm:text-sm font-bold uppercase flex items-center gap-1.5" title="Force save to disk">
+        <span>💾</span> Save
+      </button>
+
+      <button id="openImportBtn" class="sticker-btn px-3.5 py-1.5 bg-[#FAF8F3] border-2 border-black shadow-[2px_2px_0px_#181818] text-xs sm:text-sm font-bold uppercase">
+        Import
+      </button>
+
+      <button id="openExportBtn" class="sticker-btn px-4 py-1.5 bg-[#181818] text-[#FAF8F3] border-2 border-black shadow-[2px_2px_0px_#181818] text-xs sm:text-sm font-bold uppercase">
+        Export ⬇
+      </button>
+    </div>
+  </header>
+
+  <div class="flex-1 flex overflow-hidden relative" id="layoutContainer">
+
+    <!-- Mobile sidebar backdrop -->
+    <div id="sidebarBackdrop" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
+
+    <!-- ══════════ SIDEBAR (WITH CUSTOM WIDTH & RESIZE) ══════════ -->
+    <aside id="sidebar" style="width: 320px; min-width: 220px; max-width: 600px;" class="shrink-0 border-r-2 border-black bg-[#E8E3D7] flex flex-col h-full overflow-hidden max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:-translate-x-full max-lg:transition-transform max-lg:duration-200 shadow-xl lg:shadow-none">
+
+      <!-- Query search & header -->
+      <div class="p-3.5 border-b-2 border-black bg-[#DDD8CE] space-y-3 shrink-0">
+        <div class="flex items-center justify-between">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#FAF8F3] border-2 border-black font-black text-xs sm:text-sm uppercase tracking-wider shadow-[2px_2px_0px_#181818] rotate-0.5">
+            <span>✱ AGENT QUERIES</span>
+          </div>
+          <button id="addQueryBtn" class="sticker-btn text-xs sm:text-sm font-bold bg-[#FAF8F3] hover:bg-white px-3 py-1 border-2 border-black shadow-[2px_2px_0px_#181818] uppercase">
+            + New
+          </button>
+        </div>
+
+        <div class="relative">
+          <input id="filterInput" placeholder="SEARCH QUERIES OR TAGS…" class="w-full bg-[#FAF8F3] border-2 border-black shadow-[2px_2px_0px_#181818] px-3 py-2 text-xs sm:text-sm text-[#181818] outline-none placeholder-[#7A766F] uppercase font-bold focus:bg-white">
+        </div>
+      </div>
+
+      <!-- Query list -->
+      <div id="queryList" class="flex-1 overflow-y-auto p-3 space-y-2.5"></div>
+
+      <!-- Archive Filter Bar -->
+      <div class="px-3.5 py-2 border-t-2 border-black bg-[#E3DFD5] flex items-center justify-between text-xs font-bold shrink-0 select-none">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="showArchivedToggle" class="accent-black w-4 h-4 cursor-pointer">
+          <span class="text-[#181818] tracking-wider uppercase">SHOW ARCHIVED</span>
+        </label>
+        <span id="archivedCount" class="px-2 py-0.5 bg-[#FAF8F3] border border-black text-[11px] font-mono font-black">0</span>
+      </div>
+
+      <!-- Agent Terminal Hook Card -->
+      <div class="p-3.5 border-t-2 border-black bg-[#DDD8CE] text-[#524F49] space-y-2 shrink-0">
+        <div class="flex items-center justify-between font-black text-xs text-[#181818]">
+          <span class="flex items-center gap-1.5">💻 CLI AUTOMATION</span>
+          <button id="copyCliBtn" class="underline text-xs hover:text-black uppercase cursor-pointer" title="Copy CLI Command">
+            Copy command
+          </button>
+        </div>
+        <p class="text-xs leading-tight">
+          Read answers directly in terminal:
+        </p>
+        <code class="block text-xs bg-[#FAF8F3] border border-black p-1.5 font-bold text-[#181818] truncate">
+          node scripts/read-responses.js
+        </code>
+      </div>
+    </aside>
+
+    <!-- ══════════ DRAGGABLE RESIZE DIVIDER ══════════ -->
+    <div id="sidebarResizer" class="hidden lg:flex w-2.5 hover:w-3 bg-[#181818]/15 hover:bg-[#181818] cursor-col-resize transition-all shrink-0 items-center justify-center select-none z-20 group" title="Drag to adjust sidebar width (double click to reset)">
+      <div class="h-10 w-0.5 bg-black/40 group-hover:bg-white transition-colors"></div>
+    </div>
+
+    <!-- ══════════ MAIN WORKSPACE (TAKES REMAINING SPACE) ══════════ -->
+    <main class="flex-1 min-w-0 overflow-y-auto bg-[#DDD8CE] p-4 sm:p-6 lg:p-8">
+      <div id="mainView" class="max-w-5xl mx-auto"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ══════════ EXPORT MODAL ══════════ -->
+<div id="exportModal" class="fixed inset-0 z-50 items-center justify-center p-4" style="display:none">
+  <div class="absolute inset-0 bg-black/60" id="exportModalBackdrop"></div>
+  <div class="relative w-full max-w-4xl h-[85vh] bg-[#FAF8F3] border-3 border-black shadow-[8px_8px_0px_#181818] flex flex-col overflow-hidden">
+    <div class="flex items-center gap-3 px-5 py-3.5 border-b-2 border-black bg-[#E8E3D7]">
+      <div class="inline-block px-2.5 py-1 bg-[#FAF8F3] border-2 border-black font-black text-sm uppercase -rotate-1 shadow-[2px_2px_0px_#181818]">
+        EXPORT COMPILATION ✱
+      </div>
+      <label class="ml-auto flex items-center gap-2 text-xs sm:text-sm font-bold text-[#181818] cursor-pointer select-none">
+        <input type="checkbox" id="exportCurrentOnly" class="accent-black w-4 h-4"> CURRENT QUERY ONLY
+      </label>
+      <button id="closeExportBtn" class="p-1 font-bold text-base text-[#181818] hover:bg-black hover:text-white border-2 border-black px-2.5 transition-colors">✕</button>
+    </div>
+
+    <!-- Export format tabs -->
+    <div class="flex gap-2 px-5 pt-3 border-b-2 border-black bg-[#DDD8CE]">
+      <button data-tab="md" class="export-tab px-4 py-2 text-xs sm:text-sm font-black uppercase border-2 border-black bg-[#FAF8F3] shadow-[2px_2px_0px_#181818]">Markdown</button>
+      <button data-tab="json" class="export-tab px-4 py-2 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-[#EDE8DC] text-[#524F49]">JSON</button>
+      <button data-tab="xml" class="export-tab px-4 py-2 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-[#EDE8DC] text-[#524F49]">Agent XML Prompt</button>
+    </div>
+
+    <pre id="exportContent" class="flex-1 overflow-auto p-5 text-xs sm:text-sm leading-relaxed font-typewriter text-[#181818] bg-[#FFFFFF] whitespace-pre-wrap break-words border-b-2 border-black"></pre>
+
+    <div class="flex items-center gap-2 px-5 py-3.5 bg-[#E8E3D7]">
+      <span id="exportSize" class="text-xs font-bold text-[#524F49]"></span>
+      <div class="ml-auto flex gap-2.5">
+        <button id="copyExportBtn" class="sticker-btn px-4 py-2 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-[#FAF8F3] shadow-[2px_2px_0px_#181818]">📋 Copy Output</button>
+        <button id="downloadExportBtn" class="sticker-btn px-4 py-2 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-[#181818] text-white shadow-[2px_2px_0px_#181818]">⬇ Download File</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ IMPORT MODAL ══════════ -->
+<div id="importModal" class="fixed inset-0 z-50 items-center justify-center p-4" style="display:none">
+  <div class="absolute inset-0 bg-black/60" id="importModalBackdrop"></div>
+  <div class="relative w-full max-w-2xl bg-[#FAF8F3] border-3 border-black shadow-[8px_8px_0px_#181818] flex flex-col overflow-hidden">
+    <div class="flex items-center px-5 py-3.5 border-b-2 border-black bg-[#E8E3D7]">
+      <div class="px-2.5 py-1 bg-[#FAF8F3] border-2 border-black font-black text-sm uppercase shadow-[2px_2px_0px_#181818]">
+        IMPORT QUERIES ✱
+      </div>
+      <button id="closeImportBtn" class="ml-auto p-1 font-bold text-base text-[#181818] hover:bg-black hover:text-white border-2 border-black px-2.5 transition-colors">✕</button>
+    </div>
+    <div class="p-5 space-y-3 bg-[#DDD8CE]">
+      <p class="text-xs sm:text-sm text-[#181818] font-bold leading-relaxed">
+        Paste query blocks below. Separate multiple queries with a line containing <code class="bg-[#FAF8F3] border border-black px-1.5 py-0.5">---</code>.<br>
+        The first line of each block becomes its title.
+      </p>
+      <textarea id="importText" rows="10" class="w-full bg-[#FFFFFF] border-2 border-black shadow-[3px_3px_0px_#181818] p-3.5 text-xs sm:text-sm font-typewriter text-[#181818] outline-none resize-y" placeholder="Query 1 Title&#10;Query 1 prompt text...&#10;---&#10;Query 2 Title&#10;Query 2 prompt text..."></textarea>
+      <div class="flex justify-end gap-2.5 pt-2">
+        <button id="cancelImportBtn" class="sticker-btn px-4 py-2 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-[#FAF8F3] shadow-[2px_2px_0px_#181818]">Cancel</button>
+        <button id="runImportBtn" class="sticker-btn px-4 py-2 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-[#181818] text-white shadow-[2px_2px_0px_#181818]">Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" class="fixed bottom-4 right-4 z-[60] space-y-2"></div>
+
+<script>
+/* ═══════════════════ APPLICATION LOGIC ═══════════════════ */
+const STORAGE_KEY = 'agent-query-hub-data-zine-v4';
+const SIDEBAR_WIDTH_KEY = 'agent-query-hub-sidebar-width';
+
+let state = {
+  project: 'Tools & Workspaces Workbench',
+  queries: [],
+  selectedId: null,
+  isServerConnected: false,
+  viewMode: 'grid' // 'grid' | 'split' | 'stacked'
+};
+
+function uid(prefix = 'q') {
+  return `${prefix}-${Math.random().toString(36).slice(2, 8)}-${Date.now().toString(36).slice(-4)}`;
+}
+
+function esc(s) {
+  return (s == null ? '' : String(s))
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function debounce(fn, ms) {
+  let t;
+  return function(...a) {
+    clearTimeout(t);
+    t = setTimeout(() => fn.apply(this, a), ms);
+  };
+}
+
+function fmtTime(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return '';
+  }
+}
+
+function toast(msg, type = 'ok') {
+  const wrap = document.getElementById('toasts');
+  const el = document.createElement('div');
+  const ok = type === 'ok';
+  el.className = 'toast-in flex items-center gap-2 px-4 py-2.5 border-2 border-black text-xs sm:text-sm font-bold shadow-[4px_4px_0px_#181818] ' +
+    (ok ? 'bg-[#DDF0D8] text-[#181818]' : 'bg-[#FCDAD7] text-[#181818]');
+  el.innerHTML = (ok ? '☺ ' : '✕ ') + '<span class="font-bold">' + esc(msg) + '</span>';
+  wrap.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity .25s, transform .25s';
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(10px)';
+    setTimeout(() => el.remove(), 260);
+  }, 2300);
+}
+
+/* ═══════════════════ SERVER SYNC & LOCAL STORAGE ═══════════════════ */
+async function loadData() {
+  try {
+    const res = await fetch('/api/queries');
+    if (res.ok) {
+      const data = await res.json();
+      state.project = data.project || state.project;
+      state.queries = Array.isArray(data.queries) ? data.queries : [];
+      state.isServerConnected = true;
+      document.getElementById('syncBadge').innerHTML = '● SERVER SYNCED';
+      document.getElementById('syncBadge').className = 'hidden sm:inline-flex text-xs font-black px-2.5 py-0.5 bg-[#DDF0D8] border-2 border-black text-[#2D5A27] uppercase tracking-wider';
+      if (state.queries.length > 0 && !state.selectedId) {
+        state.selectedId = state.queries[0].id;
+      }
+      renderAll();
+      return;
+    }
+  } catch (err) {}
+
+  state.isServerConnected = false;
+  document.getElementById('syncBadge').innerHTML = '💾 LOCAL CACHE';
+  document.getElementById('syncBadge').className = 'hidden sm:inline-flex text-xs font-black px-2.5 py-0.5 bg-[#FAECD8] border-2 border-black text-[#8C4E0B] uppercase tracking-wider';
+
+  const localRaw = localStorage.getItem(STORAGE_KEY);
+  if (localRaw) {
+    try {
+      const data = JSON.parse(localRaw);
+      state.project = data.project || state.project;
+      state.queries = data.queries || [];
+      if (state.queries.length > 0 && !state.selectedId) {
+        state.selectedId = state.queries[0].id;
+      }
+    } catch (e) {}
+  }
+  renderAll();
+}
+
+async function persist() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    project: state.project,
+    queries: state.queries
+  }));
+
+  const activeQuery = getSelected();
+  if (activeQuery) {
+    try {
+      const res = await fetch(`/api/queries/${activeQuery.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project: state.project,
+          title: activeQuery.title,
+          text: activeQuery.text,
+          tags: activeQuery.tags,
+          responses: activeQuery.responses
+        })
+      });
+      if (res.ok) {
+        document.getElementById('syncBadge').innerHTML = '● SERVER SYNCED';
+        document.getElementById('syncBadge').className = 'hidden sm:inline-flex text-xs font-black px-2.5 py-0.5 bg-[#DDF0D8] border-2 border-black text-[#2D5A27] uppercase tracking-wider';
+      }
+    } catch (e) {
+      document.getElementById('syncBadge').innerHTML = '💾 LOCAL CACHE';
+      document.getElementById('syncBadge').className = 'hidden sm:inline-flex text-xs font-black px-2.5 py-0.5 bg-[#FAECD8] border-2 border-black text-[#8C4E0B] uppercase tracking-wider';
+    }
+  }
+}
+
+const persistDebounced = debounce(persist, 350);
+
+/* ═══════════════════ HELPERS ═══════════════════ */
+function getSelected() {
+  return state.queries.find(q => q.id === state.selectedId) || null;
+}
+
+function countFilledResponses(q) {
+  return (q.responses || []).filter(r => (r.content || '').trim().length > 0).length;
+}
+
+function queryStatusBadge(q) {
+  if (q.status === 'archived') {
+    return `<span class="px-2 py-0.5 text-xs font-black border-2 border-[#524F49] bg-[#DDD8CE] text-[#524F49] uppercase tracking-widest">[ARCHIVED 📦]</span>`;
+  }
+  if (q.status === 'resolved') {
+    return `<span class="px-2 py-0.5 text-xs font-black border-2 border-[#1E40AF] bg-[#DBEAFE] text-[#1E40AF] uppercase tracking-widest">[RESOLVED 🎯]</span>`;
+  }
+  const responses = q.responses || [];
+  if (responses.length === 0) {
+    return `<span class="px-2 py-0.5 text-xs font-black border-2 border-black bg-[#E3DFD5] text-[#4A4A4A] uppercase tracking-widest">[PENDING]</span>`;
+  }
+  const filled = countFilledResponses(q);
+  if (filled === responses.length && filled > 0) {
+    return `<span class="px-2 py-0.5 text-xs font-black border-2 border-[#2D5A27] bg-[#DDF0D8] text-[#2D5A27] uppercase tracking-widest -rotate-1">[✓ COMPLETE ☺]</span>`;
+  }
+  if (filled > 0) {
+    return `<span class="px-2 py-0.5 text-xs font-black border-2 border-[#8C4E0B] bg-[#FAECD8] text-[#8C4E0B] uppercase tracking-widest rotate-1">[DRAFT ✎]</span>`;
+  }
+  return `<span class="px-2 py-0.5 text-xs font-black border-2 border-black bg-[#FAF8F3] text-[#181818] uppercase tracking-widest">[SLOTS READY]</span>`;
+}
+
+function getStats() {
+  let totalResp = 0;
+  let filledResp = 0;
+  state.queries.forEach(q => {
+    (q.responses || []).forEach(r => {
+      totalResp++;
+      if ((r.content || '').trim().length > 0) filledResp++;
+    });
+  });
+  const pct = totalResp ? Math.round((filledResp / totalResp) * 100) : (state.queries.length > 0 ? 0 : 100);
+  return {
+    queries: state.queries.length,
+    responses: filledResp,
+    totalSlots: totalResp,
+    pct
+  };
+}
+
+/* ═══════════════════ RENDER ═══════════════════ */
+function renderHeader() {
+  const pn = document.getElementById('projectName');
+  if (document.activeElement !== pn) pn.value = state.project;
+  const s = getStats();
+  document.getElementById('statQueries').textContent = s.queries;
+  document.getElementById('statResponses').textContent = `${s.responses}${s.totalSlots > 0 ? `/${s.totalSlots}` : ''}`;
+  document.getElementById('statPct').textContent = `${s.pct}%`;
+}
+
+function renderSidebar() {
+  const ql = document.getElementById('queryList');
+  const filter = (document.getElementById('filterInput').value || '').toLowerCase().trim();
+  const showArchivedToggle = document.getElementById('showArchivedToggle');
+  const showArchived = showArchivedToggle ? showArchivedToggle.checked : false;
+
+  const archivedCount = state.queries.filter(q => q.status === 'archived').length;
+  const countEl = document.getElementById('archivedCount');
+  if (countEl) countEl.textContent = archivedCount;
+
+  const filtered = state.queries.filter(q => {
+    if (!showArchived && q.status === 'archived') return false;
+    if (!filter) return true;
+    const titleMatch = (q.title || '').toLowerCase().includes(filter);
+    const textMatch = (q.text || '').toLowerCase().includes(filter);
+    const tagMatch = (q.tags || []).some(t => t.toLowerCase().includes(filter));
+    return titleMatch || textMatch || tagMatch;
+  });
+
+  if (filtered.length === 0) {
+    ql.innerHTML = `
+      <div class="text-xs sm:text-sm text-[#524F49] py-8 text-center leading-relaxed border-2 border-dashed border-black bg-[#DDD8CE] p-4">
+        ${state.queries.length === 0 ? 'NO QUERIES RECORDED YET.<br>CLICK <b>+ NEW</b> TO START.' : (archivedCount > 0 && !showArchived ? 'ALL QUERIES IN THIS VIEW ARE ARCHIVED.<br>CHECK <b>SHOW ARCHIVED</b> TO VIEW THEM.' : 'NO QUERIES MATCH YOUR FILTER.')}
+      </div>`;
+    return;
+  }
+
+  ql.innerHTML = filtered.map((q, idx) => {
+    const isSel = q.id === state.selectedId;
+    const filled = countFilledResponses(q);
+    const total = (q.responses || []).length;
+
+    return `
+      <button data-id="${q.id}" class="query-item w-full text-left p-3.5 border-2 border-black transition-all ${
+        isSel
+          ? 'bg-white shadow-[4px_4px_0px_#181818] -translate-x-0.5 -translate-y-0.5'
+          : 'bg-[#FAF8F3] shadow-[2px_2px_0px_#181818] hover:bg-white hover:translate-x-0.5 hover:translate-y-0.5'
+      }">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="bg-[#EDE8DC] border-2 border-black px-1.5 py-0.5 text-xs font-black -rotate-2">Q${idx + 1}</span>
+            <span class="text-sm font-black truncate uppercase ${isSel ? 'text-black underline' : 'text-[#181818]'}">${esc(q.title || 'UNTITLED QUERY')}</span>
+          </div>
+          ${queryStatusBadge(q)}
+        </div>
+        <div class="mt-2.5 flex items-center justify-between text-xs text-[#524F49] font-mono">
+          <span class="font-bold">${total === 0 ? '0 responses' : `${filled}/${total} filled`}</span>
+          <span class="tracking-widest uppercase font-bold text-[11px]">${q.tags && q.tags.length ? `#${q.tags[0]}` : ''}</span>
+        </div>
+      </button>
+    `;
+  }).join('');
+
+  ql.querySelectorAll('.query-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.selectedId = btn.dataset.id;
+      renderSidebar();
+      renderMain();
+    });
+  });
+}
+
+function emptyStateHTML() {
+  return `
+    <div class="max-w-xl mx-auto mt-12 text-center p-8 sm:p-10 bg-[#FAF8F3] border-3 border-black shadow-[6px_6px_0px_#181818]">
+      <div class="inline-block px-3.5 py-1 bg-[#DDD8CE] border-2 border-black font-black text-sm uppercase mb-4 shadow-[2px_2px_0px_#181818] -rotate-1">
+        EDITORIAL WORKBENCH ☺
+      </div>
+      <h2 class="text-2xl font-black uppercase tracking-tight text-[#181818]">Agent Query & Multi-Response Hub</h2>
+      <p class="text-sm text-[#524F49] mt-3 mb-6 leading-relaxed">
+        Collect queries posted by AI agents, add dynamic response slots for any model you choose (no fixed model constraints), paste answers, and export clean structured outputs.
+      </p>
+      <div class="flex justify-center gap-3">
+        <button id="emptyCreateBtn" class="sticker-btn px-6 py-2.5 text-sm font-black uppercase border-2 border-black bg-[#181818] text-white shadow-[3px_3px_0px_#181818]">
+          + Create First Query
+        </button>
+        <button id="emptyImportBtn" class="sticker-btn px-6 py-2.5 text-sm font-black uppercase border-2 border-black bg-[#FAF8F3] text-[#181818] shadow-[3px_3px_0px_#181818]">
+          Import Queries
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderResponseCard(r, idx, qId) {
+  const content = r.content || '';
+  const hasContent = content.trim().length > 0;
+  const modelName = r.model !== undefined && r.model.trim() ? r.model.trim() : '';
+
+  return `
+    <div class="resp-card border-2 border-black bg-[#FAF8F3] shadow-[3px_3px_0px_#181818] overflow-hidden flex flex-col" data-rid="${r.id}">
+      <!-- Header with Model Title & Controls -->
+      <div class="flex items-center justify-between gap-3 px-4 py-3 border-b-2 border-black bg-[#EDE8DC]">
+        <div class="flex items-center gap-2.5 flex-1 min-w-0">
+          <span class="w-3.5 h-3.5 border-2 border-black ${hasContent ? 'bg-[#2D5A27]' : 'bg-[#FAF8F3]'} shrink-0"></span>
+          <input 
+            class="resp-model-input flex-1 bg-transparent text-sm sm:text-base font-black text-[#181818] placeholder-[#7A766F] outline-none uppercase tracking-wider min-w-[140px]"
+            data-rid="${r.id}"
+            value="${esc(modelName)}"
+            placeholder="TYPE PLATFORM / MODEL NAME..."
+          />
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button data-action="copy-resp" data-rid="${r.id}" class="sticker-btn text-xs sm:text-sm font-bold px-3 py-1 bg-[#FAF8F3] border-2 border-black shadow-[1px_1px_0px_#181818] uppercase" title="Copy response content">
+            📋 Copy
+          </button>
+          <button data-action="delete-resp" data-rid="${r.id}" class="sticker-btn text-xs sm:text-sm font-bold px-3 py-1 bg-[#FAF8F3] hover:bg-[#FCDAD7] border-2 border-black text-[#181818] shadow-[1px_1px_0px_#181818] uppercase" title="Delete response slot">
+            ✕ Delete
+          </button>
+        </div>
+      </div>
+
+      <!-- Single Response Textarea -->
+      <div class="p-4 space-y-2 bg-[#FAF8F3] flex-1 flex flex-col">
+        <textarea 
+          rows="12"
+          class="resp-content-input flex-1 w-full bg-[#FFFFFF] border-2 border-black p-3.5 text-sm sm:text-base leading-relaxed font-typewriter text-[#181818] outline-none resize-y placeholder-[#7A766F] min-h-[260px]"
+          data-rid="${r.id}"
+          placeholder="Paste response output here..."
+        >${esc(content)}</textarea>
+
+        <div class="flex items-center justify-between text-xs text-[#524F49] font-mono pt-1">
+          <span class="char-count font-bold">${content.length.toLocaleString()} CHARACTERS</span>
+          <span class="update-info font-bold">${r.updatedAt && hasContent ? `SAVED ${fmtTime(r.updatedAt)}` : 'AUTO-SAVES'}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMain() {
+  const mv = document.getElementById('mainView');
+  const q = getSelected();
+
+  if (!q) {
+    mv.innerHTML = emptyStateHTML();
+    const cBtn = document.getElementById('emptyCreateBtn');
+    if (cBtn) cBtn.addEventListener('click', createNewQuery);
+    const iBtn = document.getElementById('emptyImportBtn');
+    if (iBtn) iBtn.addEventListener('click', () => openModal('importModal'));
+    return;
+  }
+
+  const idx = state.queries.indexOf(q);
+  const responses = q.responses || [];
+  const gridClass = state.viewMode === 'split' 
+    ? 'grid grid-cols-1 md:grid-cols-2 gap-5' 
+    : state.viewMode === 'stacked' 
+      ? 'flex flex-col gap-5' 
+      : 'grid grid-cols-1 lg:grid-cols-2 gap-5';
+
+  mv.innerHTML = `
+    <div class="space-y-6 pb-12">
+      <!-- Query Metadata Header Card -->
+      <div class="border-2 border-black bg-[#FAF8F3] shadow-[4px_4px_0px_#181818] p-5 sm:p-6">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="px-2.5 py-1 bg-[#EDE8DC] border-2 border-black text-xs sm:text-sm font-black -rotate-1 shadow-[2px_2px_0px_#181818]">
+            QUERY Q${idx + 1}
+          </div>
+          <input id="qTitle" value="${esc(q.title)}" placeholder="UNTITLED QUERY — TYPE TITLE..." class="flex-1 min-w-[240px] bg-transparent text-xl sm:text-2xl font-black text-[#181818] placeholder-[#7A766F] outline-none border-b-2 border-black/20 focus:border-black uppercase tracking-tight transition-colors">
+          ${queryStatusBadge(q)}
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <button id="toggleResolveBtn" class="sticker-btn px-3 py-1.5 text-xs font-bold border-2 border-black ${q.status === 'resolved' ? 'bg-[#DBEAFE] text-[#1E40AF]' : 'bg-[#FAF8F3] hover:bg-[#DDF0D8] text-[#181818]'} shadow-[2px_2px_0px_#181818] uppercase" title="Mark query resolved">
+              ${q.status === 'resolved' ? '↺ Re-open' : '✓ Resolved'}
+            </button>
+
+            <button id="toggleArchiveBtn" class="sticker-btn px-3 py-1.5 text-xs font-bold border-2 border-black ${q.status === 'archived' ? 'bg-[#DDD8CE] text-[#524F49]' : 'bg-[#FAF8F3] hover:bg-[#EDE8DC] text-[#181818]'} shadow-[2px_2px_0px_#181818] uppercase" title="Archive query to hide from active list">
+              ${q.status === 'archived' ? '📂 Unarchive' : '📦 Archive'}
+            </button>
+
+            <button id="exportAdrBtn" class="sticker-btn px-3 py-1.5 text-xs font-bold border-2 border-black bg-[#FAF8F3] hover:bg-[#F3E8FF] text-[#181818] shadow-[2px_2px_0px_#181818] uppercase flex items-center gap-1" title="Generate Architecture Decision Record in docs/adr/">
+              <span>📝</span> Export ADR
+            </button>
+
+            <button id="deleteQueryBtn" class="sticker-btn px-3 py-1.5 text-xs font-bold border-2 border-black bg-[#FAF8F3] hover:bg-[#FCDAD7] text-[#181818] shadow-[2px_2px_0px_#181818] uppercase" title="Permanently delete query">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center gap-2.5 text-xs sm:text-sm">
+          <span class="uppercase font-bold text-[#524F49]">TAGS:</span>
+          <input id="qTags" value="${esc((q.tags || []).join(', '))}" placeholder="architecture, react, sse (comma separated)" class="bg-[#FFFFFF] border-2 border-black px-3 py-1 text-xs sm:text-sm text-[#181818] outline-none w-80 uppercase placeholder-[#7A766F]">
+        </div>
+      </div>
+
+      <!-- Agent Prompt Box with Drag & Drop -->
+      <div id="promptDropZone" class="border-2 border-black bg-[#FAF8F3] shadow-[4px_4px_0px_#181818] p-5 sm:p-6 space-y-3 relative transition-colors">
+        <div class="flex items-center justify-between">
+          <div class="inline-flex items-center gap-2 px-3 py-1 bg-[#DDD8CE] border-2 border-black font-black text-xs sm:text-sm uppercase tracking-wider">
+            <span>AGENT QUERY PROMPT ☺</span>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <span class="hidden sm:inline text-xs text-[#7A766F] uppercase font-bold">Drop .md file to load</span>
+            <button id="copyPromptBtn" class="sticker-btn text-xs sm:text-sm font-bold px-3.5 py-1.5 bg-[#FAF8F3] border-2 border-black shadow-[2px_2px_0px_#181818] uppercase flex items-center gap-1.5">
+              <span>📋</span> Copy Prompt
+            </button>
+          </div>
+        </div>
+        <textarea id="qText" rows="7" class="w-full bg-[#FFFFFF] border-2 border-black p-4 text-sm sm:text-base leading-relaxed font-typewriter text-[#181818] outline-none resize-y placeholder-[#7A766F] shadow-[2px_2px_0px_#181818]" placeholder="Paste the agent's query here or drop a .md prompt file...">${esc(q.text || '')}</textarea>
+      </div>
+
+      <!-- Model Responses Controls & Grid -->
+      <div class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1 bg-[#FAF8F3] border-2 border-black font-black text-xs sm:text-sm uppercase tracking-wider shadow-[2px_2px_0px_#181818] rotate-0.5">
+            <span>✱ MODEL RESPONSES (${responses.length})</span>
+          </div>
+
+          <div class="flex items-center gap-2.5">
+            <!-- View Mode Switcher -->
+            <div class="inline-flex border-2 border-black bg-[#FAF8F3] shadow-[2px_2px_0px_#181818] text-xs font-bold uppercase">
+              <button data-view="grid" class="view-btn px-3 py-1.5 ${state.viewMode === 'grid' ? 'bg-[#181818] text-white' : 'text-[#181818]'}">▦ Grid</button>
+              <button data-view="split" class="view-btn px-3 py-1.5 border-l-2 border-black ${state.viewMode === 'split' ? 'bg-[#181818] text-white' : 'text-[#181818]'}">☷ Split</button>
+              <button data-view="stacked" class="view-btn px-3 py-1.5 border-l-2 border-black ${state.viewMode === 'stacked' ? 'bg-[#181818] text-white' : 'text-[#181818]'}">☰ Stacked</button>
+            </div>
+
+            <!-- Add Response Button -->
+            <button id="addResponseBtn" class="sticker-btn px-4 py-1.5 text-xs sm:text-sm font-black bg-[#FAF8F3] hover:bg-white border-2 border-black shadow-[2px_2px_0px_#181818] uppercase flex items-center gap-1.5">
+              <span>+</span> Add Response Slot
+            </button>
+          </div>
+        </div>
+
+        ${responses.length === 0 ? `
+          <div class="border-2 border-dashed border-black bg-[#EDE8DC] p-10 text-center space-y-3.5">
+            <div class="text-sm font-black uppercase text-[#181818]">No responses added yet for this query.</div>
+            <p class="text-xs sm:text-sm text-[#524F49] max-w-md mx-auto leading-relaxed">
+              Click below to create a response slot for any model or platform. Type any model name and paste its output directly.
+            </p>
+            <button id="addFirstResponseBtn" class="sticker-btn px-5 py-2.5 text-xs sm:text-sm font-black uppercase border-2 border-black bg-[#181818] text-white shadow-[3px_3px_0px_#181818]">
+              + Add First Response Slot ☺
+            </button>
+          </div>
+        ` : `
+          <div class="${gridClass}">
+            ${responses.map((r, rIdx) => renderResponseCard(r, rIdx, q.id)).join('')}
+          </div>
+        `}
+      </div>
+    </div>
+  `;
+
+  attachMainEvents(q);
+}
+
+function attachMainEvents(q) {
+  const mv = document.getElementById('mainView');
+
+  // Title change
+  const title = mv.querySelector('#qTitle');
+  if (title) {
+    title.addEventListener('input', () => {
+      q.title = title.value;
+      renderSidebar();
+      renderHeader();
+      persistDebounced();
+    });
+  }
+
+  // Tags change
+  const tags = mv.querySelector('#qTags');
+  if (tags) {
+    tags.addEventListener('change', () => {
+      q.tags = tags.value.split(',').map(s => s.trim()).filter(Boolean);
+      toast('Tags updated');
+      persist();
+    });
+  }
+
+  // Prompt change
+  const qText = mv.querySelector('#qText');
+  if (qText) {
+    qText.addEventListener('input', () => {
+      q.text = qText.value;
+      persistDebounced();
+    });
+  }
+
+  // Drag and drop onto prompt
+  const dropZone = mv.querySelector('#promptDropZone');
+  if (dropZone) {
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('bg-[#EAE5DB]');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('bg-[#EAE5DB]');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('bg-[#EAE5DB]');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        const file = e.dataTransfer.files[0];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          q.text = event.target.result;
+          const textarea = mv.querySelector('#qText');
+          if (textarea) textarea.value = q.text;
+          persist();
+          toast(`Loaded prompt from ${file.name} ☺`);
+        };
+        reader.readAsText(file);
+      }
+    });
+  }
+
+  // Copy prompt button
+  const copyPromptBtn = mv.querySelector('#copyPromptBtn');
+  if (copyPromptBtn) {
+    copyPromptBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(q.text || '');
+      toast('Prompt copied to clipboard! ☺');
+    });
+  }
+
+  // Toggle resolve button
+  const resolveBtn = mv.querySelector('#toggleResolveBtn');
+  if (resolveBtn) {
+    resolveBtn.addEventListener('click', async () => {
+      const nextStatus = q.status === 'resolved' ? 'open' : 'resolved';
+      q.status = nextStatus;
+      try {
+        await fetch(`/api/queries/${q.id}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: nextStatus })
+        });
+      } catch (e) {}
+      await persist();
+      renderAll();
+      toast(`Query marked as ${nextStatus.toUpperCase()}! 🎯`);
+    });
+  }
+
+  // Toggle archive button
+  const archiveBtn = mv.querySelector('#toggleArchiveBtn');
+  if (archiveBtn) {
+    archiveBtn.addEventListener('click', async () => {
+      const nextStatus = q.status === 'archived' ? 'open' : 'archived';
+      q.status = nextStatus;
+      try {
+        await fetch(`/api/queries/${q.id}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: nextStatus })
+        });
+      } catch (e) {}
+      await persist();
+
+      const showArchived = document.getElementById('showArchivedToggle')?.checked;
+      if (nextStatus === 'archived' && !showArchived) {
+        const remaining = state.queries.filter(item => item.status !== 'archived');
+        state.selectedId = remaining.length ? remaining[0].id : null;
+      }
+      renderAll();
+      toast(`Query ${nextStatus === 'archived' ? 'archived 📦' : 'unarchived 📂'}!`);
+    });
+  }
+
+  // Export as ADR button
+  const exportAdrBtn = mv.querySelector('#exportAdrBtn');
+  if (exportAdrBtn) {
+    exportAdrBtn.addEventListener('click', async () => {
+      if (!confirm(`Generate an Architecture Decision Record (ADR) in docs/adr/ from this query and mark it resolved?`)) return;
+      try {
+        const res = await fetch(`/api/queries/${q.id}/export-adr`, { method: 'POST' });
+        if (res.ok) {
+          const data = await res.json();
+          q.status = 'resolved';
+          renderAll();
+          toast(`ADR generated: ${data.filename} in docs/adr/! 📝`);
+        } else {
+          toast('Failed to generate ADR', 'err');
+        }
+      } catch (err) {
+        toast(`Error: ${err.message}`, 'err');
+      }
+    });
+  }
+
+  // Delete query button
+  const deleteBtn = mv.querySelector('#deleteQueryBtn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
+      if (!confirm(`Permanently delete query "${q.title || 'Untitled'}" and all pasted responses? This cannot be undone.`)) return;
+      try {
+        await fetch(`/api/queries/${q.id}`, { method: 'DELETE' });
+      } catch (e) {}
+      state.queries = state.queries.filter(item => item.id !== q.id);
+      state.selectedId = state.queries.length ? state.queries[0].id : null;
+      persist();
+      renderAll();
+      toast('Query permanently deleted');
+    });
+  }
+
+  // View mode switcher buttons
+  mv.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.viewMode = btn.dataset.view;
+      renderMain();
+    });
+  });
+
+  // Add response button
+  const addRespBtn = mv.querySelector('#addResponseBtn');
+  const addFirstBtn = mv.querySelector('#addFirstResponseBtn');
+  const handleAddResponse = () => {
+    if (!Array.isArray(q.responses)) q.responses = [];
+    const newResp = {
+      id: uid('resp'),
+      model: '',
+      content: '',
+      updatedAt: new Date().toISOString()
+    };
+    q.responses.push(newResp);
+    persist();
+    renderMain();
+    renderSidebar();
+    renderHeader();
+  };
+  if (addRespBtn) addRespBtn.addEventListener('click', handleAddResponse);
+  if (addFirstBtn) addFirstBtn.addEventListener('click', handleAddResponse);
+
+  // Model Name input
+  mv.querySelectorAll('.resp-model-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const rid = inp.dataset.rid;
+      const resp = q.responses.find(r => r.id === rid);
+      if (resp) {
+        resp.model = inp.value;
+        persistDebounced();
+      }
+    });
+  });
+
+  // Content textarea input
+  mv.querySelectorAll('.resp-content-input').forEach(ta => {
+    ta.addEventListener('input', () => {
+      const rid = ta.dataset.rid;
+      const resp = q.responses.find(r => r.id === rid);
+      if (resp) {
+        resp.content = ta.value;
+        resp.updatedAt = new Date().toISOString();
+        const card = ta.closest('.resp-card');
+        card.querySelector('.char-count').textContent = `${ta.value.length.toLocaleString()} CHARACTERS`;
+        renderHeader();
+        renderSidebar();
+        persistDebounced();
+      }
+    });
+  });
+
+  // Copy response
+  mv.querySelectorAll('[data-action="copy-resp"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const rid = btn.dataset.rid;
+      const resp = q.responses.find(r => r.id === rid);
+      if (resp && resp.content) {
+        navigator.clipboard.writeText(resp.content);
+        toast('Response copied! ☺');
+      }
+    });
+  });
+
+  // Delete response
+  mv.querySelectorAll('[data-action="delete-resp"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const rid = btn.dataset.rid;
+      q.responses = (q.responses || []).filter(r => r.id !== rid);
+      persist();
+      renderMain();
+      renderSidebar();
+      renderHeader();
+      toast('Response slot removed');
+    });
+  });
+}
+
+function renderAll() {
+  renderHeader();
+  renderSidebar();
+  renderMain();
+}
+
+function createNewQuery() {
+  const newQ = {
+    id: uid('q'),
+    title: 'NEW AGENT QUERY',
+    text: '',
+    tags: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    responses: []
+  };
+  state.queries.unshift(newQ);
+  state.selectedId = newQ.id;
+  persist();
+  renderAll();
+  toast('Created new query ☺');
+}
+
+/* ═══════════════════ EXPORT BUILDERS ═══════════════════ */
+let currentExportTab = 'md';
+
+function buildMarkdownExport(queries) {
+  let md = `# ${state.project || 'Agent Response Compilation'}\n\n`;
+  md += `Exported: ${new Date().toISOString()}\n`;
+  md += `Total Queries: ${queries.length}\n\n---\n\n`;
+
+  queries.forEach((q, i) => {
+    md += `## Query ${i + 1}: ${q.title || 'Untitled Query'}\n\n`;
+    if (q.tags && q.tags.length) {
+      md += `**Tags:** ${q.tags.map(t => `\`${t}\``).join(', ')}\n\n`;
+    }
+    md += `### Prompt\n\n\`\`\`\n${q.text || ''}\n\`\`\`\n\n`;
+
+    const responses = q.responses || [];
+    md += `### Responses (${responses.length})\n\n`;
+    if (responses.length === 0) {
+      md += `*No responses recorded.*\n\n`;
+    } else {
+      responses.forEach((r, ri) => {
+        const modelName = (r.model && r.model.trim()) ? r.model.trim() : `Response ${ri + 1}`;
+        md += `#### ${ri + 1}. ${modelName}\n\n`;
+        md += `\`\`\`\n${r.content || ''}\n\`\`\`\n\n`;
+      });
+    }
+
+    md += `---\n\n`;
+  });
+
+  return md;
+}
+
+function buildXmlExport(queries) {
+  let xml = `<agent_compilation project="${esc(state.project)}">\n`;
+  queries.forEach((q, i) => {
+    xml += `  <query index="${i + 1}" id="${esc(q.id)}">\n`;
+    xml += `    <title>${esc(q.title)}</title>\n`;
+    xml += `    <tags>${esc((q.tags || []).join(', '))}</tags>\n`;
+    xml += `    <prompt><![CDATA[\n${q.text || ''}\n]]></prompt>\n`;
+    xml += `    <responses count="${(q.responses || []).length}">\n`;
+    (q.responses || []).forEach((r, ri) => {
+      xml += `      <response index="${ri + 1}" model="${esc(r.model || `Model ${ri + 1}`)}">\n`;
+      xml += `        <![CDATA[\n${r.content || ''}\n]]>\n`;
+      xml += `      </response>\n`;
+    });
+    xml += `    </responses>\n`;
+    xml += `  </query>\n`;
+  });
+  xml += `</agent_compilation>`;
+  return xml;
+}
+
+function updateExportView() {
+  const currentOnly = document.getElementById('exportCurrentOnly').checked;
+  const targetQueries = currentOnly
+    ? (getSelected() ? [getSelected()] : [])
+    : state.queries;
+
+  let output = '';
+  if (currentExportTab === 'md') {
+    output = buildMarkdownExport(targetQueries);
+  } else if (currentExportTab === 'json') {
+    output = JSON.stringify({ project: state.project, queries: targetQueries }, null, 2);
+  } else if (currentExportTab === 'xml') {
+    output = buildXmlExport(targetQueries);
+  }
+
+  const pre = document.getElementById('exportContent');
+  pre.textContent = output;
+  document.getElementById('exportSize').textContent = `${output.length.toLocaleString()} CHARACTERS · ${(new Blob([output]).size / 1024).toFixed(1)} KB`;
+}
+
+function openModal(id) {
+  document.getElementById(id).style.display = 'flex';
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+/* ═══════════════════ RESIZABLE SIDEBAR LOGIC ═══════════════════ */
+function initSidebarResizer() {
+  const sidebar = document.getElementById('sidebar');
+  const resizer = document.getElementById('sidebarResizer');
+  if (!sidebar || !resizer) return;
+
+  // Restore saved width from localStorage
+  const savedWidth = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+  if (savedWidth) {
+    const num = parseInt(savedWidth, 10);
+    if (num >= 220 && num <= 600) {
+      sidebar.style.width = `${num}px`;
+    }
+  }
+
+  let isDragging = false;
+
+  resizer.addEventListener('pointerdown', (e) => {
+    isDragging = true;
+    resizer.setPointerCapture(e.pointerId);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  window.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    const newWidth = Math.max(220, Math.min(600, e.clientX));
+    sidebar.style.width = `${newWidth}px`;
+  });
+
+  const stopDragging = (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebar.style.width);
+  };
+
+  window.addEventListener('pointerup', stopDragging);
+  window.addEventListener('pointercancel', stopDragging);
+
+  // Double-click resets to default 320px
+  resizer.addEventListener('dblclick', () => {
+    sidebar.style.width = '320px';
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, '320px');
+    toast('Sidebar reset to default width (320px)');
+  });
+}
+
+/* ═══════════════════ INITIALIZATION & LISTENERS ═══════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  initSidebarResizer();
+
+  // Mobile sidebar toggle
+  const toggleBtn = document.getElementById('toggleSidebarBtn');
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  const toggleSidebar = () => {
+    sidebar.classList.toggle('max-lg:-translate-x-full');
+    backdrop.classList.toggle('hidden');
+  };
+  if (toggleBtn) toggleBtn.addEventListener('click', toggleSidebar);
+  if (backdrop) backdrop.addEventListener('click', toggleSidebar);
+
+  // Add query
+  document.getElementById('addQueryBtn').addEventListener('click', createNewQuery);
+
+  // Filter input
+  document.getElementById('filterInput').addEventListener('input', renderSidebar);
+
+  // Archive filter toggle
+  const showArchivedToggle = document.getElementById('showArchivedToggle');
+  if (showArchivedToggle) {
+    showArchivedToggle.addEventListener('change', renderSidebar);
+  }
+
+  // Project name input
+  document.getElementById('projectName').addEventListener('input', (e) => {
+    state.project = e.target.value;
+    persistDebounced();
+  });
+
+  // Save button
+  document.getElementById('saveNowBtn').addEventListener('click', async () => {
+    await persist();
+    toast('Saved to disk! 💾');
+  });
+
+  // Copy CLI command button
+  document.getElementById('copyCliBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText('node scripts/read-responses.js');
+    toast('CLI command copied! ☺');
+  });
+
+  // Export Modal
+  document.getElementById('openExportBtn').addEventListener('click', () => {
+    updateExportView();
+    openModal('exportModal');
+  });
+  document.getElementById('closeExportBtn').addEventListener('click', () => closeModal('exportModal'));
+  document.getElementById('exportModalBackdrop').addEventListener('click', () => closeModal('exportModal'));
+  document.getElementById('exportCurrentOnly').addEventListener('change', updateExportView);
+
+  document.querySelectorAll('.export-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.export-tab').forEach(t => {
+        t.className = 'export-tab px-4 py-2 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-[#EDE8DC] text-[#524F49]';
+      });
+      tab.className = 'export-tab px-4 py-2 text-xs sm:text-sm font-black uppercase border-2 border-black bg-[#FAF8F3] shadow-[2px_2px_0px_#181818]';
+      currentExportTab = tab.dataset.tab;
+      updateExportView();
+    });
+  });
+
+  document.getElementById('copyExportBtn').addEventListener('click', () => {
+    const text = document.getElementById('exportContent').textContent;
+    navigator.clipboard.writeText(text);
+    toast('Export content copied! 📋');
+  });
+
+  document.getElementById('downloadExportBtn').addEventListener('click', () => {
+    const text = document.getElementById('exportContent').textContent;
+    const ext = currentExportTab === 'md' ? 'md' : currentExportTab === 'json' ? 'json' : 'xml';
+    const blob = new Blob([text], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `agent-compilation-${Date.now()}.${ext}`;
+    a.click();
+    toast('File downloaded! ⬇');
+  });
+
+  // Import Modal
+  document.getElementById('openImportBtn').addEventListener('click', () => openModal('importModal'));
+  document.getElementById('closeImportBtn').addEventListener('click', () => closeModal('importModal'));
+  document.getElementById('cancelImportBtn').addEventListener('click', () => closeModal('importModal'));
+  document.getElementById('importModalBackdrop').addEventListener('click', () => closeModal('importModal'));
+
+  document.getElementById('runImportBtn').addEventListener('click', () => {
+    const val = document.getElementById('importText').value.trim();
+    if (!val) return closeModal('importModal');
+
+    if (val.startsWith('{') && val.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed.queries)) {
+          state.queries = [...parsed.queries, ...state.queries];
+          state.selectedId = parsed.queries[0]?.id || state.selectedId;
+          persist();
+          renderAll();
+          closeModal('importModal');
+          toast(`Imported ${parsed.queries.length} queries ☺`);
+          return;
+        }
+      } catch (e) {}
+    }
+
+    const blocks = val.split(/\n\s*---\s*\n/).filter(b => b.trim().length > 0);
+    const newItems = blocks.map(block => {
+      const lines = block.trim().split('\n');
+      const title = lines[0].replace(/^#+\s*/, '').trim();
+      const text = lines.slice(1).join('\n').trim();
+      return {
+        id: uid('q'),
+        title: title || 'IMPORTED QUERY',
+        text: text || title,
+        tags: ['imported'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        responses: []
+      };
+    });
+
+    state.queries = [...newItems, ...state.queries];
+    state.selectedId = newItems[0].id;
+    persist();
+    renderAll();
+    closeModal('importModal');
+    document.getElementById('importText').value = '';
+    toast(`Imported ${newItems.length} queries ☺`);
+  });
+
+  loadData();
+});
+</script>
+
+</body>
+</html>

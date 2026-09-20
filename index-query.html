@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Response Hub — Multi-Model Compilation</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-800-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/jetbrains-mono@latest/latin-400-normal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/fonts/jetbrains-mono@latest/latin-600-normal.css">
+<style>
+  html,body{height:100%;}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#020617;}
+  .font-mono,pre,textarea.mono{font-family:'JetBrains Mono',ui-monospace,monospace;}
+  ::-webkit-scrollbar{width:9px;height:9px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#1e293b;border-radius:8px;border:2px solid #020617;}
+  ::-webkit-scrollbar-thumb:hover{background:#334155;}
+  pre::-webkit-scrollbar-thumb{border:2px solid #0f172a;}
+  .fade-in{animation:fadeIn .25s ease both;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+  .toast-in{animation:toastIn .25s ease both;}
+  @keyframes toastIn{from{opacity:0;transform:translateX(16px);}to{opacity:1;transform:none;}}
+  .glow{background:radial-gradient(600px circle at 70% -10%,rgba(99,102,241,.14),transparent 60%),radial-gradient(500px circle at 10% 0%,rgba(139,92,246,.08),transparent 55%);}
+  textarea,input{scrollbar-width:thin;}
+  ::selection{background:rgba(99,102,241,.4);}
+</style>
+</head>
+<body class="text-slate-200 antialiased">
+
+<div class="h-screen flex flex-col glow">
+
+  <!-- ══════════ HEADER ══════════ -->
+  <header class="h-14 shrink-0 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur flex items-center gap-3 px-4 z-30">
+    <button data-action="toggle-sidebar" class="lg:hidden p-1.5 rounded-lg hover:bg-slate-800 text-slate-400" aria-label="Toggle sidebar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      </div>
+      <div class="hidden sm:block leading-tight">
+        <div class="text-sm font-bold text-white tracking-tight">Agent Response Hub</div>
+        <div class="text-[10px] text-slate-500 -mt-0.5">multi-model compilation workspace</div>
+      </div>
+    </div>
+
+    <div class="hidden md:flex items-center gap-1.5 ml-4 pl-4 border-l border-slate-800">
+      <span class="text-[10px] uppercase tracking-wider text-slate-500">Project</span>
+      <input id="projectName" class="bg-transparent text-sm font-semibold text-slate-200 outline-none border-b border-transparent hover:border-slate-700 focus:border-indigo-500 w-40 transition-colors" placeholder="Project name">
+    </div>
+
+    <div class="ml-auto flex items-center gap-4">
+      <div class="hidden sm:flex items-center gap-3 text-[11px] font-mono">
+        <span class="text-slate-400"><b id="statQueries" class="text-slate-100">0</b> queries</span>
+        <span class="text-slate-400"><b id="statResponses" class="text-slate-100">0</b> responses</span>
+        <span class="flex items-center gap-1.5">
+          <span class="w-16 h-1.5 rounded-full bg-slate-800 overflow-hidden"><span id="headerBar" class="block h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-500" style="width:0%"></span></span>
+          <b id="statPct" class="text-emerald-300">0%</b>
+        </span>
+      </div>
+      <button data-action="open-import" class="px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">Import</button>
+      <button data-action="open-export" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:brightness-110 transition-all">Export ⬇</button>
+      <button data-action="reset-all" title="Reset workspace" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition-colors">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- sidebar backdrop (mobile) -->
+    <div id="sidebarBackdrop" class="fixed inset-0 bg-black/60 z-30 hidden lg:hidden" data-action="toggle-sidebar"></div>
+
+    <!-- ══════════ SIDEBAR ══════════ -->
+    <aside id="sidebar" class="w-72 shrink-0 border-r border-slate-800/80 bg-slate-950/60 backdrop-blur flex flex-col h-full overflow-hidden max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40 max-lg:-translate-x-full max-lg:transition-transform max-lg:duration-200 max-lg:shadow-2xl">
+
+      <!-- Model Panel -->
+      <div class="p-4 border-b border-slate-800/80">
+        <div class="flex items-center justify-between mb-2.5">
+          <h2 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>
+            Model Panel
+          </h2>
+          <span id="modelCount" class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">0</span>
+        </div>
+        <div id="modelList" class="space-y-0.5 max-h-44 overflow-y-auto pr-1"></div>
+        <button data-action="toggle-model-form" id="addModelBtn" class="mt-2 w-full py-1.5 rounded-lg border border-dashed border-slate-700 text-[11px] font-semibold text-slate-400 hover:border-indigo-500/60 hover:text-indigo-300 transition-colors">+ Add model / platform</button>
+        <form id="modelForm" class="hidden mt-2 space-y-2 rounded-xl border border-indigo-500/30 bg-indigo-500/5 p-2.5">
+          <input id="modelNameInput" required placeholder="Model name — e.g. GPT-4o" class="w-full bg-slate-950/70 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-indigo-500 placeholder-slate-600">
+          <input id="modelPlatformInput" required placeholder="Platform — e.g. OpenAI" class="w-full bg-slate-950/70 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-indigo-500 placeholder-slate-600">
+          <div class="flex gap-2">
+            <button type="submit" class="flex-1 py-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold transition-colors">Add to panel</button>
+            <button type="button" data-action="cancel-model-form" class="px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 text-xs hover:bg-slate-800 transition-colors">Cancel</button>
+          </div>
+          <p class="text-[10px] text-slate-500 leading-snug">Every model here automatically gets a response slot in <b>all</b> queries.</p>
+        </form>
+      </div>
+
+      <!-- Query list -->
+      <div class="flex-1 overflow-y-auto p-4">
+        <div class="flex items-center justify-between mb-2.5">
+          <h2 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+            Agent Queries
+          </h2>
+          <button data-action="add-query" class="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 px-2 py-0.5 rounded-md hover:bg-indigo-500/10 transition-colors">+ New</button>
+        </div>
+        <div id="queryList"></div>
+      </div>
+
+      <div class="p-3 border-t border-slate-800/80 text-[10px] text-slate-600 leading-relaxed">
+        Workflow: <span class="text-slate-500">agent uploads queries → you paste each model's output into its slot → export one structured compilation back to the agent.</span>
+      </div>
+    </aside>
+
+    <!-- ══════════ MAIN ══════════ -->
+    <main class="flex-1 overflow-y-auto">
+      <div id="mainView" class="max-w-6xl mx-auto p-4 sm:p-6"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ══════════ EXPORT MODAL ══════════ -->
+<div id="exportModal" class="fixed inset-0 z-50 items-center justify-center p-4" style="display:none">
+  <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" data-action="close-modal" data-modal="exportModal"></div>
+  <div class="relative w-full max-w-4xl h-[85vh] bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden fade-in">
+    <div class="flex items-center gap-3 px-5 py-3.5 border-b border-slate-800">
+      <h3 class="text-sm font-bold text-white">Structured Export — agent-ready compilation</h3>
+      <label class="ml-auto flex items-center gap-1.5 text-[11px] text-slate-400 cursor-pointer select-none">
+        <input type="checkbox" id="exportCompleteOnly" class="accent-indigo-500"> only fully-answered queries
+      </label>
+      <button data-action="close-modal" data-modal="exportModal" class="p-1 rounded-md text-slate-500 hover:text-white hover:bg-slate-800">✕</button>
+    </div>
+    <div class="flex gap-1 px-5 pt-3 border-b border-slate-800 bg-slate-900">
+      <button data-action="export-tab" data-tab="json" class="export-tab px-3.5 py-2 rounded-t-lg text-xs font-bold border-b-2 border-indigo-500 text-indigo-300">JSON</button>
+      <button data-action="export-tab" data-tab="md" class="export-tab px-3.5 py-2 rounded-t-lg text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-300">Markdown</button>
+      <button data-action="export-tab" data-tab="xml" class="export-tab px-3.5 py-2 rounded-t-lg text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-300">XML (agent prompt)</button>
+    </div>
+    <pre id="exportContent" class="flex-1 overflow-auto p-5 text-[11.5px] leading-relaxed font-mono text-emerald-200/90 bg-slate-950/70 whitespace-pre-wrap break-words"></pre>
+    <div class="flex items-center gap-2 px-5 py-3 border-t border-slate-800 bg-slate-900">
+      <span id="exportSize" class="text-[10px] font-mono text-slate-500"></span>
+      <div class="ml-auto flex gap-2">
+        <button data-action="copy-export" class="px-4 py-2 rounded-lg text-xs font-bold border border-slate-700 text-slate-200 hover:bg-slate-800 transition-colors">📋 Copy to clipboard</button>
+        <button data-action="download-export" class="px-4 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:brightness-110 transition-all">⬇ Download file</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ IMPORT MODAL ══════════ -->
+<div id="importModal" class="fixed inset-0 z-50 items-center justify-center p-4" style="display:none">
+  <div class="absolute inset-0 bg-black/75 backdrop-blur-sm" data-action="close-modal" data-modal="importModal"></div>
+  <div class="relative w-full max-w-2xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden fade-in">
+    <div class="flex items-center px-5 py-3.5 border-b border-slate-800">
+      <h3 class="text-sm font-bold text-white">Import</h3>
+      <button data-action="close-modal" data-modal="importModal" class="ml-auto p-1 rounded-md text-slate-500 hover:text-white hover:bg-slate-800">✕</button>
+    </div>
+    <div class="flex gap-1 px-5 pt-3">
+      <button data-action="import-mode" data-mode="bulk" class="import-mode px-3.5 py-2 rounded-t-lg text-xs font-bold border-b-2 border-indigo-500 text-indigo-300">Bulk queries (text)</button>
+      <button data-action="import-mode" data-mode="json" class="import-mode px-3.5 py-2 rounded-t-lg text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-300">Previous export (JSON)</button>
+    </div>
+    <div class="p-5 space-y-3">
+      <p id="importHint" class="text-[11px] text-slate-500 leading-relaxed">Paste agent queries below. Separate multiple queries with a line of <code class="font-mono text-indigo-300">---</code>. The first line of each block becomes its title.</p>
+      <textarea id="importText" rows="10" class="w-full bg-slate-950/70 border border-slate-700 rounded-xl p-3 text-xs font-mono text-slate-200 outline-none focus:border-indigo-500 resize-y placeholder-slate-600" placeholder="Query 1 text…&#10;---&#10;Query 2 text…"></textarea>
+      <div class="flex justify-end gap-2">
+        <button data-action="close-modal" data-modal="importModal" class="px-4 py-2 rounded-lg text-xs font-semibold border border-slate-700 text-slate-300 hover:bg-slate-800">Cancel</button>
+        <button data-action="run-import" class="px-4 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-indigo-500 to-violet-600 text-white hover:brightness-110">Import</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" class="fixed bottom-4 right-4 z-[60] space-y-2"></div>
+
+<script>
+/* ═══════════════════ STATE ═══════════════════ */
+const STORAGE_KEY = 'agent-response-hub-v1';
+const MODEL_COLORS = ['#34d399','#818cf8','#fbbf24','#22d3ee','#f472b6','#a78bfa','#fb7185','#4ade80','#f97316','#38bdf8'];
+
+function uid(){ return Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4); }
+function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function debounce(fn, ms){ let t; return function(...a){ clearTimeout(t); t=setTimeout(()=>fn.apply(this,a), ms); }; }
+function nextColor(){ return MODEL_COLORS[state.models.length % MODEL_COLORS.length]; }
+function fmtTime(iso){ try{ return new Date(iso).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+
+function seed(){
+  const m1={id:uid(),name:'GPT-4o',platform:'OpenAI',color:MODEL_COLORS[0]};
+  const m2={id:uid(),name:'Claude Sonnet 4',platform:'Anthropic',color:MODEL_COLORS[1]};
+  const m3={id:uid(),name:'Gemini 2.5 Pro',platform:'Google AI Studio',color:MODEL_COLORS[2]};
+  const m4={id:uid(),name:'DeepSeek V3',platform:'DeepSeek',color:MODEL_COLORS[3]};
+  const q1={ id:uid(), title:'Design a distributed rate-limiter',
+    text:'We are building a distributed API gateway. Design a rate-limiting mechanism that supports per-user and per-API-key limits, works across 6 regions, degrades gracefully under network partition, and returns standard 429 responses with Retry-After headers. Provide data structures, algorithms, and trade-offs.',
+    tags:['architecture','backend','distributed'], consolidated:'',
+    responses:{ [m1.id]:{ content:'Recommended approach: sliding-window counter backed by Redis, with a token-bucket fallback for local degradation.\n\n1. Data structure — sorted set per key: ZADD ratelimit:{userId} <now-ms> <req-id>, then ZREMRANGEBYSCORE to evict entries older than the window, ZCARD for the count. Pipeline all three in one Lua script for atomicity.\n\n2. Cross-region — use a two-tier scheme: local in-region counters (fast path) + async global reconciliation every ~1s. During partition, each region enforces limit/N locally so the global budget is approximately preserved.\n\n3. 429 handling — always set Retry-After from the oldest entry expiry in the window.\n\nTrade-offs: sliding window is memory-heavier than fixed window but avoids burst-at-boundary abuse; strict global consistency would add cross-region latency on every request.', params:'temp=0.4', updatedAt:new Date().toISOString() } } };
+  const q2={ id:uid(), title:'Refactor plan for legacy auth module',
+    text:'Our Node.js authentication module uses callbacks and session cookies. Propose a step-by-step refactor plan to migrate to async/await with JWT + refresh-token rotation, keeping zero downtime. Include risk assessment and rollback strategy.',
+    tags:['refactor','security','nodejs'], consolidated:'', responses:{} };
+  const st={ project:'My Project', models:[m1,m2,m3,m4], queries:[q1,q2], selectedId:q1.id };
+  return st;
+}
+
+function loadState(){
+  try{ const raw=localStorage.getItem(STORAGE_KEY); if(!raw) return null;
+    const p=JSON.parse(raw);
+    if(!p||!Array.isArray(p.queries)||!Array.isArray(p.models)) return null;
+    return p;
+  }catch(e){ return null; }
+}
+let state = loadState() || seed();
+function save(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+const saveDebounced = debounce(save, 350);
+
+/* ═══════════════════ HELPERS ═══════════════════ */
+function getSelected(){ return state.queries.find(q=>q.id===state.selectedId) || null; }
+function countFilled(q){ return state.models.filter(m=>((q.responses[m.id]||{}).content||'').trim().length>0).length; }
+function statusOf(q){
+  const tot=state.models.length; if(tot===0) return 'no-models';
+  const f=countFilled(q); return f===tot?'complete':(f>0?'partial':'pending');
+}
+function getStats(){
+  let resp=0, slots=0;
+  state.queries.forEach(q=>{ state.models.forEach(m=>{ slots++; if(((q.responses[m.id]||{}).content||'').trim()) resp++; }); });
+  return { total:state.queries.length, resp, slots, pct: slots?Math.round(resp/slots*100):0 };
+}
+
+function toast(msg, type){
+  const wrap=document.getElementById('toasts');
+  const el=document.createElement('div');
+  const ok = type!=='err';
+  el.className='toast-in flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold shadow-xl backdrop-blur '+(ok?'bg-slate-900/95 border-emerald-500/40 text-emerald-300':'bg-slate-900/95 border-rose-500/40 text-rose-300');
+  el.innerHTML=(ok?'✓':'✕')+' <span class="text-slate-200 font-medium">'+esc(msg)+'</span>';
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.transition='opacity .3s, transform .3s'; el.style.opacity='0'; el.style.transform='translateX(12px)'; setTimeout(()=>el.remove(),320); }, 2600);
+}
+
+/* ═══════════════════ RENDER: HEADER ═══════════════════ */
+function renderHeader(){
+  const pn=document.getElementById('projectName');
+  if(document.activeElement!==pn) pn.value=state.project;
+  const s=getStats();
+  document.getElementById('statQueries').textContent=s.total;
+  document.getElementById('statResponses').textContent=s.resp;
+  document.getElementById('statPct').textContent=s.pct+'%';
+  document.getElementById('headerBar').style.width=s.pct+'%';
+}
+
+/* ═══════════════════ RENDER: SIDEBAR ═══════════════════ */
+function renderSidebar(){
+  document.getElementById('modelCount').textContent=state.models.length;
+  const ml=document.getElementById('modelList');
+  ml.innerHTML = state.models.length ? state.models.map(m=>`
+    <div class="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-800/60 transition-colors">
+      <span class="w-2 h-2 rounded-full shrink-0" style="background:${m.color};box-shadow:0 0 6px ${m.color}66"></span>
+      <div class="min-w-0 flex-1">
+        <div class="text-xs font-semibold text-slate-200 truncate">${esc(m.name)}</div>
+        <div class="text-[10px] text-slate-500 truncate">${esc(m.platform)}</div>
+      </div>
+      <button data-action="delete-model" data-id="${m.id}" title="Remove model" class="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-rose-400 text-xs px-1 transition-all">✕</button>
+    </div>`).join('')
+    : `<div class="text-[11px] text-slate-500 px-2 py-1.5 leading-relaxed">No models yet. Add every model/platform you will paste responses from — slots appear in all queries automatically.</div>`;
+
+  const ql=document.getElementById('queryList');
+  ql.innerHTML = state.queries.length ? state.queries.map((q,i)=>{
+    const f=countFilled(q), tot=state.models.length, pct=tot?Math.round(f/tot*100):0;
+    const sel=q.id===state.selectedId;
+    const dot = (tot>0&&f===tot)?'bg-emerald-400 shadow-[0_0_6px_#34d399]' : f>0?'bg-amber-400':'bg-slate-700';
+    return `
+    <button data-action="select-query" data-id="${q.id}" class="w-full text-left rounded-xl px-3 py-2.5 mb-1.5 border transition-all ${sel?'bg-indigo-500/10 border-indigo-500/40 shadow-lg shadow-indigo-500/5':'border-transparent hover:bg-slate-800/60'}">
+      <div class="flex items-center gap-2">
+        <span class="text-[10px] font-mono font-bold ${sel?'text-indigo-300':'text-slate-500'}">Q${i+1}</span>
+        <span class="text-xs font-semibold truncate flex-1 ${sel?'text-white':'text-slate-300'}">${esc(q.title||'Untitled query')}</span>
+        <span class="w-1.5 h-1.5 rounded-full ${dot} shrink-0"></span>
+      </div>
+      <div class="mt-2 flex items-center gap-2">
+        <div class="h-1 flex-1 rounded-full bg-slate-800 overflow-hidden"><div class="h-full rounded-full transition-all duration-500 ${(f===tot&&tot>0)?'bg-emerald-400':'bg-indigo-500'}" style="width:${pct}%"></div></div>
+        <span class="text-[10px] text-slate-500 font-mono">${f}/${tot}</span>
+      </div>
+    </button>`;
+  }).join('')
+  : `<div class="text-[11px] text-slate-500 px-2 py-5 text-center leading-relaxed">No queries yet.<br>Click <b class="text-indigo-400">+ New</b> or use <b class="text-indigo-400">Import</b>.</div>`;
+}
+const renderSidebarSoft = debounce(()=>{ renderSidebar(); renderHeader(); }, 250);
+
+/* ═══════════════════ RENDER: MAIN ═══════════════════ */
+function emptyStateHTML(){
+  const step=(n,t,d)=>`<div class="flex gap-3 items-start"><span class="w-7 h-7 shrink-0 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-bold flex items-center justify-center">${n}</span><div><div class="text-sm font-semibold text-slate-200">${t}</div><div class="text-xs text-slate-500 mt-0.5 leading-relaxed">${d}</div></div></div>`;
+  return `
+  <div class="fade-in max-w-xl mx-auto mt-10 sm:mt-20 text-center">
+    <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-600/20 border border-indigo-500/30 flex items-center justify-center text-3xl mb-5">🧠</div>
+    <h2 class="text-xl font-extrabold text-white tracking-tight">Multi-model response workspace</h2>
+    <p class="text-sm text-slate-400 mt-2 mb-8 leading-relaxed">Collect the AI agent's queries, paste every platform's model output into its slot, then export one clean structured compilation the agent can consume directly.</p>
+    <div class="text-left space-y-5 rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      ${step(1,'Define your model panel','Add each model + platform once (GPT-4o, Claude, Gemini…). Every query automatically gets a slot for each one.')}
+      ${step(2,'Upload agent queries','Add them one by one or bulk-import many at once, separated by --- lines.')}
+      ${step(3,'Paste model responses','Copy each platform\'s output into the matching slot. Status, progress and character counts update live; everything auto-saves.')}
+      ${step(4,'Export structured compilation','Get JSON, Markdown, or an XML agent-prompt containing every query, every response, and your consolidated answers.')}
+    </div>
+    <div class="mt-8 flex justify-center gap-3">
+      <button data-action="add-query" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-500/25 hover:brightness-110 transition-all">+ Create first query</button>
+      <button data-action="open-import" class="px-5 py-2.5 rounded-xl text-sm font-semibold border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors">Import queries</button>
+    </div>
+  </div>`;
+}
+
+function respCardHTML(q, m){
+  const r=q.responses[m.id]||{content:'',params:'',updatedAt:null};
+  const has=(r.content||'').trim().length>0;
+  return `
+  <div class="resp-card rounded-2xl border ${has?'border-slate-700 bg-slate-900/70':'border-slate-800 bg-slate-900/50'} overflow-hidden transition-colors">
+    <div class="flex items-center gap-2 px-4 py-2.5 border-b border-slate-800/80 bg-slate-950/40">
+      <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${m.color};box-shadow:0 0 7px ${m.color}77"></span>
+      <span class="text-sm font-bold text-slate-100 truncate">${esc(m.name)}</span>
+      <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 truncate max-w-[140px]">${esc(m.platform)}</span>
+      <span class="status-dot ml-auto w-2 h-2 rounded-full shrink-0 ${has?'bg-emerald-400 shadow-[0_0_6px_#34d399]':'bg-slate-700'}" title="${has?'response received':'awaiting response'}"></span>
+    </div>
+    <div class="p-3 space-y-2">
+      <input class="params-input w-full bg-slate-950/50 border border-slate-800 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-400 outline-none focus:border-slate-600 transition-colors" data-mid="${m.id}" placeholder="params / notes (optional) — e.g. temp=0.7, prompt v2" value="${esc(r.params||'')}">
+      <textarea rows="9" class="resp-input w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3 text-[12.5px] leading-relaxed font-mono text-slate-200 outline-none focus:border-indigo-500/60 resize-y transition-colors placeholder-slate-600" data-mid="${m.id}" placeholder="Paste ${esc(m.name)} output here…">${esc(r.content||'')}</textarea>
+      <div class="flex items-center justify-between text-[10px] text-slate-600 px-1 font-mono">
+        <span class="charcount">${(r.content||'').length.toLocaleString()} chars</span>
+        <span class="savedinfo">${r.updatedAt&&has?('saved '+fmtTime(r.updatedAt)):'auto-saves'}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function queryViewHTML(q, idx){
+  const f=countFilled(q), tot=state.models.length, st=statusOf(q);
+  const pill = st==='complete'?'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+    : st==='partial'?'bg-amber-500/15 text-amber-300 border-amber-500/30'
+    : 'bg-slate-700/40 text-slate-400 border-slate-600/50';
+  return `
+  <div class="space-y-5 fade-in pb-10">
+    <!-- query header -->
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+      <div class="flex flex-wrap items-center gap-3">
+        <span class="font-mono text-xs font-bold text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-2.5 py-1.5">Q${idx+1}</span>
+        <input id="qTitle" value="${esc(q.title)}" placeholder="Untitled query — click to name it…" class="flex-1 min-w-[180px] bg-transparent text-lg font-bold text-white placeholder-slate-600 outline-none border-b border-transparent focus:border-indigo-500/60 transition-colors">
+        <span class="pill text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg border ${pill}">${st} · ${f}/${tot}</span>
+        <button data-action="delete-query" class="px-3 py-1.5 rounded-lg text-[11px] font-semibold border border-slate-700 text-slate-400 hover:text-rose-300 hover:border-rose-500/40 hover:bg-rose-500/10 transition-colors">Delete</button>
+      </div>
+      <div class="mt-3.5 flex flex-wrap items-center gap-2 text-xs">
+        <span class="text-slate-500 font-semibold">Tags</span>
+        <input id="qTags" value="${esc((q.tags||[]).join(', '))}" placeholder="comma, separated, tags" class="bg-slate-800/60 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] text-slate-300 outline-none focus:border-indigo-500/50 w-64 transition-colors placeholder-slate-600">
+      </div>
+    </div>
+
+    <!-- query text -->
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+      <div class="flex items-center justify-between mb-2.5">
+        <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+          Agent Query
+        </h3>
+        <span class="text-[10px] text-slate-600">paste exactly as the agent sent it</span>
+      </div>
+      <textarea id="qText" rows="5" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 text-[13px] leading-relaxed text-slate-200 outline-none focus:border-indigo-500/60 resize-y transition-colors placeholder-slate-600" placeholder="Paste the agent's query here…">${esc(q.text)}</textarea>
+    </div>
+
+    <!-- responses -->
+    <div>
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Model Responses
+          <span class="normal-case font-medium tracking-normal text-slate-600">— one slot per model in your panel</span>
+        </h3>
+        <span class="font-mono text-xs font-bold ${(f===tot&&tot>0)?'text-emerald-400':'text-slate-500'}">${f}/${tot} received</span>
+      </div>
+      ${ tot===0
+        ? `<div class="rounded-2xl border border-dashed border-slate-700 p-10 text-center text-sm text-slate-500 leading-relaxed">Your model panel is empty.<br><span class="text-xs">Add models on the left — a response slot for each will appear here for <b>every</b> query automatically.</span></div>`
+        : `<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">${state.models.map(m=>respCardHTML(q,m)).join('')}</div>` }
+    </div>
+
+    <!-- consolidated -->
+    <div class="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 to-indigo-500/5 p-5">
+      <h3 class="text-[11px] font-bold uppercase tracking-wider text-violet-300 flex items-center gap-1.5">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+        Consolidated Answer → back to the Agent
+      </h3>
+      <p class="text-[11px] text-slate-500 mt-1 mb-3 leading-relaxed">Merge the best parts of all model outputs into one final answer. Included in every export format.</p>
+      <textarea id="qConsolidated" rows="6" class="w-full bg-slate-950/60 border border-violet-500/20 rounded-xl p-3.5 text-[13px] leading-relaxed text-slate-200 outline-none focus:border-violet-500/60 resize-y transition-colors placeholder-slate-600" placeholder="Final consolidated answer for this query…">${esc(q.consolidated||'')}</textarea>
+    </div>
+  </div>`;
+}
+
+function renderMain(){
+  const mv=document.getElementById('mainView');
+  const q=getSelected();
+  if(!q){ mv.innerHTML=emptyStateHTML(); return; }
+  const idx=state.queries.indexOf(q);
+  mv.innerHTML=queryViewHTML(q, idx);
+  attachMainListeners(q);
+}
+
+function attachMainListeners(q){
+  const mv=document.getElementById('mainView');
+
+  const title=mv.querySelector('#qTitle');
+  title.addEventListener('input', ()=>{ q.title=title.value; saveDebounced(); renderSidebarSoft(); });
+
+  const tags=mv.querySelector('#qTags');
+  tags.addEventListener('change', ()=>{ q.tags=tags.value.split(',').map(t=>t.trim()).filter(Boolean); save(); toast('Tags updated'); });
+
+  const text=mv.querySelector('#qText');
+  text.addEventListener('input', ()=>{ q.text=text.value; saveDebounced(); });
+
+  const cons=mv.querySelector('#qConsolidated');
+  cons.addEventListener('input', ()=>{ q.consolidated=cons.value; saveDebounced(); });
+
+  mv.querySelectorAll('.resp-input').forEach(ta=>{
+    ta.addEventListener('input', ()=>{
+      const mid=ta.dataset.mid;
+      if(!q.responses[mid]) q.responses[mid]={content:'',params:'',updatedAt:null};
+      q.responses[mid].content=ta.value;
+      q.responses[mid].updatedAt=new Date().toISOString();
+      const card=ta.closest('.resp-card');
+      card.querySelector('.charcount').textContent=ta.value.length.toLocaleString()+' chars';
+      const filledNow=ta.value.trim().length>0;
+      const dot=card.querySelector('.status-dot');
+      dot.className='status-dot ml-auto w-2 h-2 rounded-full shrink-0 '+(filledNow?'bg-emerald-400 shadow-[0_0_6px_#34d399]':'bg-slate-700');
+      card.classList.toggle('border-slate-700', filledNow);
+      card.classList.toggle('border-slate-800', !filledNow);
+      saveDebounced(); renderSidebarSoft();
+    });
+  });
+
+  mv.querySelectorAll('.params-input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      const mid=inp.dataset.mid;
+      if(!q.responses[mid]) q.responses[mid]={content:'',params:'',updatedAt:null};
+      q.responses[mid].params=inp.value;
+      saveDebounced();
+    });
+  });
+}
+
+function renderAll(){ renderHeader(); renderSidebar(); renderMain(); }
+
+/* ═══════════════════ EXPORT BUILDERS ═══════════════════ */
+function exportQueryList(){
+  const only=document.getElementById('exportCompleteOnly') && document.getElementById('exportCompleteOnly').checked;
+  return state.queries
+    .map((q,i)=>({q, label:'Q'+(i+1)}))
+    .filter(({q})=> !only || (state.models.length>0 && countFilled(q)===state.models.length));
+}
+function queryExportObject(q, label){
+  const responses = state.models.map(m=>{
+    const r=q.responses[m.id]||{};
+    return { model:m.name, platform:m.platform, parameters:r.params||'', content:r.content||'', status:(r.content||'').trim()?'received':'missing', updatedAt:r.updatedAt||null };
+  });
+  return {
+    id:label, title:q.title||'', query:q.text||'', tags:q.tags||[], status:statusOf(q),
+    responsesExpected:state.models.length,
+    responsesReceived:responses.filter(r=>r.status==='received').length,
+    responses:responses.filter(r=>r.status==='received'),
+    missingModels:responses.filter(r=>r.status==='missing').map(r=>r.model),
+    consolidatedAnswer:q.consolidated||''
+  };
+}
+function buildJSON(){
+  const list=exportQueryList(); const s=getStats();
+  const out={
+    meta:{
+      format:'agent-response-compilation', version:'1.0',
+      project:state.project, generatedAt:new Date().toISOString(),
+      generator:'Agent Response Hub',
+      modelPanel:state.models.map(m=>({name:m.name,platform:m.platform})),
+      totalQueries:list.length, totalResponses:list.reduce((a,e)=>a+countFilled(e.q),0),
+      workspaceCompletion:s.pct+'%'
+    },
+    queries:list.map(({q,label})=>queryExportObject(q,label))
+  };
+  return JSON.stringify(out,null,2);
+}
+function buildMarkdown(){
+  const list=exportQueryList(); const s=getStats();
+  const L=[];
+  L.push('# Multi-Model Response Compilation — '+state.project);
+  L.push('');
+  L.push('> Generated: '+new Date().toISOString()+'  ');
+  L.push('> Queries: '+list.length+' · Responses collected: '+list.reduce((a,e)=>a+countFilled(e.q),0)+' · Workspace completion: '+s.pct+'%');
+  L.push('');
+  L.push('## Model Panel');
+  L.push('');
+  L.push('| Model | Platform |');
+  L.push('|---|---|');
+  state.models.forEach(m=>L.push('| '+m.name+' | '+m.platform+' |'));
+  state.queries.forEach((q,i)=>{
+    if(!list.some(e=>e.q===q)) return;
+    const label='Q'+(i+1); const f=countFilled(q); const tot=state.models.length;
+    L.push(''); L.push('---'); L.push('');
+    L.push('## '+label+(q.title?' · '+q.title:''));
+    L.push('');
+    L.push('- **Status:** '+statusOf(q)+' ('+f+'/'+tot+' responses)');
+    if((q.tags||[]).length) L.push('- **Tags:** '+q.tags.join(', '));
+    L.push('');
+    L.push('### Query');
+    L.push('');
+    L.push(q.text||'_(empty)_');
+    state.models.forEach(m=>{
+      const r=q.responses[m.id]||{};
+      if(!(r.content||'').trim()) return;
+      L.push('');
+      L.push('### Response — '+m.name+' ('+m.platform+')');
+      if(r.params) L.push('');
+      if(r.params) L.push('_Parameters: '+r.params+'_');
+      L.push('');
+      L.push(r.content);
+    });
+    if((q.consolidated||'').trim()){
+      L.push('');
+      L.push('### ✅ Consolidated Answer (for the agent)');
+      L.push('');
+      L.push(q.consolidated);
+    }
+  });
+  L.push(''); L.push('---');
+  L.push('_End of compilation — '+new Date().toISOString()+'_');
+  return L.join('\n');
+}
+function cdata(s){ return '<![CDATA['+String(s==null?'':s).replace(/]]>/g,']]]]><![CDATA[>')+'>'; }
+function buildXML(){
+  const list=exportQueryList(); const s=getStats();
+  const L=[];
+  L.push('<?xml version="1.0" encoding="UTF-8"?>');
+  L.push('<!-- Structured multi-model response compilation for AI agent consumption -->');
+  L.push('<compilation project="'+esc(state.project)+'" generated="'+new Date().toISOString()+'" version="1.0">');
+  L.push('  <meta totalQueries="'+list.length+'" totalResponses="'+list.reduce((a,e)=>a+countFilled(e.q),0)+'" workspaceCompletion="'+s.pct+'%"/>');
+  L.push('  <models>');
+  state.models.forEach(m=>L.push('    <model name="'+esc(m.name)+'" platform="'+esc(m.platform)+'"/>'));
+  L.push('  </models>');
+  state.queries.forEach((q,i)=>{
+    if(!list.some(e=>e.q===q)) return;
+    const label='Q'+(i+1);
+    L.push('  <query id="'+label+'" status="'+statusOf(q)+'" tags="'+esc((q.tags||[]).join(','))+'">');
+    L.push('    <title>'+esc(q.title||'')+'</title>');
+    L.push('    <text>'+cdata(q.text||'')+'</text>');
+    L.push('    <responses>');
+    state.models.forEach(m=>{
+      const r=q.responses[m.id]||{};
+      if(!(r.content||'').trim()) return;
+      L.push('      <response model="'+esc(m.name)+'" platform="'+esc(m.platform)+'" params="'+esc(r.params||'')+'">'+cdata(r.content)+'</response>');
+    });
+    L.push('    </responses>');
+    L.push('    <consolidated>'+cdata(q.consolidated||'')+'</consolidated>');
+  });
+  L.push('  </query-placeholder-ignore/>'.replace(/^.*$/,'')||'');
+  L.pop();
+  L.push('</compilation>');
+  return L.join('\n').split('\n').filter(x=>x!=='').join('\n');
+}
+
+/* export modal state */
+let exportTab='json', exportText='';
+const EXT={json:'json',md:'md',xml:'xml'};
+function renderExport(){
+  exportText = exportTab==='json'?buildJSON() : exportTab==='md'?buildMarkdown() : buildXML();
+  document.getElementById('exportContent').textContent=exportText;
+  document.getElementById('exportSize').textContent=(exportText.length/1024).toFixed(1)+' KB · '+exportText.split('\n').length+' lines';
+  document.querySelectorAll('.export-tab').forEach(b=>{
+    const on=b.dataset.tab===exportTab;
+    b.className='export-tab px-3.5 py-2 rounded-t-lg text-xs border-b-2 '+(on?'font-bold border-indigo-500 text-indigo-300':'font-semibold border-transparent text-slate-500 hover:text-slate-300');
+  });
+}
+function downloadFile(name, content, mime){
+  const blob=new Blob([content],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function slug(s){ return (s||'project').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'project'; }
+
+/* ═══════════════════ IMPORT ═══════════════════ */
+let importMode='bulk';
+function setImportMode(mode){
+  importMode=mode;
+  document.querySelectorAll('.import-mode').forEach(b=>{
+    const on=b.dataset.mode===mode;
+    b.className='import-mode px-3.5 py-2 rounded-t-lg text-xs border-b-2 '+(on?'font-bold border-indigo-500 text-indigo-300':'font-semibold border-transparent text-slate-500 hover:text-slate-300');
+  });
+  document.getElementById('importHint').innerHTML = mode==='bulk'
+    ? 'Paste agent queries below. Separate multiple queries with a line of <code class="font-mono text-indigo-300">---</code>. The first line of each block becomes its title.'
+    : 'Paste a previously exported JSON compilation (or a workspace JSON). Models, queries and responses will be merged into this workspace.';
+  document.getElementById('importText').placeholder = mode==='bulk'
+    ? 'Query 1 text…\n---\nQuery 2 text…'
+    : '{ "meta": { … }, "queries": [ … ] }';
+}
+function ensureModel(name, platform){
+  let m=state.models.find(x=>x.name===name && (!platform || x.platform===platform));
+  if(!m){ m={id:uid(),name:name||'Unknown model',platform:platform||'',color:nextColor()}; state.models.push(m); }
+  return m;
+}
+function runImport(){
+  const raw=document.getElementById('importText').value.trim();
+  if(!raw){ toast('Nothing to import','err'); return; }
+  let addedQ=0;
+  if(importMode==='json'){
+    try{
+      const obj=JSON.parse(raw);
+      const proj=obj.meta&&obj.meta.project || obj.project;
+      if(proj) state.project=proj;
+      const modelsIn=(obj.models)||(obj.meta&&obj.meta.modelPanel)||[];
+      modelsIn.forEach(mm=>ensureModel(mm.name, mm.platform||''));
+      const queriesIn=obj.queries||[];
+      queriesIn.forEach(qi=>{
+        const nq={ id:uid(), title:qi.title||'', text:qi.text||qi.query||'', tags:qi.tags||[], consolidated:qi.consolidatedAnswer!=null?qi.consolidatedAnswer:(qi.consolidated||''), responses:{} };
+        let arr=Array.isArray(qi.responses)?qi.responses:Object.values(qi.responses||{});
+        arr.forEach(r=>{
+          const content=r.content!=null?r.content:(typeof r==='string'?r:'');
+          if(!String(content).trim()) return;
+          const m=ensureModel(r.model||r.modelName||'Unknown', r.platform||'');
+          nq.responses[m.id]={content:String(content),params:r.params||r.parameters||'',updatedAt:r.updatedAt||new Date().toISOString()};
+        });
+        state.queries.push(nq); addedQ++;
+        if(state.queries.length===1) state.selectedId=nq.id;
+      });
+    }catch(e){ toast('Invalid JSON: '+e.message,'err'); return; }
+  }else{
+    const blocks=raw.split(/^\s*-{3,}\s*$/m).map(b=>b.trim()).filter(Boolean);
+    blocks.forEach(b=>{
+      const firstLine=b.split('\n')[0].trim();
+      const title=firstLine.length<=70?firstLine:firstLine.slice(0,67)+'…';
+      const nq={ id:uid(), title, text:b, tags:[], responses:{}, consolidated:'' };
+      state.queries.push(nq); addedQ++;
+      if(state.queries.length===1) state.selectedId=nq.id;
+    });
+  }
+  if(addedQ>0) state.selectedId=state.queries[state.queries.length-1].id;
+  save(); renderAll();
+  closeModal('importModal');
+  document.getElementById('importText').value='';
+  toast(addedQ+' quer'+(addedQ===1?'y':'ies')+' imported');
+}
+
+/* ═══════════════════ MODALS ═══════════════════ */
+function openModal(id){ const el=document.getElementById(id); el.style.display='flex'; }
+function closeModal(id){ document.getElementById(id).style.display='none'; }
+
+/* ═══════════════════ ACTIONS ═══════════════════ */
+function addQuery(){
+  const q={ id:uid(), title:'', text:'', tags:[], responses:{}, consolidated:'' };
+  state.queries.push(q); state.selectedId=q.id; save(); renderAll();
+  document.querySelector('main').scrollTop=0;
+  setTimeout(()=>{ const t=document.getElementById('qTitle'); if(t) t.focus(); },60);
+  toast('Query Q'+state.queries.length+' added');
+  closeSidebarMobile();
+}
+function selectQuery(id){
+  state.selectedId=id; save(); renderSidebar(); renderMain();
+  document.querySelector('main').scrollTop=0;
+  closeSidebarMobile();
+}
+function deleteQuery(){
+  const q=getSelected(); if(!q) return;
+  const idx=state.queries.indexOf(q);
+  if(!confirm('Delete Q'+(idx+1)+(q.title?' "'+q.title+'"':'')+' and all its pasted responses?')) return;
+  state.queries.splice(idx,1);
+  state.selectedId=state.queries.length?state.queries[Math.max(0,idx-1)].id:null;
+  save(); renderAll(); toast('Query deleted');
+}
+function deleteModel(id){
+  const m=state.models.find(x=>x.id===id); if(!m) return;
+  if(!confirm('Remove "'+m.name+'" from the panel? Its response slots (and any pasted content) disappear from all queries.')) return;
+  state.models=state.models.filter(x=>x.id!==id);
+  state.queries.forEach(q=>{ delete q.responses[id]; });
+  save(); renderAll(); toast(m.name+' removed from panel');
+}
+function closeSidebarMobile(){
+  if(window.innerWidth<1024){
+    document.getElementById('sidebar').classList.add('max-lg:-translate-x-full');
+    document.getElementById('sidebarBackdrop').classList.add('hidden');
+  }
+}
+
+document.addEventListener('click', e=>{
+  const el=e.target.closest('[data-action]'); if(!el) return;
+  const a=el.dataset.action;
+  switch(a){
+    case 'toggle-sidebar': {
+      const sb=document.getElementById('sidebar'), bd=document.getElementById('sidebarBackdrop');
+      const closed=sb.classList.contains('max-lg:-translate-x-full');
+      sb.classList.toggle('max-lg:-translate-x-full', !closed);
+      bd.classList.toggle('hidden', !closed);
+      break;
+    }
+    case 'add-query': addQuery(); break;
+    case 'select-query': selectQuery(el.dataset.id); break;
+    case 'delete-query': deleteQuery(); break;
+    case 'delete-model': deleteModel(el.dataset.id); break;
+    case 'toggle-model-form':
+      document.getElementById('modelForm').classList.remove('hidden');
+      document.getElementById('addModelBtn').classList.add('hidden');
+      document.getElementById('modelNameInput').focus();
+      break;
+    case 'cancel-model-form':
+      document.getElementById('modelForm').classList.add('hidden');
+      document.getElementById('addModelBtn').classList.remove('hidden');
+      break;
+    case 'open-export': renderExport(); openModal('exportModal'); break;
+    case 'open-import': setImportMode(importMode); openModal('importModal'); break;
+    case 'close-modal': closeModal(el.dataset.modal); break;
+    case 'export-tab': exportTab=el.dataset.tab; renderExport(); break;
+    case 'copy-export':
+      navigator.clipboard.writeText(exportText).then(()=>toast('Compilation copied to clipboard')).catch(()=>toast('Copy failed','err'));
+      break;
+    case 'download-export': {
+      const stamp=new Date().toISOString().slice(0,10);
+      const base=slug(state.project)+'-compilation-'+stamp;
+      const mime=exportTab==='json'?'application/json':exportTab==='md'?'text/markdown':'application/xml';
+      downloadFile(base+'.'+EXT[exportTab], exportText, mime);
+      toast('Download started');
+      break;
+    }
+    case 'import-mode': setImportMode(el.dataset.mode); break;
+    case 'run-import': runImport(); break;
+    case 'reset-all':
+      if(confirm('Reset the entire workspace? All queries, responses and models will be replaced with sample data.')){
+        localStorage.removeItem(STORAGE_KEY); state=seed(); save(); renderAll(); toast('Workspace reset');
+      }
+      break;
+  }
+});
+
+document.getElementById('modelForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const name=document.getElementById('modelNameInput').value.trim();
+  const platform=document.getElementById('modelPlatformInput').value.trim();
+  if(!name) return;
+  if(state.models.some(m=>m.name.toLowerCase()===name.toLowerCase() && m.platform.toLowerCase()===platform.toLowerCase())){
+    toast('Model already in panel','err'); return;
+  }
+  state.models.push({id:uid(),name,platform,color:nextColor()});
+  document.getElementById('modelNameInput').value=''; document.getElementById('modelPlatformInput').value='';
+  save(); renderAll();
+  document.getElementById('modelForm').classList.add('hidden');
+  document.getElementById('addModelBtn').classList.remove('hidden');
+  toast(name+' added — slots created in all queries');
+});
+
+document.getElementById('projectName').addEventListener('input', e=>{
+  state.project=e.target.value; saveDebounced();
+});
+document.getElementById('exportCompleteOnly').addEventListener('change', renderExport);
+
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ closeModal('exportModal'); closeModal('importModal'); }
+});
+
+/* ═══════════════════ BOOT ═══════════════════ */
+if(!state.selectedId && state.queries.length) state.selectedId=state.queries[0].id;
+renderAll();
+save();
+setTimeout(()=>toast('Workspace ready — everything auto-saves locally'),400);
+</script>
+</body>
+</html>

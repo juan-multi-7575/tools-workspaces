@@ -309,6 +309,12 @@ export default function UnifiedMediaRunsHub({
                           {latestSuccessPackage.subtitles.length === 0 && <p className="text-xs text-[#7C5339] italic">No subtitles in this package</p>}
                         </div>
                       </div>
+                      {(() => {
+                        const successRun = pipelineRuns.find((r) => r.bundle_name === latestSuccessPackage.title) || pipelineRuns.find((r) => r.status === 'completed')
+                        return successRun ? (
+                          <a href={api.downloadPipelineRunUrl(workspaceId, successRun.pipeline_run_id)} className="inline-flex w-full justify-center items-center gap-1.5 rounded-xl border border-[#9D6638] bg-[#EDE5CD] px-3.5 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 mt-2"><Package className="size-3.5 text-[#9D6638]" /> Download This Output as ZIP (Browser)</a>
+                        ) : null
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -376,6 +382,10 @@ export default function UnifiedMediaRunsHub({
                     </div>
                     <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-[#B0BA99]/50">
                       <a href={activeMediaPackage.video.download_url} className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-3.5 py-2 text-xs font-bold text-[#FDFBF7] hover:bg-[#86542C]"><Download className="size-3.5" /> Download Video</a>
+                      {latestRun && (
+                        <a href={api.downloadPipelineRunUrl(workspaceId, latestRun.pipeline_run_id)} className="inline-flex items-center gap-1.5 rounded-xl border border-[#9D6638] bg-[#EDE5CD] px-3.5 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 shadow-2xs"><Package className="size-3.5 text-[#9D6638]" /> Download Full Output (ZIP)</a>
+                      )}
+                      <span className="text-[10px] text-[#7C5339] self-center ml-1">User-decided: only when you click, zipped via browser</span>
                       <button onClick={() => onRemoveMediaItem(activeMediaPackage.video!.name)} className="ml-auto inline-flex items-center gap-1 rounded-xl border border-[#A83232]/40 bg-[#FFFFFF] px-3 py-2 text-xs font-bold text-[#A83232] hover:bg-[#A83232] hover:text-[#FFFFFF]"><Trash2 className="size-3.5" /> Delete</button>
                     </div>
                   </div>
@@ -471,8 +481,9 @@ export default function UnifiedMediaRunsHub({
                                 {idx + 1}. {st.tool_id} <span className={`size-1.5 rounded-full ${st.status === 'completed' ? 'bg-[#2E6B47]' : st.status === 'failed' ? 'bg-[#FDFBF7]' : 'bg-amber-400'}`} />
                               </span>
                             ))}
+                            <a href={api.downloadPipelineRunUrl(workspaceId, group.pipeline_run_id)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#9D6638] bg-[#EDE5CD] text-[#4E220F] text-xs font-bold hover:bg-[#B0BA99]/40 ml-auto"><Package className="size-3 text-[#9D6638]" /> Download ZIP</a>
                             {group.media.video && !isFailed && (
-                              <button onClick={() => onPreviewArtifact(group.media.video!.name, group.media.video!.size, group.media.video!.preview_url, group.media.video!.download_url)} className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#9D6638] text-[#FDFBF7] text-xs font-bold"><Play className="size-3 fill-current" /> Preview</button>
+                              <button onClick={() => onPreviewArtifact(group.media.video!.name, group.media.video!.size, group.media.video!.preview_url, group.media.video!.download_url)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#9D6638] text-[#FDFBF7] text-xs font-bold"><Play className="size-3 fill-current" /> Preview</button>
                             )}
                           </div>
                           {isExpanded && (

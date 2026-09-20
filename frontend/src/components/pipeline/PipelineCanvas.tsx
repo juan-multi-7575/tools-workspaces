@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react'
 import {
   ReactFlow,
   Background,
@@ -6,376 +6,1155 @@ import {
   MiniMap,
   Handle,
   Position,
+  BaseEdge,
+  EdgeLabelRenderer,
+  getBezierPath,
+  useReactFlow,
+  ReactFlowProvider,
   useNodesState,
   useEdgesState,
   addEdge,
   type Connection,
   type Edge,
+  type EdgeProps,
   type Node,
   type NodeProps,
   type NodeTypes,
+  type EdgeTypes,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { api, type PortKind, type ToolManifest } from '../../lib/api'
-import { CheckCircle2, Play, Plus, XCircle, Trash2, Settings2, BookmarkPlus } from 'lucide-react'
+import { api, type PortKind, type ToolManifest, type DAGNode, type DAGEdge } from '../../lib/api'
+import {
+  CheckCircle2,
+  Play,
+  AlertCircle,
+  Trash2,
+  BookmarkPlus,
+  X,
+  Maximize2,
+  Minimize2,
+  LayoutGrid,
+  Sparkles,
+  Unlink,
+  Square,
+} from 'lucide-react'
+import UniversalPipelineRunModal from './UniversalPipelineRunModal'
+import { resolvePipelineFlow, type PipelineEntryInput, type ResolvedPipelineFlow } from '../../lib/pipelineInputResolver'
+
+export type ToolNodeStatus = 'idle' | 'pending' | 'running' | 'completed' | 'failed' | 'skipped'
 
 type ToolNodeData = {
   label: string
   toolId: string
+  category?: string
   inputKinds: PortKind[]
   outputKinds: PortKind[]
   params: Record<string, unknown>
+  status?: ToolNodeStatus
+  errorMessage?: string
+  durationSeconds?: number
+  cached?: boolean
 }
 
-const PORT_COLOR: Record<PortKind, string> = {
-  any: '#a78bfa',
-  audio: '#34d399',
-  video: '#60a5fa',
-  text: '#f472b6',
-  folder: '#fbbf24',
+export function getPortColor(kind: string): string {
+  const k = (kind || '').toLowerCase()
+  if (k.includes('audio')) return '#9D6638' // caramel
+  if (k.includes('video')) return '#4E220F' // espresso
+  if (k.includes('image')) return '#B0BA99' // sage
+  if (k.includes('doc') || k.includes('pdf')) return '#86542C' // brown
+  if (k.includes('text') || k.includes('code')) return '#7C5339' // soft brown
+  if (k.includes('json') || k.includes('data')) return '#B0BA99' // sage
+  if (k.includes('sec') || k.includes('hash')) return '#A83232' // red
+  if (k.includes('net') || k.includes('port')) return '#9D6638' // caramel
+  return '#B0BA99'
 }
 
-function toolNodeColor(id: string): string {
-  let h = 0
-  for (const c of id) h = (h * 31 + c.charCodeAt(0)) % 360
-  return `hsl(${h} 70% 55%)`
-}
+/** Custom Interactive Edge with instant disconnect button on the line */
+function DeletableEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  markerEnd,
+  selected,
+}: EdgeProps) {
+  const { setEdges } = useReactFlow()
+  const [edgePath, labelX, labelY] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetPosition,
+    targetX,
+    targetY,
+  })
 
-function ToolNode({ data, selected }: NodeProps<Node<ToolNodeData>>) {
   return (
-    <div
-      className={
-        'w-60 rounded-xl border bg-garage-900 p-4 text-white shadow-2xl backdrop-blur-md ' +
-        (selected ? 'border-port-in ring-2 ring-port-in/40' : 'border-garage-800')
-      }
-    >
+    <>
+      <BaseEdge
+        path={edgePath}
+        markerEnd={markerEnd}
+        style={{
+          ...style,
+          stroke: selected ? '#A83232' : (style.stroke || '#9D6638'),
+          strokeWidth: selected ? 3.5 : (style.strokeWidth || 2.5),
+        }}
+      />
+      <EdgeLabelRenderer>
+        <div
+          style={{
+            position: 'absolute',
+            transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+            pointerEvents: 'all',
+          }}
+          className="nodrag nopan"
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setEdges((es) => es.filter((edge) => edge.id !== id))
+            }}
+            className="group flex size-5 items-center justify-center rounded-full bg-[#FFFFFF] border-2 border-[#B0BA99] text-[#7C5339] hover:bg-[#A83232] hover:text-[#FFFFFF] hover:border-[#A83232] shadow-sm transition-all duration-150 active:scale-90"
+            title="Disconnect this link (or press Delete)"
+          >
+            <span className="text-[11px] font-extrabold leading-none select-none group-hover:scale-110 transition-transform">
+              ×
+            </span>
+          </button>
+        </div>
+      </EdgeLabelRenderer>
+    </>
+  )
+}
+
+/** Custom Tool Node with per-node delete button and clear ports */
+function ToolNode({ id, data, selected }: NodeProps<Node<ToolNodeData>>) {
+  const { setNodes, setEdges } = useReactFlow()
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setNodes((nds) => nds.filter((n) => n.id !== id))
+    setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id))
+  }
+
+  const status = data.status || 'idle'
+
+  // Dynamic status styling
+  let containerStyle = 'w-72 rounded-2xl border p-3.5 text-[#4E220F] shadow-md transition-all duration-200 relative bg-[#FFFFFF] '
+  if (status === 'running') {
+    containerStyle += 'border-[#9D6638] ring-3 ring-[#9D6638]/40 shadow-xl animate-pulse '
+  } else if (status === 'completed') {
+    containerStyle += 'border-emerald-600 ring-2 ring-emerald-500/30 shadow-md '
+  } else if (status === 'failed') {
+    containerStyle += 'border-[#A83232] ring-3 ring-[#A83232]/50 shadow-xl bg-red-50/20 '
+  } else if (status === 'skipped') {
+    containerStyle += 'border-dashed border-[#B0BA99] opacity-50 bg-[#EDE5CD]/20 '
+  } else if (status === 'pending') {
+    containerStyle += 'border-amber-400/80 border-dashed bg-amber-50/20 '
+  } else if (selected) {
+    containerStyle += 'border-[#9D6638] ring-2 ring-[#9D6638]/40 shadow-lg '
+  } else {
+    containerStyle += 'border-[#B0BA99] hover:border-[#9D6638] '
+  }
+
+  return (
+    <div className={containerStyle}>
+      {/* Remove Node Button */}
+      <button
+        type="button"
+        onClick={handleDelete}
+        className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-[#FFFFFF] border border-[#B0BA99] text-[#7C5339] hover:bg-[#A83232] hover:text-[#FFFFFF] hover:border-[#A83232] shadow-sm transition-all active:scale-90"
+        title="Remove tool from canvas"
+      >
+        <X className="size-3" />
+      </button>
+
+      {/* Target (Input) Handles */}
       {data.inputKinds.map((kind, i) => (
         <Handle
-          key={`in-${kind}`}
+          key={`in-${kind}-${i}`}
           type="target"
           position={Position.Left}
           id={kind}
-          style={{ background: PORT_COLOR[kind], top: `${22 + (i * 56) / Math.max(1, data.inputKinds.length * 2)}%` }}
+          style={{
+            background: getPortColor(kind),
+            width: 12,
+            height: 12,
+            border: '2px solid #F7F1DE',
+            top: `${25 + (i * 50) / Math.max(1, data.inputKinds.length)}%`,
+          }}
+          title={`Input: ${kind}`}
         />
       ))}
-      <div className="mb-2 flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: toolNodeColor(data.toolId) }}>
-          {data.toolId}
+
+      {/* Top Header & Status Badge */}
+      <div className="mb-1.5 flex items-center justify-between gap-1.5 pr-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#7C5339] bg-[#EDE5CD]/80 px-1.5 py-0.5 rounded border border-[#B0BA99]/40 truncate">
+            {data.toolId}
+          </span>
+          <span className="rounded-md bg-[#B0BA99]/30 px-1.5 py-0.5 text-[9px] font-bold text-[#4E220F] border border-[#B0BA99]/60 shrink-0">
+            {data.category || 'Tool'}
+          </span>
+        </div>
+
+        {/* Live Execution Status Pill */}
+        {status === 'running' && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-extrabold text-amber-800 animate-bounce">
+            <span className="size-1.5 rounded-full bg-amber-600 animate-ping" />
+            Running
+          </span>
+        )}
+        {status === 'completed' && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-extrabold text-emerald-800">
+            {data.cached ? (
+              <>
+                <Sparkles className="size-3 text-emerald-600" />
+                ⚡ Cached
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="size-3 text-emerald-600" />
+                Done {data.durationSeconds ? `(${data.durationSeconds.toFixed(1)}s)` : ''}
+              </>
+            )}
+          </span>
+        )}
+        {status === 'failed' && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 border border-red-300 px-2 py-0.5 text-[10px] font-extrabold text-[#A83232]">
+            <AlertCircle className="size-3 text-[#A83232]" />
+            Failed
+          </span>
+        )}
+        {status === 'skipped' && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-neutral-100 border border-neutral-300 px-2 py-0.5 text-[10px] font-bold text-neutral-500">
+            Skipped
+          </span>
+        )}
+        {status === 'pending' && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+            Waiting...
+          </span>
+        )}
+      </div>
+
+      <p className="text-xs font-bold text-[#4E220F] truncate" title={data.label}>
+        {data.label}
+      </p>
+
+      {/* Error Message Pill if failed */}
+      {status === 'failed' && data.errorMessage && (
+        <div className="mt-2 rounded-lg bg-[#A83232]/10 border border-[#A83232]/30 p-2 text-[10px] font-medium text-[#A83232] break-words line-clamp-3 leading-tight">
+          ⚠️ {data.errorMessage}
+        </div>
+      )}
+
+      <div className="mt-2 flex items-center justify-between border-t border-[#B0BA99]/50 pt-2 text-[9px] font-mono text-[#7C5339] font-medium">
+        <span className="truncate max-w-[110px]" title={`in: ${data.inputKinds.join(', ')}`}>
+          in: {data.inputKinds.join(', ')}
         </span>
-        <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+        <span className="truncate max-w-[110px]" title={`out: ${data.outputKinds.join(', ')}`}>
+          out: {data.outputKinds.join(', ')}
+        </span>
       </div>
-      <h3 className="text-sm font-bold text-slate-100">{data.label}</h3>
-      <div className="mt-3 flex justify-between border-t border-garage-800 pt-2 text-[11px] text-slate-400">
-        <span className="capitalize">in: {data.inputKinds.join(', ')}</span>
-        <span className="capitalize">out: {data.outputKinds.join(', ')}</span>
-      </div>
+
+      {/* Source (Output) Handles */}
       {data.outputKinds.map((kind, i) => (
         <Handle
-          key={`out-${kind}`}
+          key={`out-${kind}-${i}`}
           type="source"
           position={Position.Right}
           id={kind}
-          style={{ background: PORT_COLOR[kind], top: `${22 + (i * 56) / Math.max(1, data.outputKinds.length * 2)}%` }}
+          style={{
+            background: getPortColor(kind),
+            width: 12,
+            height: 12,
+            border: '2px solid #F7F1DE',
+            top: `${25 + (i * 50) / Math.max(1, data.outputKinds.length)}%`,
+          }}
+          title={`Output: ${kind}`}
         />
       ))}
     </div>
   )
 }
 
-const nodeTypes: NodeTypes = { toolNode: ToolNode }
-
-interface PipelineCanvasProps {
-  workspaceId: string
-  tools: ToolManifest[]
-  onRan: () => void
+const nodeTypes: NodeTypes = {
+  toolNode: ToolNode,
 }
 
-export default function PipelineCanvas({ workspaceId, tools, onRan }: PipelineCanvasProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
+const edgeTypes: EdgeTypes = {
+  deletableEdge: DeletableEdge,
+}
+
+const defaultEdgeOptions = {
+  type: 'deletableEdge',
+  animated: true,
+  style: { stroke: '#9D6638', strokeWidth: 2.5 },
+}
+
+export interface StarterWorkflow {
+  name: string
+  chain: string[]
+  desc: string
+  defaultParams?: Record<string, Record<string, any>>
+}
+
+const STARTER_WORKFLOWS: StarterWorkflow[] = [
+  {
+    name: '🌐 YouTube to English Subtitles (Translated)',
+    chain: ['downloader', 'audio_processor', 'transcriber'],
+    desc: 'Download ➔ Audio Extract ➔ Whisper Translate directly to English SRT',
+    defaultParams: {
+      transcriber: {
+        task: 'translate',
+        output_format: 'srt',
+      },
+    },
+  },
+  {
+    name: '🎬 Video to Original Subtitles (SRT)',
+    chain: ['downloader', 'audio_processor', 'transcriber'],
+    desc: 'Download ➔ Audio Extract ➔ Whisper Transcribe (Original Language)',
+    defaultParams: {
+      transcriber: {
+        task: 'transcribe',
+        output_format: 'srt',
+      },
+    },
+  },
+  {
+    name: '🤖 AI Subtitle Translator (LLM)',
+    chain: ['downloader', 'audio_processor', 'transcriber', 'subtitle_translator'],
+    desc: 'Download ➔ Transcribe ➔ LLM Translate to Target Language',
+    defaultParams: {
+      transcriber: {
+        task: 'transcribe',
+        output_format: 'srt',
+      },
+      subtitle_translator: {
+        target_lang: 'English',
+        provider: 'groq',
+      },
+    },
+  },
+  {
+    name: '🎵 Video to Audio Extractor',
+    chain: ['downloader', 'audio_processor'],
+    desc: 'Download ➔ Extract High-Quality WAV/MP3',
+    defaultParams: {
+      audio_processor: {
+        output_format: 'wav',
+      },
+    },
+  },
+  {
+    name: '📝 Video to AI Summary & Insights',
+    chain: ['downloader', 'audio_processor', 'transcriber', 'summarizer'],
+    desc: 'Download ➔ Transcribe ➔ Executive Summary',
+    defaultParams: {
+      transcriber: {
+        task: 'transcribe',
+        output_format: 'srt',
+      },
+      summarizer: {
+        format: 'bullet_points',
+      },
+    },
+  },
+]
+
+function PipelineCanvasInner({
+  workspaceId,
+  tools: initialTools,
+  onRan,
+  onSelectNode,
+  selectedNodeId: externalSelectedNodeId,
+  externalAddToolRef,
+  externalUpdateParamsRef,
+}: {
+  workspaceId: string
+  tools?: ToolManifest[]
+  onRan: () => void
+  onSelectNode?: (node: { id: string; toolId: string; label: string; params: Record<string, unknown>; status?: string; durationSeconds?: number; errorMessage?: string; cached?: boolean } | null) => void
+  selectedNodeId?: string | null
+  externalAddToolRef?: React.MutableRefObject<((manifest: ToolManifest) => void) | null>
+  externalUpdateParamsRef?: React.MutableRefObject<((params: Record<string, unknown>) => void) | null>
+}) {
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<ToolNodeData>>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
-  const [selected, setSelected] = useState<Node | null>(null)
-  const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null)
+  const [tools, setTools] = useState<ToolManifest[]>(initialTools || [])
   const [templates, setTemplates] = useState<{ name: string; chain: string[] }[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState('')
+  const [templateName, setTemplateName] = useState('')
+  const [isSaveTemplateOpen, setIsSaveTemplateOpen] = useState(false)
+  const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [isRunModalOpen, setIsRunModalOpen] = useState(false)
+  const [runModalInputs, setRunModalInputs] = useState<PipelineEntryInput[]>([])
+  const [resolvedFlow, setResolvedFlow] = useState<ResolvedPipelineFlow | undefined>(undefined)
+  const { fitView } = useReactFlow()
+  const isLoadedRef = useRef(false)
+  const saveTimeoutRef = useRef<any>(null)
+
+  // 1. Initial load from backend persistence (or fallback to starter)
+  useEffect(() => {
+    isLoadedRef.current = false
+    api.getWorkspaceCanvas(workspaceId)
+      .then((canvasState) => {
+        if (canvasState && canvasState.nodes) {
+          const loadedNodes: Node<ToolNodeData>[] = canvasState.nodes.map((n) => ({
+            id: n.id,
+            type: n.type || 'toolNode',
+            position: n.position || { x: 60, y: 100 },
+            data: {
+              label: n.data.label,
+              toolId: n.data.toolId,
+              category: n.data.category,
+              inputKinds: n.data.inputKinds || ['any'],
+              outputKinds: n.data.outputKinds || ['any'],
+              params: n.data.params || {},
+              status: n.data.status,
+              errorMessage: n.data.errorMessage,
+              durationSeconds: n.data.durationSeconds,
+              cached: n.data.cached,
+            },
+          }))
+          const loadedEdges: Edge[] = (canvasState.edges || []).map((e) => ({
+            id: e.id,
+            source: e.source,
+            target: e.target,
+            sourceHandle: e.sourceHandle,
+            targetHandle: e.targetHandle,
+            type: e.type || 'deletableEdge',
+            animated: e.animated ?? true,
+            style: (e.style as any) || { stroke: '#9D6638', strokeWidth: 2.5 },
+          }))
+          setNodes(loadedNodes)
+          setEdges(loadedEdges)
+        }
+        setTimeout(() => fitView({ padding: 0.2 }), 80)
+      })
+      .catch(() => {})
+      .finally(() => {
+        isLoadedRef.current = true
+      })
+  }, [workspaceId, fitView, setNodes, setEdges])
+
+  // 2. Debounced auto-save to backend whenever nodes, edges, or params change
+  useEffect(() => {
+    if (!isLoadedRef.current) return
+    setSaveStatus('unsaved')
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+
+    saveTimeoutRef.current = setTimeout(() => {
+      setSaveStatus('saving')
+      const payloadNodes = nodes.map((n) => ({
+        id: n.id,
+        type: n.type,
+        position: n.position,
+        data: n.data,
+      }))
+      const payloadEdges = edges.map((e) => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        sourceHandle: e.sourceHandle,
+        targetHandle: e.targetHandle,
+        type: e.type,
+        animated: e.animated,
+        style: e.style,
+      }))
+      api.saveWorkspaceCanvas(workspaceId, {
+        nodes: payloadNodes,
+        edges: payloadEdges,
+      })
+        .then(() => setSaveStatus('saved'))
+        .catch(() => setSaveStatus('unsaved'))
+    }, 600)
+
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    }
+  }, [nodes, edges, workspaceId])
 
   useEffect(() => {
-    api.listTemplates(workspaceId).then(({ templates }) => setTemplates(templates))
-  }, [workspaceId])
+    if (initialTools && initialTools.length > 0) {
+      setTools(initialTools)
+    } else {
+      api.listTools().then(({ tools }) => {
+        setTools(tools)
+      }).catch(() => {})
+    }
+    api.listTemplates(workspaceId, true).then(({ templates }) => setTemplates(templates)).catch(() => {})
+  }, [workspaceId, initialTools])
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#34d399' } }, eds)),
+    (params: Connection) =>
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            type: 'deletableEdge',
+            animated: true,
+            style: { stroke: '#9D6638', strokeWidth: 2.5 },
+          },
+          eds,
+        ),
+      ),
     [setEdges],
   )
 
-  const chain = useMemo(
-    () =>
-      [...nodes]
-        .sort((a, b) => a.position.x - b.position.x)
-        .map((n) => (n.data as ToolNodeData).toolId),
-    [nodes],
-  )
+  const selected = useMemo(() => {
+    const targetId = externalSelectedNodeId !== undefined ? externalSelectedNodeId : selectedNodeId
+    return nodes.find((n) => n.id === targetId)
+  }, [nodes, selectedNodeId, externalSelectedNodeId])
+  const selectedEdge = useMemo(() => edges.find((e) => e.id === selectedEdgeId), [edges, selectedEdgeId])
+
+  // Sync selection to parent inspector if requested
+  useEffect(() => {
+    if (onSelectNode) {
+      if (selected) {
+        onSelectNode({
+          id: selected.id,
+          toolId: selected.data.toolId,
+          label: selected.data.label,
+          params: selected.data.params || {},
+          status: selected.data.status,
+          durationSeconds: selected.data.durationSeconds,
+          errorMessage: selected.data.errorMessage,
+          cached: selected.data.cached,
+        })
+      } else {
+        onSelectNode(null)
+      }
+    }
+  }, [selected, onSelectNode])
 
   const addTool = (manifest: ToolManifest) => {
     const id = `${manifest.id}-${nodes.length + 1}`
-    const node: Node = {
+    const node: Node<ToolNodeData> = {
       id,
       type: 'toolNode',
-      position: { x: 60 + (nodes.length % 4) * 240, y: 60 + Math.floor(nodes.length / 4) * 150 },
-      data: { label: manifest.name, toolId: manifest.id, inputKinds: manifest.input_kinds, outputKinds: manifest.output_kinds, params: {} } as ToolNodeData,
+      position: { x: 60 + (nodes.length % 3) * 320, y: 60 + Math.floor(nodes.length / 3) * 180 },
+      data: {
+        label: manifest.name,
+        toolId: manifest.id,
+        category: manifest.category,
+        inputKinds: manifest.input_kinds,
+        outputKinds: manifest.output_kinds,
+        params: {},
+      },
     }
     setNodes((nds) => [...nds, node])
     setStatus(null)
   }
 
+  /** Auto-arrange nodes in a clean DAG flow from left to right */
+  const autoArrange = useCallback(() => {
+    if (nodes.length === 0) return
+
+    const inDegree: Record<string, number> = {}
+    const children: Record<string, string[]> = {}
+    nodes.forEach((n) => {
+      inDegree[n.id] = 0
+      children[n.id] = []
+    })
+    edges.forEach((e) => {
+      if (inDegree[e.target] !== undefined) inDegree[e.target]++
+      if (children[e.source]) children[e.source].push(e.target)
+    })
+
+    const levels: Record<string, number> = {}
+    const queue = nodes.filter((n) => inDegree[n.id] === 0).map((n) => n.id)
+    queue.forEach((id) => (levels[id] = 0))
+
+    let front = 0
+    while (front < queue.length) {
+      const curr = queue[front++]
+      const nextLevel = (levels[curr] || 0) + 1
+      for (const child of children[curr] || []) {
+        levels[child] = Math.max(levels[child] || 0, nextLevel)
+        queue.push(child)
+      }
+    }
+
+    const levelGroups: Record<number, string[]> = {}
+    nodes.forEach((n) => {
+      const lvl = levels[n.id] || 0
+      if (!levelGroups[lvl]) levelGroups[lvl] = []
+      levelGroups[lvl].push(n.id)
+    })
+
+    const nextNodes = nodes.map((n) => {
+      const lvl = levels[n.id] || 0
+      const group = levelGroups[lvl] || [n.id]
+      const idxInGroup = group.indexOf(n.id)
+      return {
+        ...n,
+        position: {
+          x: 60 + lvl * 320,
+          y: 60 + idxInGroup * 180,
+        },
+      }
+    })
+
+    setNodes(nextNodes)
+    setTimeout(() => fitView({ padding: 0.2 }), 50)
+  }, [nodes, edges, setNodes, fitView])
+
+  const buildDAGPayload = (): { nodes: DAGNode[]; edges: DAGEdge[] } => {
+    const dagNodes: DAGNode[] = nodes.map((n) => ({
+      id: n.id,
+      tool_id: n.data.toolId,
+      params: n.data.params,
+      position: n.position,
+    }))
+    const dagEdges: DAGEdge[] = edges.map((e) => ({
+      source_node: e.source,
+      source_port: e.sourceHandle || 'default',
+      target_node: e.target,
+      target_port: e.targetHandle || 'default',
+    }))
+    return { nodes: dagNodes, edges: dagEdges }
+  }
+
   const validate = async () => {
-    if (chain.length === 0) return
-    const res = await api.validatePipeline(workspaceId, chain)
-    setStatus({ ok: res.valid, msg: res.valid ? 'Chain is valid' : res.error ?? 'Invalid chain' })
+    if (nodes.length === 0) return
+    const payload = buildDAGPayload()
+    const res = await api.validatePipeline(workspaceId, payload)
+    setStatus({
+      ok: res.valid,
+      msg: res.valid ? 'Pipeline graph is compatible and valid' : res.error ?? 'Invalid pipeline',
+    })
   }
 
-  const run = async () => {
-    if (chain.length === 0) return
-    const steps = [...nodes]
-      .sort((a, b) => a.position.x - b.position.x)
-      .map((n) => ({ tool_id: (n.data as ToolNodeData).toolId, params: (n.data as ToolNodeData).params }))
-    await api.runPipeline(workspaceId, steps)
-    setStatus({ ok: true, msg: 'Pipeline run queued' })
-    onRan()
-  }
-
-  const saveTemplate = async () => {
-    if (chain.length === 0) return
-    const name = window.prompt('Template name')?.trim()
-    if (!name) return
-    await api.saveTemplate(workspaceId, name, chain)
-    const { templates: tpls } = await api.listTemplates(workspaceId)
-    setTemplates(tpls)
-    setStatus({ ok: true, msg: `Saved template "${name}"` })
-  }
-
-  const loadTemplate = (name: string) => {
-    const tpl = templates.find((t) => t.name === name)
-    if (!tpl) return
-    const rebuilt = tpl.chain
-      .map((tid, i) => {
-        const m = tools.find((t) => t.id === tid)
-        if (!m) return null
+  const executePipelineWithParams = async (
+    overrideParamsByNode?: Record<string, Record<string, unknown>>,
+    cachePolicy?: 'reuse' | 'recompute',
+  ) => {
+    if (nodes.length === 0) return
+    setBusy(true)
+    try {
+      // Build payload with any updated parameters from modal
+      const dagNodes: DAGNode[] = nodes.map((n) => {
+        const overrides = overrideParamsByNode?.[n.id] || {}
         return {
-          id: `${tid}-${i + 1}`,
-          type: 'toolNode',
-          position: { x: 60 + i * 240, y: 80 },
-          data: {
-            label: m.name,
-            toolId: m.id,
-            inputKinds: m.input_kinds,
-            outputKinds: m.output_kinds,
-            params: {},
-          } as ToolNodeData,
-        } as Node
+          id: n.id,
+          tool_id: n.data.toolId,
+          params: { ...n.data.params, ...overrides },
+          position: n.position,
+        }
       })
-      .filter((n): n is Node => n !== null)
-    setNodes(rebuilt)
+      const dagEdges: DAGEdge[] = edges.map((e) => ({
+        source_node: e.source,
+        source_port: e.sourceHandle || 'default',
+        target_node: e.target,
+        target_port: e.targetHandle || 'default',
+      }))
+
+      // Reset all nodes on canvas to pending/idle before starting run
+      setNodes((nds) =>
+        nds.map((n) => ({
+          ...n,
+          data: {
+            ...n.data,
+            params: { ...n.data.params, ...(overrideParamsByNode?.[n.id] || {}) },
+            status: 'pending',
+            errorMessage: undefined,
+            durationSeconds: undefined,
+            cached: undefined,
+          },
+        })),
+      )
+
+      setStatus({ ok: true, msg: 'Starting pipeline execution...' })
+
+      let failedNode: { id: string; error: string } | null = null
+
+      await api.runPipelineStream(
+        workspaceId,
+        { nodes: dagNodes, edges: dagEdges, error_policy: 'fail_fast', cache_policy: cachePolicy || 'recompute' },
+        (evt) => {
+          if (evt.type === 'node_started' && evt.node_id) {
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === evt.node_id
+                  ? { ...n, data: { ...n.data, status: 'running', errorMessage: undefined } }
+                  : n,
+              ),
+            )
+            setStatus({ ok: true, msg: `Running ${evt.tool_name || evt.tool_id}...` })
+          } else if (evt.type === 'node_completed' && evt.node_id) {
+            const isCached = (evt as any).cached
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === evt.node_id
+                  ? {
+                      ...n,
+                      data: {
+                        ...n.data,
+                        status: 'completed',
+                        durationSeconds: evt.duration,
+                        cached: isCached,
+                      },
+                    }
+                  : n,
+              ),
+            )
+          } else if (evt.type === 'node_failed' && evt.node_id) {
+            const errStr = evt.error || 'Execution failed'
+            failedNode = { id: evt.node_id, error: errStr }
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === evt.node_id
+                  ? {
+                      ...n,
+                      data: {
+                        ...n.data,
+                        status: 'failed',
+                        errorMessage: errStr,
+                        durationSeconds: evt.duration,
+                      },
+                    }
+                  : n,
+              ),
+            )
+          } else if (evt.type === 'node_skipped' && evt.node_id) {
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === evt.node_id
+                  ? {
+                      ...n,
+                      data: {
+                        ...n.data,
+                        status: 'skipped',
+                        errorMessage: evt.reason || 'Skipped due to upstream failure',
+                      },
+                    }
+                  : n,
+              ),
+            )
+          } else if (evt.type === 'pipeline_finished') {
+            if (evt.status === 'failed' || failedNode) {
+              const err = failedNode ? `Halted on "${failedNode.id}": ${failedNode.error}` : 'Pipeline stopped due to error'
+              setStatus({ ok: false, msg: err })
+            } else {
+              setStatus({ ok: true, msg: 'All pipeline steps finished successfully' })
+            }
+          } else if (evt.type === 'pipeline_error') {
+            setStatus({ ok: false, msg: evt.error || 'Pipeline execution failed' })
+          }
+        },
+      )
+
+      onRan()
+    } catch (err: unknown) {
+      setStatus({ ok: false, msg: err instanceof Error ? err.message : 'Execution failed' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleRunClick = () => {
+    if (nodes.length === 0) return
+    const flow = resolvePipelineFlow(nodes, edges, tools)
+    setResolvedFlow(flow)
+    setRunModalInputs(flow.entryInputs)
+    setIsRunModalOpen(true)
+  }
+
+  const clearCanvas = () => {
+    setNodes([])
     setEdges([])
-    setSelected(null)
+    setSelectedNodeId(null)
+    setSelectedEdgeId(null)
     setStatus(null)
   }
 
-  const updateSelectedParam = (key: string, value: unknown) => {
-    if (!selected) return
-    setNodes((nds) =>
-      nds.map((n) =>
-        n.id === selected.id
-          ? { ...n, data: { ...n.data, params: { ...(n.data as ToolNodeData).params, [key]: value } } as ToolNodeData }
-          : n,
-      ),
-    )
-    setSelected((s) => (s ? { ...s, data: { ...s.data, params: { ...(s.data as ToolNodeData).params, [key]: value } } as ToolNodeData } : s))
+  const saveCurrentAsTemplate = async () => {
+    const name = templateName.trim()
+    if (!name || nodes.length === 0) return
+    const chain = [...nodes].sort((a, b) => a.position.x - b.position.x).map((n) => n.data.toolId)
+    await api.saveTemplate(workspaceId, name, chain)
+    const { templates } = await api.listTemplates(workspaceId, true)
+    setTemplates(templates)
+    setTemplateName('')
+    setStatus({ ok: true, msg: `Saved template "${name}"` })
   }
 
-  const compatibleTools = useMemo(() => {
-    if (!selected) return tools
-    const outs = (selected.data as ToolNodeData).outputKinds
-    return tools.filter(
-      (t) =>
-        t.input_kinds.some((ik) => outs.includes(ik) || ik === 'any' || outs.includes('any')) &&
-        t.id !== (selected.data as ToolNodeData).toolId,
+  const loadWorkflowChain = (
+    chain: string[],
+    label: string,
+    defaultParams?: Record<string, Record<string, any>>,
+  ) => {
+    const nextNodes: Node<ToolNodeData>[] = []
+    const nextEdges: Edge[] = []
+
+    chain.forEach((toolId, i) => {
+      const tool = tools.find((t) => t.id === toolId)
+      const id = `${toolId}-${i + 1}`
+      const initialParams = defaultParams?.[toolId] || {}
+      nextNodes.push({
+        id,
+        type: 'toolNode',
+        position: { x: 60 + i * 320, y: 120 },
+        data: {
+          label: tool?.name ?? toolId,
+          toolId,
+          category: tool?.category,
+          inputKinds: tool?.input_kinds ?? ['any'],
+          outputKinds: tool?.output_kinds ?? ['any'],
+          params: { ...initialParams },
+        },
+      })
+      if (i > 0) {
+        nextEdges.push({
+          id: `e-${nextNodes[i - 1].id}-${id}`,
+          source: nextNodes[i - 1].id,
+          target: id,
+          type: 'deletableEdge',
+          animated: true,
+          style: { stroke: '#9D6638', strokeWidth: 2.5 },
+        })
+      }
+    })
+    setNodes(nextNodes)
+    setEdges(nextEdges)
+    setSelectedNodeId(null)
+    setSelectedEdgeId(null)
+    setStatus({ ok: true, msg: `Loaded "${label}"` })
+    setTimeout(() => fitView({ padding: 0.2 }), 50)
+
+    // Automatically prompt input modal for 1-click convenience
+    const flow = resolvePipelineFlow(nextNodes as any, nextEdges as any, tools)
+    setResolvedFlow(flow)
+    setRunModalInputs(flow.entryInputs)
+    setIsRunModalOpen(true)
+  }
+
+  const updateSelectedParams = (nextParams: Record<string, unknown>) => {
+    const targetId = externalSelectedNodeId !== undefined ? externalSelectedNodeId : selectedNodeId
+    if (!targetId) return
+    setNodes((nds) =>
+      nds.map((n) => (n.id === targetId ? { ...n, data: { ...n.data, params: nextParams } } : n)),
     )
-  }, [selected, tools])
+  }
+
+  // Bind external action refs for studio layout
+  useEffect(() => {
+    if (externalAddToolRef) externalAddToolRef.current = addTool
+    if (externalUpdateParamsRef) externalUpdateParamsRef.current = updateSelectedParams
+  })
 
   return (
-    <div className="grid grid-cols-[230px_1fr] gap-4">
-      <aside className="space-y-2">
-        <h3 className="px-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
-          {selected ? 'Compatible next tools' : 'Tool palette'}
-        </h3>
-        {compatibleTools.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => addTool(t)}
-            className="flex w-full items-center justify-between rounded-lg border border-garage-800 bg-garage-900/60 px-3 py-2 text-left text-sm text-slate-200 transition-colors hover:border-port-in/60 hover:bg-garage-800"
-          >
-            <span>{t.name}</span>
-            <Plus className="h-4 w-4 text-slate-500" />
-          </button>
-        ))}
-        {selected && (
-          <button
-            onClick={() => setSelected(null)}
-            className="w-full rounded-lg border border-garage-800 px-3 py-1.5 text-xs text-slate-400 transition-colors hover:text-slate-200"
-          >
-            Show all tools
-          </button>
-        )}
-      </aside>
+    <div className="space-y-3 text-[#4E220F] flex flex-col h-full">
+      {/* Sleek Canvas Action Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-3 shadow-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Starter Workflows Selector */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold text-[#7C5339] flex items-center gap-1 mr-1">
+              <Sparkles className="size-3.5 text-[#9D6638]" /> Starters:
+            </span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {STARTER_WORKFLOWS.map((wf) => (
+                <button
+                  key={wf.name}
+                  onClick={() => loadWorkflowChain(wf.chain, wf.name, wf.defaultParams)}
+                  className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-2.5 py-1 text-xs font-bold text-[#4E220F] hover:bg-[#9D6638] hover:text-[#FFFFFF] hover:border-[#9D6638] transition-all shadow-2xs active:scale-95"
+                  title={wf.desc}
+                >
+                  <span>{wf.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-      <div>
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <button
-            onClick={validate}
-            disabled={chain.length === 0}
-            className="inline-flex items-center gap-2 rounded-lg border border-garage-700 bg-garage-900 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-garage-800 disabled:opacity-40"
-          >
-            <CheckCircle2 className="h-4 w-4" /> Validate
-          </button>
-          <button
-            onClick={run}
-            disabled={chain.length === 0}
-            className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-slate-950 transition-colors hover:bg-cyan-400 disabled:opacity-40"
-          >
-            <Play className="h-4 w-4" /> Run pipeline
-          </button>
-          {selected && (
+          {/* Custom Saved Templates */}
+          {templates.length > 0 && (
+            <div className="flex items-center gap-1.5 pl-2 border-l border-[#B0BA99]/60">
+              <select
+                value={selectedTemplate}
+                onChange={(e) => {
+                  setSelectedTemplate(e.target.value)
+                  const tpl = templates.find((t) => t.name === e.target.value)
+                  if (tpl) loadWorkflowChain(tpl.chain, tpl.name)
+                }}
+                className="rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-2.5 py-1 text-xs text-[#4E220F] font-bold focus:border-[#9D6638] focus:outline-none max-w-xs truncate"
+              >
+                <option value="">— Saved Templates —</option>
+                {templates.map((tpl) => (
+                  <option key={tpl.name} value={tpl.name}>
+                    {tpl.name} ({tpl.chain.length} tools)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {/* Action Controls */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Auto-Save Status Badge */}
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-[#B0BA99]/60 bg-[#F7F1DE]/60 text-[10px] font-mono">
+            {saveStatus === 'saved' && (
+              <>
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="text-[#4E220F] font-bold">Saved</span>
+              </>
+            )}
+            {saveStatus === 'saving' && (
+              <>
+                <span className="h-2 w-2 rounded-full bg-[#9D6638] animate-ping" />
+                <span className="text-[#9D6638] font-bold">Saving...</span>
+              </>
+            )}
+            {saveStatus === 'unsaved' && (
+              <>
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                <span className="text-amber-700 font-bold">Unsaved</span>
+              </>
+            )}
+          </div>
+
+          {selectedEdge && (
             <button
               onClick={() => {
-                setNodes((nds) => nds.filter((n) => n.id !== selected.id))
-                setSelected(null)
+                setEdges((eds) => eds.filter((e) => e.id !== selectedEdgeId))
+                setSelectedEdgeId(null)
               }}
-              className="inline-flex items-center gap-2 rounded-lg border border-garage-800 px-3 py-1.5 text-xs font-semibold text-slate-300 transition-colors hover:bg-garage-800"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-[#A83232] bg-[#A83232]/10 px-2.5 py-1.5 text-xs font-bold text-[#A83232] hover:bg-[#A83232] hover:text-[#FFFFFF] transition-all shadow-2xs"
+              title={`Disconnect link from ${selectedEdge.source} to ${selectedEdge.target}`}
             >
-              <Trash2 className="h-3.5 w-3.5" /> Remove node
+              <Unlink className="size-3.5" /> Disconnect
             </button>
           )}
+
           <button
-            onClick={saveTemplate}
-            disabled={chain.length === 0}
-            className="inline-flex items-center gap-2 rounded-lg border border-garage-800 bg-garage-900 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-garage-800 disabled:opacity-40"
+            onClick={autoArrange}
+            disabled={nodes.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs disabled:opacity-40"
+            title="Automatically arrange nodes cleanly from left to right"
           >
-            <BookmarkPlus className="h-4 w-4" /> Save template
+            <LayoutGrid className="size-3.5 text-[#9D6638]" /> Auto Arrange
           </button>
-          {templates.length > 0 && (
-            <select
-              onChange={(e) => {
-                if (e.target.value) loadTemplate(e.target.value)
-                e.currentTarget.value = ''
-              }}
-              defaultValue=""
-              className="rounded-lg border border-garage-800 bg-garage-900 px-3 py-1.5 text-xs text-slate-200 outline-none focus:border-port-in"
-            >
-              <option value="" disabled>
-                Load template…
-              </option>
-              {templates.map((t) => (
-                <option key={t.name} value={t.name}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          )}
-          {status && (
-            <span className={'ml-1 inline-flex items-center gap-1 text-xs ' + (status.ok ? 'text-emerald-400' : 'text-red-400')}>
-              {status.ok ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-              {status.msg}
-            </span>
-          )}
-        </div>
 
-        <div className="h-[520px] overflow-hidden rounded-2xl border border-garage-800 bg-garage-950">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            onNodeClick={(_, n) => setSelected(n)}
-            onPaneClick={() => setSelected(null)}
-            fitView
+          <button
+            onClick={validate}
+            disabled={nodes.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs disabled:opacity-40"
+            title="Validate compatibility of connections"
           >
-            <Background color="#1e293b" gap={20} size={1} />
-            <Controls className="!bg-garage-900 !border-garage-800" />
-            <MiniMap nodeColor="#38bdf8" maskColor="rgba(15,23,42,0.8)" className="!bg-garage-900 !border-garage-800" />
-          </ReactFlow>
-        </div>
+            Validate Graph
+          </button>
 
-        {selected && (
-          <div className="mt-3 rounded-xl border border-garage-800 bg-garage-900/40 p-4">
-            <h4 className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-              <Settings2 className="h-3.5 w-3.5" /> {(selected.data as ToolNodeData).label} parameters
-            </h4>
-            <ParamForm
-              schema={tools.find((t) => t.id === (selected.data as ToolNodeData).toolId)?.parameters_schema ?? {}}
-              params={(selected.data as ToolNodeData).params}
-              onChange={updateSelectedParam}
-            />
-          </div>
-        )}
+          <button
+            onClick={() => setIsSaveTemplateOpen(true)}
+            disabled={nodes.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs disabled:opacity-40"
+            title="Save current pipeline as reusable template"
+          >
+            <BookmarkPlus className="size-3.5 text-[#9D6638]" /> Save Template
+          </button>
+
+          <button
+            onClick={clearCanvas}
+            disabled={nodes.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F] transition-colors disabled:opacity-40"
+          >
+            <Trash2 className="size-3.5" /> Clear
+          </button>
+
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs"
+            title={isExpanded ? 'Shrink Canvas View' : 'Expand Canvas View'}
+          >
+            {isExpanded ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
+          </button>
+
+          {busy ? (
+            <button
+              onClick={async () => {
+                setStatus({ ok: false, msg: 'Stopping pipeline...' })
+                try {
+                  await api.stopPipeline(workspaceId)
+                } catch {
+                  /* ignore */
+                }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#A83232] px-4 py-1.5 text-xs font-bold text-[#FFFFFF] hover:bg-[#862727] transition-all shadow-md active:scale-95 animate-pulse"
+              title="Stop running pipeline immediately"
+            >
+              <Square className="size-3.5 fill-current" />
+              Stop Pipeline
+            </button>
+          ) : (
+            <button
+              onClick={handleRunClick}
+              disabled={nodes.length === 0}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-4 py-1.5 text-xs font-bold text-[#FDFBF7] hover:bg-[#86542C] transition-all disabled:opacity-50 shadow-sm"
+            >
+              <Play className="size-3.5 fill-current" />
+              Run Pipeline
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Status Bar */}
+      {status && (
+        <div
+          className={`flex items-center justify-between rounded-xl border px-4 py-2 text-xs font-mono font-semibold ${
+            status.ok
+              ? 'border-[#B0BA99] bg-[#EDE5CD]/70 text-[#4E220F]'
+              : 'border-[#A83232]/30 bg-[#A83232]/10 text-[#A83232]'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {status.ok ? (
+              <CheckCircle2 className="size-4 text-[#9D6638]" />
+            ) : (
+              <AlertCircle className="size-4 text-[#A83232]" />
+            )}
+            <span>{status.msg}</span>
+          </div>
+          <button onClick={() => setStatus(null)} className="text-[#7C5339] hover:text-[#4E220F]">
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Full-Width Spacious Graph Canvas Area */}
+      <div
+        className={`rounded-2xl border-2 border-[#B0BA99] bg-[#F7F1DE] overflow-hidden shadow-inner transition-all duration-200 w-full relative ${
+          isExpanded ? 'h-[780px]' : 'h-[620px]'
+        }`}
+      >
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodeClick={(_, node) => {
+            setSelectedNodeId(node.id)
+            setSelectedEdgeId(null)
+          }}
+          onEdgeClick={(_, edge) => {
+            setSelectedEdgeId(edge.id)
+            setSelectedNodeId(null)
+          }}
+          onPaneClick={() => {
+            setSelectedNodeId(null)
+            setSelectedEdgeId(null)
+          }}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          defaultEdgeOptions={defaultEdgeOptions}
+          deleteKeyCode={['Backspace', 'Delete']}
+          elementsSelectable={true}
+          fitView
+        >
+          <Background color="#B0BA99" gap={18} />
+          <Controls className="!bg-[#FFFFFF] !border-[#B0BA99] !fill-[#4E220F] !rounded-xl !shadow-xs" />
+          <MiniMap
+            nodeColor="#9D6638"
+            maskColor="rgba(247,241,222,0.85)"
+            className="!bg-[#FFFFFF] !border-[#B0BA99] !rounded-xl"
+          />
+        </ReactFlow>
+      </div>
+
+      {/* Save Template Modal */}
+      {isSaveTemplateOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-5 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#B0BA99]/40 pb-2">
+              <h3 className="text-sm font-bold text-[#4E220F] flex items-center gap-2">
+                <BookmarkPlus className="size-4 text-[#9D6638]" /> Save Pipeline as Template
+              </h3>
+              <button
+                onClick={() => setIsSaveTemplateOpen(false)}
+                className="text-[#7C5339] hover:text-[#4E220F] text-lg font-bold"
+              >
+                ×
+              </button>
+            </div>
+            <p className="text-xs text-[#7C5339]">
+              Save this workflow ({nodes.length} connected tools) as a reusable starter template for this workspace.
+            </p>
+            <input
+              type="text"
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder="e.g. YouTube to English Translated Subtitles"
+              className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-3.5 py-2 text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:outline-none font-medium"
+              autoFocus
+            />
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                onClick={() => setIsSaveTemplateOpen(false)}
+                className="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-[#7C5339] hover:bg-[#EDE5CD]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  saveCurrentAsTemplate()
+                  setIsSaveTemplateOpen(false)
+                }}
+                disabled={!templateName.trim() || nodes.length === 0}
+                className="rounded-xl bg-[#9D6638] px-4 py-1.5 text-xs font-bold text-[#FDFBF7] hover:bg-[#86542C] disabled:opacity-40 shadow-xs"
+              >
+                Save Template
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Universal Pipeline Run Input Modal */}
+      <UniversalPipelineRunModal
+        isOpen={isRunModalOpen}
+        workspaceId={workspaceId}
+        dagNodes={nodes.map((n) => ({
+          id: n.id,
+          tool_id: n.data.toolId,
+          params: n.data.params,
+          position: n.position,
+        }))}
+        onClose={() => setIsRunModalOpen(false)}
+        onRun={(paramOverrides, cachePolicy) => executePipelineWithParams(paramOverrides, cachePolicy)}
+        inputs={runModalInputs}
+        toolSteps={nodes.map((n) => n.data.label || n.data.toolId)}
+        resolvedFlow={resolvedFlow}
+      />
     </div>
   )
 }
 
-function ParamForm({
-  schema,
-  params,
-  onChange,
-}: {
-  schema: Record<string, { type: string; enum?: (string | number)[] }>
-  params: Record<string, unknown>
-  onChange: (k: string, v: unknown) => void
+export default function PipelineCanvas(props: {
+  workspaceId: string
+  tools?: ToolManifest[]
+  onRan: () => void
+  onSelectNode?: (node: { id: string; toolId: string; label: string; params: Record<string, unknown>; status?: string; durationSeconds?: number; errorMessage?: string; cached?: boolean } | null) => void
+  selectedNodeId?: string | null
+  externalAddToolRef?: React.MutableRefObject<((manifest: ToolManifest) => void) | null>
+  externalUpdateParamsRef?: React.MutableRefObject<((params: Record<string, unknown>) => void) | null>
 }) {
-  const entries = Object.entries(schema)
-  if (entries.length === 0) return <p className="text-xs text-slate-500">No parameters.</p>
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {entries.map(([key, def]) => (
-        <label key={key} className="text-xs text-slate-300">
-          <span className="mb-1 block font-medium text-slate-400">{key}</span>
-          {def.enum ? (
-            <select
-              value={String(params[key] ?? '')}
-              onChange={(e) => onChange(key, e.target.value)}
-              className="w-full rounded-lg border border-garage-800 bg-garage-950 px-3 py-2 text-slate-100 outline-none focus:border-port-in"
-            >
-              <option value="">—</option>
-              {def.enum.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          ) : def.type === 'integer' || def.type === 'number' ? (
-            <input
-              type="number"
-              value={String(params[key] ?? '')}
-              onChange={(e) => onChange(key, e.target.value === '' ? '' : Number(e.target.value))}
-              className="w-full rounded-lg border border-garage-800 bg-garage-950 px-3 py-2 text-slate-100 outline-none focus:border-port-in"
-            />
-          ) : def.type === 'boolean' ? (
-            <input
-              type="checkbox"
-              checked={Boolean(params[key])}
-              onChange={(e) => onChange(key, e.target.checked)}
-              className="h-4 w-4 accent-cyan-500"
-            />
-          ) : (
-            <input
-              type="text"
-              value={String(params[key] ?? '')}
-              onChange={(e) => onChange(key, e.target.value)}
-              className="w-full rounded-lg border border-garage-800 bg-garage-950 px-3 py-2 text-slate-100 outline-none focus:border-port-in"
-            />
-          )}
-        </label>
-      ))}
-    </div>
+    <ReactFlowProvider>
+      <PipelineCanvasInner {...props} />
+    </ReactFlowProvider>
   )
 }

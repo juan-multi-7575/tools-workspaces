@@ -65,14 +65,14 @@ def test_transcriber_single_and_batch(client, tmp_path):
         json={
             "kind": "standalone",
             "destination": str(tmp_path / "out"),
-            "params": {"input_path": "/tmp/a.wav", "provider": "groq", "model": "whisper-large-v3-turbo"},
+            "params": {"input_path": "/tmp/a.wav", "provider": "unsupported_provider", "model": "whisper-large-v3-turbo"},
         },
     )
     body = resp.json()
-    assert body["status"] == "completed"
-    assert len(body["artifacts"]) == 1
-    assert "groq" in body["artifacts"][0]["name"] or True
-    assert "groq" in open(body["artifacts"][0]["path"]).read()
+    assert body["status"] == "failed"
+    assert body["artifacts"] == []
+    assert "unsupported provider" in body["error"]
+    assert "unsupported_provider" in body["error"]
 
     resp = client.post(
         "/api/tools/transcriber/execute",
@@ -83,5 +83,87 @@ def test_transcriber_single_and_batch(client, tmp_path):
         },
     )
     body = resp.json()
+    assert body["status"] == "failed"
+    assert body["artifacts"] == []
+    assert "openai" in body["error"]
+
+
+def test_transcriber_faster_whisper_success(client, tmp_path, monkeypatch):
+    from app.tools.base import Artifact, PortKind
+    from app.tools.downloader import TranscriberTool
+
+    audio = tmp_path / "a.wav"
+    audio.write_bytes(b"RIFFplaceholder")
+
+    def fake_transcribe(self, input_paths, model, dest):
+        assert model == "base"
+        return [
+            Artifact(path=str(dest / "a.txt"), kind=PortKind.text, name="a.txt"),
+            Artifact(path=str(dest / "a.srt"), kind=PortKind.document, name="a.srt"),
+        ]
+
+    monkeypatch.setattr(TranscriberTool, "_transcribe", fake_transcribe)
+    resp = client.post(
+        "/api/tools/transcriber/execute",
+        json={
+            "kind": "standalone",
+            "destination": str(tmp_path / "out"),
+            "params": {"input_path": str(audio), "provider": "faster-whisper", "model": "base"},
+        },
+    )
+    body = resp.json()
     assert body["status"] == "completed"
     assert len(body["artifacts"]) == 2
+    assert {a["name"] for a in body["artifacts"]} == {"a.txt", "a.srt"}
+
+
+def test_transcriber_translate_mode(client, tmp_path, monkeypatch):
+    from pathlib import Path
+    from app.tools.base import Artifact, PortKind
+    from app.tools.downloader import TranscriberTool
+
+    audio = tmp_path / "korean_clip.wav"
+    audio.write_bytes(b"RIFFdummydata")
+
+    # Mock transcribe_with_groq to return translated English segments
+    async def fake_groq(file_path, api_key, model="whisper-large-v3-turbo", task="transcribe", timeout=120.0):
+        assert task == "translate"
+        return [
+            {"start": 0.0, "end": 2.5, "text": "Did you talk about that in the interview?"},
+            {"start": 2.5, "end": 5.0, "text": "Who do you think will marry first?"},
+        ]
+
+    import app.tools.subtitles
+    monkeypatch.setattr(app.tools.subtitles, "transcribe_with_groq", fake_groq)
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_mock_test_key_123")
+
+    resp = client.post(
+        "/api/tools/transcriber/execute",
+        json={
+            "kind": "standalone",
+            "destination": str(tmp_path / "out"),
+            "params": {
+                "input_path": str(audio),
+                "provider": "groq",
+                "task": "translate",
+                "output_mode": "both",
+            },
+        },
+    )
+    body = resp.json()
+    assert body["status"] == "completed"
+    artifact_names = {a["name"] for a in body["artifacts"]}
+    assert "korean_clip.en.srt" in artifact_names
+    assert "korean_clip.en.vtt" in artifact_names
+    assert "korean_clip_en_clean.txt" in artifact_names
+
+
+def test_split_audio_into_chunks_short_file(tmp_path):
+    from app.tools.subtitles import split_audio_into_chunks
+    f = tmp_path / "short.wav"
+    f.write_bytes(b"x" * 1024)
+    chunks = split_audio_into_chunks(f, chunk_duration=600.0)
+    assert len(chunks) == 1
+    assert chunks[0][0] == f
+    assert chunks[0][1] == 0.0
+
