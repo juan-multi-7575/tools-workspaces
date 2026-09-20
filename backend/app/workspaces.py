@@ -62,19 +62,29 @@ def save_run_meta(workspace_id: str, run_id: str, record: dict[str, Any]) -> Non
 DEFAULT_STARTER_TEMPLATES: list[dict[str, Any]] = [
     {
         "name": "🎬 Video to Subtitles (YouTube ➔ Audio Extractor ➔ Subtitles SRT)",
-        "chain": ["downloader", "audio_processor", "transcriber"],
+        "chain": ["media.download.yt-dlp", "media.audio.process", "transcriber"],
     },
     {
         "name": "⚡ Direct Video to Subtitles (YouTube ➔ Subtitles SRT)",
-        "chain": ["downloader", "transcriber"],
+        "chain": ["media.download.yt-dlp", "transcriber"],
     },
     {
         "name": "🎵 Video to Audio Extractor (YouTube ➔ WAV/MP3)",
-        "chain": ["downloader", "audio_processor"],
+        "chain": ["media.download.yt-dlp", "media.audio.process"],
     },
     {
         "name": "📝 Video to Text Summary (YouTube ➔ Transcribe ➔ AI Summary)",
-        "chain": ["downloader", "transcriber", "summarizer"],
+        "chain": ["media.download.yt-dlp", "transcriber", "text.translate.llm"],
+    },
+    {
+        "name": "media.youtube_to_mp4",
+        "preset_id": "media.youtube_to_mp4",
+        "chain": [
+            "media.download.resolve",
+            "media.download.format_select",
+            "media.thumbnail.get",
+            "media.subtitle.fetch",
+        ],
     },
 ]
 
@@ -148,10 +158,10 @@ def list_runs(workspace_id: str) -> list[dict[str, Any]]:
                     run_item["status"] = mdata.get("status")
                     run_item["error"] = mdata.get("error")
                     run_item["duration_seconds"] = mdata.get("duration_seconds")
-                    if mdata.get("pipeline_run_id"):
-                        run_item["pipeline_run_id"] = mdata.get("pipeline_run_id")
-                    if mdata.get("pipeline_name"):
-                        run_item["pipeline_name"] = mdata.get("pipeline_name")
+                    run_item["pipeline_run_id"] = mdata.get("pipeline_run_id")
+                    run_item["pipeline_name"] = mdata.get("pipeline_name")
+                    run_item["visibility"] = mdata.get("visibility")
+                    run_item["preset_id"] = mdata.get("preset_id")
                     if mdata.get("bundle_name"):
                         run_item["bundle_name"] = mdata.get("bundle_name")
                     if mdata.get("timestamp"):
@@ -616,6 +626,45 @@ def export_workspace_zip(workspace_id: str) -> Path:
             for p in run_path.rglob("*"):
                 if p.is_file():
                     zf.write(p, p.relative_to(root))
+    return Path(tmp)
+
+
+def export_pipeline_run_zip(workspace_id: str, pipeline_run_id: str) -> Path | None:
+    """Zip only the artifacts for a single pipeline_run_id. Returns temp zip path or None if not found."""
+    runs = list_pipeline_runs(workspace_id)
+    target = next((g for g in runs if g["pipeline_run_id"] == pipeline_run_id), None)
+    if not target:
+        # fallback: try single run id
+        single = next((r for r in list_runs(workspace_id) if r["id"] == pipeline_run_id), None)
+        if not single:
+            return None
+        # single run zip
+        fd, tmp = tempfile.mkstemp(suffix=".zip", prefix=f"{pipeline_run_id}-")
+        with os.fdopen(fd, "wb") as handle, zipfile.ZipFile(handle, "w", zipfile.ZIP_DEFLATED) as zf:
+            run_path = paths.workspace_root(workspace_id) / "runs" / pipeline_run_id
+            for p in run_path.rglob("*"):
+                if p.is_file():
+                    zf.write(p, p.relative_to(run_path))
+        return Path(tmp)
+    fd, tmp = tempfile.mkstemp(suffix=".zip", prefix=f"{pipeline_run_id}-")
+    with os.fdopen(fd, "wb") as handle, zipfile.ZipFile(handle, "w", zipfile.ZIP_DEFLATED) as zf:
+        for step in target["steps"]:
+            run_id = step["id"]
+            run_path = paths.workspace_root(workspace_id) / "runs" / run_id
+            if not run_path.exists():
+                continue
+            for p in run_path.rglob("*"):
+                if p.is_file():
+                    # store under <pipeline_run_id>/<run_id>/<file>
+                    arc = Path(pipeline_run_id) / run_id / p.relative_to(run_path)
+                    zf.write(p, arc)
+        # also include bundle media if exists
+        if target.get("bundle_name"):
+            media_dir = paths.workspace_media_dir(workspace_id, target["bundle_name"])
+            if media_dir.exists():
+                for p in media_dir.rglob("*"):
+                    if p.is_file():
+                        zf.write(p, Path("bundle") / target["bundle_name"] / p.name)
     return Path(tmp)
 
 

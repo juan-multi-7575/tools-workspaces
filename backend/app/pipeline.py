@@ -1,14 +1,15 @@
 import uuid
 from typing import Any
 
+from app.core.ports import PortKind, is_assignable
 from app.paths import run_dir
 from app.registry import get
-from app.tools.base import PortKind, ToolRunContext
+from app.tools.base import ToolRunContext
 from app.workspaces import save_run_meta
 
 
-def _compatible(out_kind: PortKind, in_kind: PortKind) -> bool:
-    return out_kind == in_kind or out_kind == PortKind.any or in_kind == PortKind.any
+def _compatible(out_kind: PortKind | str, in_kind: PortKind | str) -> bool:
+    return is_assignable(out_kind, in_kind)
 
 
 def validate_chain(tool_ids: list[str]) -> tuple[bool, str | None]:
@@ -20,9 +21,17 @@ def validate_chain(tool_ids: list[str]) -> tuple[bool, str | None]:
     return True, None
 
 
-async def run_pipeline(workspace_id: str, steps: list[dict[str, Any]]) -> list[dict[str, Any]]:
+async def run_pipeline(
+    workspace_id: str,
+    steps: list[dict[str, Any]],
+    pipeline_name: str | None = None,
+    visibility: str = "success",
+    preset_id: str | None = None,
+    pipeline_run_id: str | None = None,
+) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     produced: list[dict[str, Any]] = []
+    pipeline_run_id = pipeline_run_id or uuid.uuid4().hex[:12]
 
     for idx, step in enumerate(steps):
         tool = get(step["tool_id"])
@@ -57,6 +66,10 @@ async def run_pipeline(workspace_id: str, steps: list[dict[str, Any]]) -> list[d
             "error": result.error,
             "params": params,
             "artifacts": [a.model_dump() for a in result.artifacts],
+            "pipeline_run_id": pipeline_run_id,
+            "pipeline_name": pipeline_name,
+            "visibility": visibility,
+            "preset_id": preset_id,
         }
         save_run_meta(workspace_id, run_id, record)
         produced.append({"step_index": idx, "artifacts": result.artifacts})
