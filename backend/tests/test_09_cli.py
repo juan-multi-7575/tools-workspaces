@@ -18,8 +18,7 @@ def test_cli_no_args_lists_subcommands(capsys):
 
 def test_cli_subcommands_match_registry():
     cli = build_cli()
-    registry_ids = {m.id for m in list_manifests()}
-    assert set(cli.commands.keys()) == registry_ids
+    assert set(cli.commands.keys()) == set(REGISTRY.keys())
 
 
 def test_cli_invokes_audio_processor(tmp_path, monkeypatch):
