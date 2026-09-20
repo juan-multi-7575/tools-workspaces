@@ -1,4 +1,5 @@
 from app import registry
+from app.registry import REGISTRY, _SOURCES
 from app.tools.base import Tool, ToolManifest, ToolRunContext, ToolResult
 
 
@@ -19,8 +20,15 @@ class _T2(Tool):
 def test_duplicate_dotted_id_fails_with_both_files():
     registry.register(_T1())
     try:
-        registry.register(_T2())
-    except ValueError as e:
-        assert "media.download.resolve" in str(e)
-    else:
-        raise AssertionError("expected ValueError for duplicate id")
+        try:
+            registry.register(_T2())
+        except ValueError as e:
+            assert "media.download.resolve" in str(e)
+        else:
+            raise AssertionError("expected ValueError for duplicate id")
+    finally:
+        for store in (REGISTRY, _SOURCES):
+            try:
+                del store["media.download.resolve"]
+            except KeyError:
+                pass

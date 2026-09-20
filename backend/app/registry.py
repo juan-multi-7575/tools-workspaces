@@ -16,16 +16,17 @@ _SOURCES: dict[str, str] = {}
 def register(tool: Any, _source: str = "<unknown>") -> None:
     tid = tool.manifest.id
     if tid in REGISTRY and REGISTRY[tid] is not tool:
-        raise ValueError(f"tool id collision: {tid} from {_SOURCES.get(tid)} vs {_source}")
+        raise ValueError(f"tool id collision: {tid} from {_SOURCES.get(tid, '<unknown>')} vs {_source}")
     if "." not in tid:
         log.warning("tool id %s is not dotted domain.verb.engine form (from %s)", tid, _source)
     REGISTRY[tid] = tool
     _SOURCES[tid] = _source
 
 
-def register_alias(old_id: str, tool: Any, _source: str = "<unknown>") -> None:
+def register_alias(old_id: str, tool: Any, _source: str = "<unknown>", deprecated: bool = True) -> None:
     _ALIASES[old_id] = tool.manifest.id
-    log.warning("tool id %s is deprecated, use %s", old_id, tool.manifest.id)
+    if deprecated:
+        log.warning("tool id %s is deprecated, use %s", old_id, tool.manifest.id)
 
 
 def get(tool_id: str) -> Any:
