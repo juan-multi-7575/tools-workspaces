@@ -93,3 +93,24 @@ def test_starter_templates_use_dotted_ids_and_composite_preset():
         "media.download.format_select",
         "media.subtitle.fetch",
     ]
+
+
+def test_gc_dry_run_lists_but_keeps():
+    from app import workspaces
+    ws_id = workspaces.create_workspace("gc probe")["id"]
+    workspaces.save_run_meta(
+        ws_id, "gc_old_failed",
+        {"id": "gc_old_failed", "tool_id": "mediainfo", "status": "failed",
+         "visibility": "success", "timestamp": 1, "artifacts": []},
+    )
+    workspaces.save_run_meta(
+        ws_id, "gc_fresh_ok",
+        {"id": "gc_fresh_ok", "tool_id": "mediainfo", "status": "completed",
+         "visibility": "success", "timestamp": 9999999999, "artifacts": []},
+    )
+    res = workspaces.gc_runs(ws_id, older_than_days=3650, dry_run=True)
+    assert "candidates" in res and "deleted" in res
+    assert res["deleted"] == []
+    assert "gc_old_failed" in res["candidates"]
+    assert "gc_fresh_ok" not in res["candidates"]
+    assert workspaces.get_run_manifest(ws_id, "gc_old_failed") is not None

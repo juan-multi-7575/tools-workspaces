@@ -610,6 +610,22 @@ def delete_run(workspace_id: str, run_id: str) -> bool:
     return True
 
 
+def gc_runs(workspace_id: str, older_than_days: int = 30, keep_starred: bool = True, dry_run: bool = True) -> dict[str, Any]:
+    runs = list_runs(workspace_id)
+    cutoff = time.time() - older_than_days * 86400
+    candidates = [r["id"] for r in runs
+                  if (r.get("timestamp") or 0) < cutoff
+                  and (r.get("visibility") in ("scratch", "failed")
+                       or r.get("status") in ("failed", "error"))
+                  and not (keep_starred and r.get("starred"))]
+    deleted = []
+    if not dry_run:
+        for rid in candidates:
+            if delete_run(workspace_id, rid):
+                deleted.append(rid)
+    return {"candidates": candidates, "deleted": deleted}
+
+
 def delete_workspace(workspace_id: str) -> bool:
     root = paths.workspace_root(workspace_id)
     if not root.exists():
