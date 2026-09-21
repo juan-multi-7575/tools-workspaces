@@ -528,10 +528,17 @@ function PipelineCanvasInner({
   }, [nodes, edges, workspaceId, persistCanvas])
 
   const snapshotOf = (nowNodes: Node<ToolNodeData>[], nowEdges: Edge[]) => {
+    // Strip volatile ReactFlow runtime keys (measured dimensions, selection)
+    // so history compares semantic graph state only.
+    const clean = (items: object[]) =>
+      items.map((item) => {
+        const { measured: _m, selected: _s, ...rest } = item as Record<string, unknown>
+        return rest
+      })
     try {
       return {
-        nodes: JSON.parse(JSON.stringify(nowNodes)),
-        edges: JSON.parse(JSON.stringify(nowEdges)),
+        nodes: JSON.parse(JSON.stringify(clean(nowNodes))) as Node<ToolNodeData>[],
+        edges: JSON.parse(JSON.stringify(clean(nowEdges))) as Edge[],
       }
     } catch {
       return { nodes: [...nowNodes], edges: [...nowEdges] }
