@@ -40,6 +40,7 @@ import {
   Save,
   Undo2,
   Redo2,
+  MoreHorizontal,
 } from 'lucide-react'
 import UniversalPipelineRunModal from './UniversalPipelineRunModal'
 import { resolvePipelineFlow, type PipelineEntryInput, type ResolvedPipelineFlow } from '../../lib/pipelineInputResolver'
@@ -403,6 +404,7 @@ function PipelineCanvasInner({
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
   const [showSavedToast, setShowSavedToast] = useState(false)
   const [clearArmed, setClearArmed] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [histDepths, setHistDepths] = useState({ past: 0, future: 0 })
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
@@ -1147,45 +1149,72 @@ function PipelineCanvasInner({
             </button>
           )}
 
-          <button
-            onClick={autoArrange}
-            disabled={nodes.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs disabled:opacity-40"
-            title="Automatically arrange nodes cleanly from left to right"
-          >
-            <LayoutGrid className="size-3.5 text-[#9D6638]" /> Auto Arrange
-          </button>
-
-          <button
-            onClick={validate}
-            disabled={nodes.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs disabled:opacity-40"
-            title="Validate compatibility of connections"
-          >
-            Validate Graph
-          </button>
-
-          <button
-            onClick={() => setIsSaveTemplateOpen(true)}
-            disabled={nodes.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs disabled:opacity-40"
-            title="Save current pipeline as reusable template"
-          >
-            <BookmarkPlus className="size-3.5 text-[#9D6638]" /> Save as Template
-          </button>
-
-          <button
-            onClick={clearCanvas}
-            disabled={nodes.length === 0}
-            className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-40 ${
-              clearArmed
-                ? 'bg-[#A83232] text-[#FFFFFF] hover:bg-[#862727]'
-                : 'text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F]'
-            }`}
-            title={clearArmed ? 'Click again to confirm clearing the canvas' : 'Clear canvas (asks to confirm)'}
-          >
-            <Trash2 className="size-3.5" /> {clearArmed ? 'Confirm clear?' : 'Clear'}
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => {
+                setMoreOpen((v) => !v)
+                setClearArmed(false)
+              }}
+              className={`inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs ${moreOpen ? 'ring-2 ring-[#9D6638]/40' : ''}`}
+              title="More canvas actions"
+              aria-haspopup="menu"
+              aria-expanded={moreOpen}
+            >
+              <MoreHorizontal className="size-4 text-[#9D6638]" />
+            </button>
+            {moreOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => { setMoreOpen(false); setClearArmed(false) }} />
+                <div role="menu" className="absolute right-0 top-full z-50 mt-1.5 w-56 overflow-hidden rounded-xl border border-[#B0BA99] bg-[#FFFFFF] shadow-xl">
+                  <button
+                    role="menuitem"
+                    onClick={() => { setMoreOpen(false); autoArrange() }}
+                    disabled={nodes.length === 0}
+                    className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#EDE5CD] transition-colors disabled:opacity-40 text-left"
+                    title="Automatically arrange nodes cleanly from left to right"
+                  >
+                    <LayoutGrid className="size-3.5 text-[#9D6638]" /> Auto Arrange
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => { setMoreOpen(false); validate() }}
+                    disabled={nodes.length === 0}
+                    className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#EDE5CD] transition-colors disabled:opacity-40 text-left"
+                    title="Validate compatibility of connections"
+                  >
+                    <CheckCircle2 className="size-3.5 text-[#9D6638]" /> Validate Graph
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => { setMoreOpen(false); setIsSaveTemplateOpen(true) }}
+                    disabled={nodes.length === 0}
+                    className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#EDE5CD] transition-colors disabled:opacity-40 text-left"
+                    title="Save current pipeline as reusable template"
+                  >
+                    <BookmarkPlus className="size-3.5 text-[#9D6638]" /> Save as Template
+                  </button>
+                  <div className="border-t border-[#B0BA99]/40" />
+                  <button
+                    role="menuitem"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      clearCanvas()
+                      if (clearArmed) setMoreOpen(false)
+                    }}
+                    disabled={nodes.length === 0}
+                    className={`flex w-full items-center gap-2 px-3.5 py-2 text-xs font-semibold transition-colors disabled:opacity-40 text-left ${
+                      clearArmed
+                        ? 'bg-[#A83232] text-[#FFFFFF] hover:bg-[#862727]'
+                        : 'text-[#A83232] hover:bg-[#A83232]/10'
+                    }`}
+                    title={clearArmed ? 'Click again to confirm clearing the canvas' : 'Clear canvas (asks to confirm)'}
+                  >
+                    <Trash2 className="size-3.5" /> {clearArmed ? 'Confirm clear?' : 'Clear canvas'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
 
           <button
             onClick={() => setIsExpanded(!isExpanded)}
