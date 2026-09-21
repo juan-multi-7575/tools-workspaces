@@ -37,9 +37,13 @@ import {
   Sparkles,
   Unlink,
   Square,
+  Save,
+  Undo2,
+  Redo2,
 } from 'lucide-react'
 import UniversalPipelineRunModal from './UniversalPipelineRunModal'
 import { resolvePipelineFlow, type PipelineEntryInput, type ResolvedPipelineFlow } from '../../lib/pipelineInputResolver'
+import { useActivityTracker } from '../activity/ActivityContext'
 
 export type ToolNodeStatus = 'idle' | 'pending' | 'running' | 'completed' | 'failed' | 'skipped'
 
@@ -376,6 +380,7 @@ function PipelineCanvasInner({
   selectedNodeId: externalSelectedNodeId,
   externalAddToolRef,
   externalUpdateParamsRef,
+  onGraphStats,
 }: {
   workspaceId: string
   tools?: ToolManifest[]
@@ -384,6 +389,7 @@ function PipelineCanvasInner({
   selectedNodeId?: string | null
   externalAddToolRef?: React.MutableRefObject<((manifest: ToolManifest) => void) | null>
   externalUpdateParamsRef?: React.MutableRefObject<((params: Record<string, unknown>) => void) | null>
+  onGraphStats?: (stats: { nodeCount: number; edgeCount: number }) => void
 }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<ToolNodeData>>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
@@ -395,6 +401,9 @@ function PipelineCanvasInner({
   const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
+  const [showSavedToast, setShowSavedToast] = useState(false)
+  const [clearArmed, setClearArmed] = useState(false)
+  const [histDepths, setHistDepths] = useState({ past: 0, future: 0 })
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -404,6 +413,13 @@ function PipelineCanvasInner({
   const { fitView } = useReactFlow()
   const isLoadedRef = useRef(false)
   const saveTimeoutRef = useRef<any>(null)
+  const savedToastTimerRef = useRef<any>(null)
+  const clearArmTimerRef = useRef<any>(null)
+  const pastRef = useRef<{ nodes: Node<ToolNodeData>[]; edges: Edge[] }[]>([])
+  const futureRef = useRef<{ nodes: Node<ToolNodeData>[]; edges: Edge[] }[]>([])
+  const historyLockRef = useRef(false)
+  const historyTimerRef = useRef<any>(null)
+  const MAX_HISTORY = 50
 
   // 1. Initial load from backend persistence (or fallback to starter)
   useEffect(() => {
@@ -449,21 +465,22 @@ function PipelineCanvasInner({
       })
   }, [workspaceId, fitView, setNodes, setEdges])
 
-  // 2. Debounced auto-save to backend whenever nodes, edges, or params change
-  useEffect(() => {
-    if (!isLoadedRef.current) return
-    setSaveStatus('unsaved')
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+  const flashSavedToast = useCallback(() => {
+    setShowSavedToast(true)
+    if (savedToastTimerRef.current) clearTimeout(savedToastTimerRef.current)
+    savedToastTimerRef.current = setTimeout(() => setShowSavedToast(false), 1500)
+  }, [])
 
-    saveTimeoutRef.current = setTimeout(() => {
+  const persistCanvas = useCallback(
+    (nowNodes: Node<ToolNodeData>[], nowEdges: Edge[]) => {
       setSaveStatus('saving')
-      const payloadNodes = nodes.map((n) => ({
+      const payloadNodes = nowNodes.map((n) => ({
         id: n.id,
         type: n.type,
         position: n.position,
         data: n.data,
       }))
-      const payloadEdges = edges.map((e) => ({
+      const payloadEdges = nowEdges.map((e) => ({
         id: e.id,
         source: e.source,
         target: e.target,
@@ -473,18 +490,154 @@ function PipelineCanvasInner({
         animated: e.animated,
         style: e.style,
       }))
-      api.saveWorkspaceCanvas(workspaceId, {
-        nodes: payloadNodes,
-        edges: payloadEdges,
-      })
-        .then(() => setSaveStatus('saved'))
+      return api
+        .saveWorkspaceCanvas(workspaceId, {
+          nodes: payloadNodes,
+          edges: payloadEdges,
+        })
+        .then(() => {
+          setSaveStatus('saved')
+          flashSavedToast()
+        })
         .catch(() => setSaveStatus('unsaved'))
+    },
+    [workspaceId, flashSavedToast],
+  )
+
+  // Explicit save (button + ⌘S): flush any pending debounce and persist now
+  const saveCanvasNow = useCallback(() => {
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+    return persistCanvas(nodes, edges)
+  }, [nodes, edges, persistCanvas])
+
+  // 2. Debounced auto-save to backend whenever nodes, edges, or params change
+  useEffect(() => {
+    if (!isLoadedRef.current) return
+    setSaveStatus('unsaved')
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+
+    saveTimeoutRef.current = setTimeout(() => {
+      persistCanvas(nodes, edges)
     }, 600)
 
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
     }
-  }, [nodes, edges, workspaceId])
+  }, [nodes, edges, workspaceId, persistCanvas])
+
+  const snapshotOf = (nowNodes: Node<ToolNodeData>[], nowEdges: Edge[]) => {
+    try {
+      return {
+        nodes: JSON.parse(JSON.stringify(nowNodes)),
+        edges: JSON.parse(JSON.stringify(nowEdges)),
+      }
+    } catch {
+      return { nodes: [...nowNodes], edges: [...nowEdges] }
+    }
+  }
+
+  // 2b. Undo/redo history (shift register): when the settled graph changes from
+  // lastSnap -> snap, the PRE-change state (lastSnap) is what undo returns to.
+  // Undo/redo replays run under historyLock so they never record.
+  const lastSnapRef = useRef<{ nodes: Node<ToolNodeData>[]; edges: Edge[] } | null>(null)
+  useEffect(() => {
+    if (!isLoadedRef.current || historyLockRef.current) return
+    if (historyTimerRef.current) clearTimeout(historyTimerRef.current)
+    historyTimerRef.current = setTimeout(() => {
+      const snap = snapshotOf(nodes, edges)
+      const prev = lastSnapRef.current
+      lastSnapRef.current = snap
+      if (!prev) return // first settled state seeds the register, nothing to undo yet
+      if (JSON.stringify(prev) === JSON.stringify(snap)) return
+      pastRef.current.push(prev)
+      if (pastRef.current.length > MAX_HISTORY) pastRef.current.shift()
+      futureRef.current = []
+      setHistDepths({ past: pastRef.current.length, future: 0 })
+    }, 400)
+    return () => {
+      if (historyTimerRef.current) clearTimeout(historyTimerRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges])
+
+  const applySnapshot = useCallback(
+    (snap: { nodes: Node<ToolNodeData>[]; edges: Edge[] }) => {
+      historyLockRef.current = true
+      setNodes(snap.nodes)
+      setEdges(snap.edges)
+      setSelectedNodeId(null)
+      setSelectedEdgeId(null)
+      setTimeout(() => {
+        historyLockRef.current = false
+      }, 0)
+    },
+    [setNodes, setEdges],
+  )
+
+  const syncHistDepths = useCallback(() => {
+    setHistDepths({ past: pastRef.current.length, future: futureRef.current.length })
+  }, [])
+
+  const undo = useCallback(() => {
+    if (pastRef.current.length === 0) {
+      syncHistDepths()
+      return
+    }
+    const cur = snapshotOf(nodes, edges)
+    const prev = pastRef.current[pastRef.current.length - 1]
+    if (JSON.stringify(prev) === JSON.stringify(cur)) {
+      syncHistDepths()
+      return
+    }
+    pastRef.current.pop()
+    futureRef.current.push(cur)
+    lastSnapRef.current = prev
+    applySnapshot(prev)
+    syncHistDepths()
+  }, [nodes, edges, applySnapshot, syncHistDepths])
+
+  const redo = useCallback(() => {
+    if (futureRef.current.length === 0) {
+      syncHistDepths()
+      return
+    }
+    const cur = snapshotOf(nodes, edges)
+    const next = futureRef.current[futureRef.current.length - 1]
+    if (JSON.stringify(next) === JSON.stringify(cur)) {
+      syncHistDepths()
+      return
+    }
+    futureRef.current.pop()
+    pastRef.current.push(cur)
+    lastSnapRef.current = next
+    applySnapshot(next)
+    syncHistDepths()
+  }, [nodes, edges, applySnapshot, syncHistDepths])
+
+  // 2c. Keyboard shortcuts: ⌘S/Ctrl+S save, ⌘Z undo, ⇧⌘Z / Ctrl+Y redo
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        saveCanvasNow()
+        return
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        e.preventDefault()
+        if (e.shiftKey) redo()
+        else undo()
+        return
+      }
+      if (e.ctrlKey && e.key.toLowerCase() === 'y') {
+        e.preventDefault()
+        redo()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [saveCanvasNow, undo, redo])
 
   useEffect(() => {
     if (initialTools && initialTools.length > 0) {
@@ -518,6 +671,13 @@ function PipelineCanvasInner({
     return nodes.find((n) => n.id === targetId)
   }, [nodes, selectedNodeId, externalSelectedNodeId])
   const selectedEdge = useMemo(() => edges.find((e) => e.id === selectedEdgeId), [edges, selectedEdgeId])
+
+  const { setOpen: setActivityOpen, setActiveTab: setActivityTab, setAutoOpened } = useActivityTracker()
+
+  // Report graph size to parent (inspector fallback) whenever it changes
+  useEffect(() => {
+    if (onGraphStats) onGraphStats({ nodeCount: nodes.length, edgeCount: edges.length })
+  }, [nodes, edges, onGraphStats])
 
   // Sync selection to parent inspector if requested
   useEffect(() => {
@@ -643,6 +803,10 @@ function PipelineCanvasInner({
   ) => {
     if (nodes.length === 0) return
     setBusy(true)
+    // Surface live progress: auto-open the activity drawer on the live tab
+    setActivityTab('downloads')
+    setAutoOpened(true)
+    setActivityOpen(true)
     try {
       // Build payload with any updated parameters from modal
       const dagNodes: DAGNode[] = nodes.map((n) => {
@@ -772,7 +936,16 @@ function PipelineCanvasInner({
     setIsRunModalOpen(true)
   }
 
+  // Two-click destructive confirm: first click arms, second executes, auto-disarm after 3s
   const clearCanvas = () => {
+    if (!clearArmed) {
+      setClearArmed(true)
+      if (clearArmTimerRef.current) clearTimeout(clearArmTimerRef.current)
+      clearArmTimerRef.current = setTimeout(() => setClearArmed(false), 3000)
+      return
+    }
+    if (clearArmTimerRef.current) clearTimeout(clearArmTimerRef.current)
+    setClearArmed(false)
     setNodes([])
     setEdges([])
     setSelectedNodeId(null)
@@ -859,72 +1032,107 @@ function PipelineCanvasInner({
     <div className="space-y-3 text-[#4E220F] flex flex-col h-full">
       {/* Sleek Canvas Action Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-3 shadow-xs">
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Starter Workflows Selector */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-bold text-[#7C5339] flex items-center gap-1 mr-1">
-              <Sparkles className="size-3.5 text-[#9D6638]" /> Starters:
-            </span>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {STARTER_WORKFLOWS.map((wf) => (
-                <button
-                  key={wf.name}
-                  onClick={() => loadWorkflowChain(wf.chain, wf.name, wf.defaultParams)}
-                  className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-2.5 py-1 text-xs font-bold text-[#4E220F] hover:bg-[#9D6638] hover:text-[#FFFFFF] hover:border-[#9D6638] transition-all shadow-2xs active:scale-95"
-                  title={wf.desc}
-                >
-                  <span>{wf.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Custom Saved Templates */}
-          {templates.length > 0 && (
-            <div className="flex items-center gap-1.5 pl-2 border-l border-[#B0BA99]/60">
-              <select
-                value={selectedTemplate}
-                onChange={(e) => {
-                  setSelectedTemplate(e.target.value)
-                  const tpl = templates.find((t) => t.name === e.target.value)
-                  if (tpl) loadWorkflowChain(tpl.chain, tpl.name)
-                }}
-                className="rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-2.5 py-1 text-xs text-[#4E220F] font-bold focus:border-[#9D6638] focus:outline-none max-w-xs truncate"
-              >
-                <option value="">— Saved Templates —</option>
-                {templates.map((tpl) => (
-                  <option key={tpl.name} value={tpl.name}>
-                    {tpl.name} ({tpl.chain.length} tools)
-                  </option>
+        {nodes.length === 0 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Starter Workflows Selector (empty canvas only) */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-bold text-[#7C5339] flex items-center gap-1 mr-1">
+                <Sparkles className="size-3.5 text-[#9D6638]" /> Starters:
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {STARTER_WORKFLOWS.map((wf) => (
+                  <button
+                    key={wf.name}
+                    onClick={() => loadWorkflowChain(wf.chain, wf.name, wf.defaultParams)}
+                    className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-2.5 py-1 text-xs font-bold text-[#4E220F] hover:bg-[#9D6638] hover:text-[#FFFFFF] hover:border-[#9D6638] transition-all shadow-2xs active:scale-95"
+                    title={wf.desc}
+                  >
+                    <span>{wf.name}</span>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* Custom Saved Templates (empty canvas only) */}
+            {templates.length > 0 && (
+              <div className="flex items-center gap-1.5 pl-2 border-l border-[#B0BA99]/60">
+                <select
+                  value={selectedTemplate}
+                  onChange={(e) => {
+                    setSelectedTemplate(e.target.value)
+                    const tpl = templates.find((t) => t.name === e.target.value)
+                    if (tpl) loadWorkflowChain(tpl.chain, tpl.name)
+                  }}
+                  className="rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-2.5 py-1 text-xs text-[#4E220F] font-bold focus:border-[#9D6638] focus:outline-none max-w-xs truncate"
+                >
+                  <option value="">— Saved Templates ({templates.length}) —</option>
+                  {templates.map((tpl) => (
+                    <option key={tpl.name} value={tpl.name}>
+                      {tpl.name} ({tpl.chain.length} tools)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-xs font-mono text-[#7C5339]">
+            {nodes.length} node{nodes.length === 1 ? '' : 's'} · {edges.length} edge{edges.length === 1 ? '' : 's'}
+          </div>
+        )}
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Auto-Save Status Badge */}
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-[#B0BA99]/60 bg-[#F7F1DE]/60 text-[10px] font-mono">
-            {saveStatus === 'saved' && (
-              <>
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="text-[#4E220F] font-bold">Saved</span>
-              </>
-            )}
-            {saveStatus === 'saving' && (
-              <>
-                <span className="h-2 w-2 rounded-full bg-[#9D6638] animate-ping" />
-                <span className="text-[#9D6638] font-bold">Saving...</span>
-              </>
-            )}
-            {saveStatus === 'unsaved' && (
-              <>
-                <span className="h-2 w-2 rounded-full bg-amber-500" />
-                <span className="text-amber-700 font-bold">Unsaved</span>
-              </>
-            )}
-          </div>
+          {/* Undo / Redo */}
+          <button
+            onClick={undo}
+            disabled={histDepths.past === 0}
+            className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs disabled:opacity-40"
+            title="Undo (⌘Z)"
+          >
+            <Undo2 className="size-3.5 text-[#9D6638]" />
+          </button>
+          <button
+            onClick={redo}
+            disabled={histDepths.future === 0}
+            className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs disabled:opacity-40"
+            title="Redo (⇧⌘Z)"
+          >
+            <Redo2 className="size-3.5 text-[#9D6638]" />
+          </button>
+
+          {/* Save Status: visible while dirty/saving; Saved auto-dismisses */}
+          {(saveStatus !== 'saved' || showSavedToast) && (
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-[#B0BA99]/60 bg-[#F7F1DE]/60 text-[10px] font-mono">
+              {saveStatus === 'saved' && showSavedToast && (
+                <>
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="text-[#4E220F] font-bold">Saved</span>
+                </>
+              )}
+              {saveStatus === 'saving' && (
+                <>
+                  <span className="h-2 w-2 rounded-full bg-[#9D6638] animate-ping" />
+                  <span className="text-[#9D6638] font-bold">Saving...</span>
+                </>
+              )}
+              {saveStatus === 'unsaved' && (
+                <>
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  <span className="text-amber-700 font-bold">Unsaved • ⌘S</span>
+                </>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={saveCanvasNow}
+            disabled={saveStatus !== 'unsaved'}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs disabled:opacity-40"
+            title="Save pipeline now (⌘S)"
+          >
+            <Save className="size-3.5 text-[#9D6638]" /> Save
+          </button>
 
           {selectedEdge && (
             <button
@@ -963,15 +1171,20 @@ function PipelineCanvasInner({
             className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs disabled:opacity-40"
             title="Save current pipeline as reusable template"
           >
-            <BookmarkPlus className="size-3.5 text-[#9D6638]" /> Save Template
+            <BookmarkPlus className="size-3.5 text-[#9D6638]" /> Save as Template
           </button>
 
           <button
             onClick={clearCanvas}
             disabled={nodes.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F] transition-colors disabled:opacity-40"
+            className={`inline-flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-40 ${
+              clearArmed
+                ? 'bg-[#A83232] text-[#FFFFFF] hover:bg-[#862727]'
+                : 'text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F]'
+            }`}
+            title={clearArmed ? 'Click again to confirm clearing the canvas' : 'Clear canvas (asks to confirm)'}
           >
-            <Trash2 className="size-3.5" /> Clear
+            <Trash2 className="size-3.5" /> {clearArmed ? 'Confirm clear?' : 'Clear'}
           </button>
 
           <button
@@ -1002,10 +1215,11 @@ function PipelineCanvasInner({
             <button
               onClick={handleRunClick}
               disabled={nodes.length === 0}
+              title={nodes.length === 0 ? 'Add a node to run' : `Run ${nodes.length} node${nodes.length === 1 ? '' : 's'}`}
               className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-4 py-1.5 text-xs font-bold text-[#FDFBF7] hover:bg-[#86542C] transition-all disabled:opacity-50 shadow-sm"
             >
               <Play className="size-3.5 fill-current" />
-              Run Pipeline
+              {nodes.length === 0 ? 'Run Pipeline' : `Run · ${nodes.length} node${nodes.length === 1 ? '' : 's'}`}
             </button>
           )}
         </div>
@@ -1151,6 +1365,7 @@ export default function PipelineCanvas(props: {
   selectedNodeId?: string | null
   externalAddToolRef?: React.MutableRefObject<((manifest: ToolManifest) => void) | null>
   externalUpdateParamsRef?: React.MutableRefObject<((params: Record<string, unknown>) => void) | null>
+  onGraphStats?: (stats: { nodeCount: number; edgeCount: number }) => void
 }) {
   return (
     <ReactFlowProvider>

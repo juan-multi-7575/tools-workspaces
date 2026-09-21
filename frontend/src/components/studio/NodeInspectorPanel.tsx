@@ -21,6 +21,9 @@ export default function NodeInspectorPanel({
   collapsed,
   onToggleCollapse,
   onStepFinished,
+  nodeCount,
+  edgeCount,
+  lastRun,
 }: {
   selectedNode: {
     id: string
@@ -38,6 +41,9 @@ export default function NodeInspectorPanel({
   collapsed: boolean
   onToggleCollapse: () => void
   onStepFinished?: () => void
+  nodeCount?: number
+  edgeCount?: number
+  lastRun?: { name: string; status: string } | null
 }) {
   const [runningStep, setRunningStep] = useState(false)
   const [stepStatus, setStepStatus] = useState<string | null>(null)
@@ -101,12 +107,46 @@ export default function NodeInspectorPanel({
       </div>
 
       {!selectedNode ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-[#7C5339] space-y-2">
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-[#7C5339] space-y-3">
           <Settings2 className="size-8 text-[#9D6638] opacity-60" />
-          <p className="text-xs font-bold text-[#4E220F]">No Node Selected</p>
-          <p className="text-[11px] leading-relaxed">
-            Click any node on the canvas to inspect parameters, input bindings, and execution results.
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs font-bold text-[#4E220F]">No Node Selected</p>
+            <p className="text-[11px] leading-relaxed">
+              Click any node on the canvas to inspect parameters, input bindings, and execution results.
+            </p>
+          </div>
+          {(nodeCount !== undefined || lastRun !== undefined) && (
+            <div className="w-full rounded-xl border border-[#B0BA99]/60 bg-[#FFFFFF] p-3 text-left space-y-1.5">
+              <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7C5339]">
+                Pipeline overview
+              </p>
+              {nodeCount !== undefined && (
+                <p className="font-mono text-[11px] text-[#4E220F]">
+                  {nodeCount} node{nodeCount === 1 ? '' : 's'}
+                  {edgeCount !== undefined && ` · ${edgeCount} edge${edgeCount === 1 ? '' : 's'}`}
+                </p>
+              )}
+              {lastRun ? (
+                <p className="text-[11px] text-[#4E220F]">
+                  <span className="font-bold">Last run:</span>{' '}
+                  <span className="font-mono truncate inline-block max-w-[140px] align-bottom" title={lastRun.name}>
+                    {lastRun.name}
+                  </span>{' '}
+                  <span
+                    className={`font-mono text-[10px] font-bold uppercase ${
+                      lastRun.status === 'failed' ? 'text-[#A83232]' : 'text-[#2E6B47]'
+                    }`}
+                  >
+                    • {lastRun.status}
+                  </span>
+                </p>
+              ) : (
+                lastRun !== undefined && (
+                  <p className="text-[11px] text-[#7C5339] italic">No runs yet — press Run Pipeline to start.</p>
+                )
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-3 space-y-3.5">

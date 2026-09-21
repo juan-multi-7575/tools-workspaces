@@ -57,6 +57,7 @@ export default function WorkspaceDetailPage() {
     errorMessage?: string
     cached?: boolean
   } | null>(null)
+  const [graphStats, setGraphStats] = useState({ nodeCount: 0, edgeCount: 0 })
 
   const addToolRef = useRef<((tool: ToolManifest) => void) | null>(null)
   const updateParamsRef = useRef<((params: Record<string, unknown>) => void) | null>(null)
@@ -303,6 +304,7 @@ export default function WorkspaceDetailPage() {
                 selectedNodeId={selectedCanvasNode?.id}
                 externalAddToolRef={addToolRef}
                 externalUpdateParamsRef={updateParamsRef}
+                onGraphStats={setGraphStats}
               />
             </div>
 
@@ -311,6 +313,16 @@ export default function WorkspaceDetailPage() {
               selectedNode={selectedCanvasNode}
               toolManifest={tools.find((t) => t.id === selectedCanvasNode?.toolId)}
               workspaceId={id!}
+              nodeCount={graphStats.nodeCount}
+              edgeCount={graphStats.edgeCount}
+              lastRun={
+                pipelineRuns[0]
+                  ? {
+                      name: pipelineRuns[0].bundle_name || pipelineRuns[0].pipeline_name || pipelineRuns[0].pipeline_run_id.slice(0, 8),
+                      status: pipelineRuns[0].status,
+                    }
+                  : null
+              }
               onUpdateParams={(newParams) => {
                 if (selectedCanvasNode) {
                   setSelectedCanvasNode({

@@ -20,6 +20,9 @@ interface ActivityContextType {
   setOpen: (open: boolean) => void
   activeTab: ActivityTabType
   setActiveTab: (tab: ActivityTabType) => void
+  /** True when the drawer was opened automatically for a live run — safe to auto-close when idle. */
+  autoOpened: boolean
+  setAutoOpened: (v: boolean) => void
   toolExecutions: ToolExecutionRecord[]
   recordToolExecution: (exec: ToolExecutionRecord) => void
   updateToolExecution: (id: string, updates: Partial<ToolExecutionRecord>) => void
@@ -42,6 +45,7 @@ export function useActivityTracker() {
 export function ActivityProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<ActivityTabType>('downloads')
+  const [autoOpened, setAutoOpened] = useState(false)
   const [toolExecutions, setToolExecutions] = useState<ToolExecutionRecord[]>([])
   const [onPlayMediaCallback, setOnPlayMediaCallback] = useState<
     ((media: { name: string; path: string; kind?: string }) => void) | undefined
@@ -72,6 +76,8 @@ export function ActivityProvider({ children }: { children: React.ReactNode }) {
         setOpen,
         activeTab,
         setActiveTab,
+        autoOpened,
+        setAutoOpened,
         toolExecutions,
         recordToolExecution,
         updateToolExecution,

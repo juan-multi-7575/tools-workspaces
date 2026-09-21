@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useState, useEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 import {
   X,
   Activity,
@@ -39,6 +39,8 @@ export default function ActivitySidebar({
     setOpen,
     activeTab,
     setActiveTab,
+    autoOpened,
+    setAutoOpened,
     toolExecutions,
     clearToolExecutions,
     removeToolExecution,
@@ -116,6 +118,23 @@ export default function ActivitySidebar({
   )
 
   const totalActive = activeDownloads + activeTools
+
+  // Auto-close only drawers that were auto-opened for a live run, once activity
+  // has actually been observed and then drains. Manually opened drawers are
+  // never yanked. The sawActivity guard covers the gap between run start
+  // (auto-open) and task registration.
+  const sawActivityRef = useRef(false)
+  useEffect(() => {
+    if (totalActive > 0) {
+      sawActivityRef.current = true
+      return
+    }
+    if (autoOpened && sawActivityRef.current && open) {
+      sawActivityRef.current = false
+      setOpen(false)
+      setAutoOpened(false)
+    }
+  }, [autoOpened, totalActive, open, setOpen, setAutoOpened])
 
   // Map backwards-compatible tab names if needed
   const normalizedTab: ActivityTabType =
@@ -269,6 +288,25 @@ export default function ActivitySidebar({
               )}
             </div>
 
+            {/* Live progress strip: persists across tabs while streams run */}
+            {totalActive > 0 && (
+              <button
+                onClick={() => setActiveTab('downloads')}
+                className="mx-5 mt-2 flex items-center gap-2 rounded-lg border border-[#9D6638]/40 bg-[#EDE5CD] px-3 py-1.5 font-mono text-[11px] font-bold text-[#4E220F] hover:bg-[#B0BA99]/30 transition-colors text-left"
+                title="Jump to live downloads"
+              >
+                <span className="h-2 w-2 rounded-full bg-[#9D6638] animate-pulse shrink-0" />
+                <span>
+                  {activeDownloads > 0 && `${activeDownloads} downloading`}
+                  {activeDownloads > 0 && activeTools > 0 && ' • '}
+                  {activeTools > 0 && `${activeTools} tool${activeTools === 1 ? '' : 's'} running`}
+                </span>
+                {normalizedTab !== 'downloads' && (
+                  <span className="ml-auto text-[10px] text-[#9D6638] underline underline-offset-2 shrink-0">View live →</span>
+                )}
+              </button>
+            )}
+
             {/* Notice Toast */}
             {clearNotice && (
               <div className="mx-5 mt-2 rounded-lg border border-[#B0BA99] bg-[#EDE5CD] p-2 text-center font-mono text-xs text-[#4E220F] flex items-center justify-center gap-1.5">
@@ -327,6 +365,7 @@ export default function ActivitySidebar({
                   onCancel={handleCancelDownload}
                   onRemove={handleRemoveDownload}
                   onPlayMedia={onOpenAudioPlayer}
+                  onBrowseFiles={() => setActiveTab('artifacts')}
                 />
               )}
 
