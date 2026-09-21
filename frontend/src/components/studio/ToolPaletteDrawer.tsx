@@ -37,14 +37,24 @@ export default function ToolPaletteDrawer({
 }) {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
   const categories = useMemo(() => {
-    const set = new Set<string>()
+    const counts = new Map<string, number>()
     tools.forEach((t) => {
-      if (t.category) set.add(t.category)
+      if (t.category) counts.set(t.category, (counts.get(t.category) || 0) + 1)
     })
-    return ['all', ...Array.from(set)]
+    return [{ name: 'all', count: tools.length }, ...Array.from(counts.entries()).map(([name, count]) => ({ name, count }))]
   }, [tools])
+
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const filteredTools = useMemo(() => {
     return tools.filter((t) => {
@@ -111,19 +121,20 @@ export default function ToolPaletteDrawer({
         </div>
       </div>
 
-      {/* Categories Filter Pills */}
+      {/* Categories Filter Pills (with counts) */}
       <div className="px-2.5 py-2 border-b border-[#B0BA99]/30 flex flex-wrap gap-1">
         {categories.map((cat) => (
           <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
+            key={cat.name}
+            onClick={() => setSelectedCategory(cat.name)}
             className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
-              selectedCategory === cat
+              selectedCategory === cat.name
                 ? 'bg-[#9D6638] text-[#FDFBF7] shadow-2xs'
                 : 'bg-[#FFFFFF] border border-[#B0BA99]/60 text-[#7C5339] hover:bg-[#EDE5CD]'
             }`}
+            title={`${cat.count} tool${cat.count === 1 ? '' : 's'}`}
           >
-            {cat}
+            {cat.name} <span className="font-mono opacity-75">({cat.count})</span>
           </button>
         ))}
       </div>
@@ -137,20 +148,30 @@ export default function ToolPaletteDrawer({
         ) : (
           filteredTools.map((tool) => {
             const IconComponent = CATEGORY_ICONS[tool.category || ''] || Cpu
+            const expanded = expandedIds.has(tool.id)
             return (
               <div
                 key={tool.id}
-                className="group relative rounded-xl border border-[#B0BA99] bg-[#FFFFFF] p-2.5 hover:border-[#9D6638] hover:shadow-xs transition-all flex flex-col gap-1.5"
+                className="group relative rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2 py-1.5 hover:border-[#9D6638] hover:shadow-xs transition-all flex flex-col gap-1"
               >
                 <div className="flex items-center justify-between gap-1">
-                  <div className="flex items-center gap-2 min-w-0">
+                  <button
+                    onClick={() => toggleExpanded(tool.id)}
+                    className="flex items-center gap-1.5 min-w-0 text-left"
+                    title={expanded ? 'Hide description & ports' : `Show description & ports for ${tool.name}`}
+                  >
+                    {expanded ? (
+                      <ChevronLeft className="size-3 text-[#9D6638] shrink-0 -rotate-90" />
+                    ) : (
+                      <ChevronRight className="size-3 text-[#7C5339] shrink-0" />
+                    )}
                     <div className="flex size-6 items-center justify-center rounded-lg bg-[#9D6638]/10 text-[#9D6638] shrink-0">
                       <IconComponent className="size-3.5" />
                     </div>
-                    <span className="text-xs font-bold text-[#4E220F] truncate" title={tool.name}>
+                    <span className="text-xs font-bold text-[#4E220F] leading-tight line-clamp-2" title={tool.name}>
                       {tool.name}
                     </span>
-                  </div>
+                  </button>
                   <button
                     onClick={() => onAddTool(tool)}
                     className="flex size-6 items-center justify-center rounded-lg bg-[#9D6638] text-[#FDFBF7] hover:bg-[#86542C] transition-all shrink-0 active:scale-90 shadow-2xs"
@@ -160,12 +181,14 @@ export default function ToolPaletteDrawer({
                   </button>
                 </div>
 
-                <p className="text-[10px] text-[#7C5339] line-clamp-2 leading-relaxed">
-                  {tool.description || 'No description provided.'}
-                </p>
+                {expanded && (
+                  <>
+                    <p className="text-[10px] text-[#7C5339] line-clamp-3 leading-relaxed pl-5">
+                      {tool.description || 'No description provided.'}
+                    </p>
 
-                {/* Ports / Tags */}
-                <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-[#B0BA99]/20">
+                    {/* Ports / Tags (on expand) */}
+                    <div className="flex flex-wrap items-center gap-1 pt-1 ml-5 border-t border-[#B0BA99]/20">
                   {tool.input_kinds?.map((k) => (
                     <span
                       key={k}
@@ -181,8 +204,10 @@ export default function ToolPaletteDrawer({
                     >
                       out:{k}
                     </span>
-                  ))}
-                </div>
+                    ))}
+                    </div>
+                  </>
+                )}
               </div>
             )
           })

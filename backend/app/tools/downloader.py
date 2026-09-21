@@ -243,6 +243,65 @@ def build_ydl_opts(params: dict, outtmpl: str) -> dict:
     return opts
 
 
+def resolve_media_url(url: str, timeout: float = 30.0) -> dict[str, Any]:
+    """Lightweight pre-run URL check: dump single-video metadata without downloading.
+
+    Returns {"ok": True, title, duration_seconds, uploader, extractor, thumbnail}
+    or {"ok": False, "error": ...}. Never raises.
+    """
+    from urllib.parse import urlparse
+
+    try:
+        parts = urlparse((url or '').strip())
+    except Exception:
+        return {"ok": False, "error": "Malformed URL."}
+    if parts.scheme not in ("http", "https") or not parts.netloc:
+        return {"ok": False, "error": "URL must start with http:// or https://."}
+    cmd = [
+        "yt-dlp",
+        "--dump-single-json",
+        "--no-download",
+        "--skip-download",
+        "--no-playlist",
+        "--no-warnings",
+        "--socket-timeout",
+        "10",
+        (url or '').strip(),
+    ]
+    try:
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout)
+    except FileNotFoundError:
+        return {"ok": False, "error": "yt-dlp is not installed on the server."}
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "error": f"Timed out after {timeout:.0f}s waiting for metadata."}
+    except Exception as exc:
+        return {"ok": False, "error": f"Metadata lookup failed: {exc}"}
+    if proc.returncode != 0:
+        err = (proc.stderr or '').strip().splitlines()
+        msg = err[-1].strip() if err else f"yt-dlp exited with code {proc.returncode}."
+        # Trim the common "ERROR: " prefix for display
+        if msg.startswith("ERROR: "):
+            msg = msg[len("ERROR: "):]
+        return {"ok": False, "error": msg[:300]}
+    try:
+        import json as _json
+
+        info = _json.loads(proc.stdout or '{}')
+    except Exception:
+        return {"ok": False, "error": "Could not parse video metadata."}
+    thumbs = info.get("thumbnails") or []
+    thumb = thumbs[-1].get("url") if thumbs and isinstance(thumbs[-1], dict) else None
+    return {
+        "ok": True,
+        "title": info.get("title") or "Untitled",
+        "duration_seconds": info.get("duration"),
+        "uploader": info.get("uploader") or info.get("channel"),
+        "extractor": info.get("extractor"),
+        "thumbnail": thumb,
+        "is_live": bool(info.get("is_live")),
+    }
+
+
 def _to_cli(ydl_opts: dict) -> list[str]:
     cmd = ["yt-dlp"]
     for key, value in ydl_opts.items():

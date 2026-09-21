@@ -392,6 +392,16 @@ async def stop_pipeline_route(workspace_id: str):
     return {"stopped": stopped}
 
 
+@app.post("/api/workspaces/{workspace_id}/pipeline/resolve-url")
+async def resolve_pipeline_url(workspace_id: str, payload: dict):
+    """Pre-run URL check: validate syntax and fetch title/duration metadata without downloading."""
+    from app.tools.downloader import resolve_media_url
+
+    url = (payload or {}).get("url", "")
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, resolve_media_url, url)
+
+
 @app.get("/api/workspaces/{workspace_id}/canvas")
 async def get_workspace_canvas_route(workspace_id: str):
     """Get persisted canvas nodes, edges, positions and params for this workspace session."""

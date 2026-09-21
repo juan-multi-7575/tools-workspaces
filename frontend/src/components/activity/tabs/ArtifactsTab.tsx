@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { FolderOpen, Clock, Play, Download, Copy, Check } from 'lucide-react'
 import type { StoredArtifact } from '../../../lib/activityStore'
+import { getCompatibleTools } from '../../../lib/toolCompatibility'
 import { UseAsInputMenu } from '../UseAsInputMenu'
 
 interface ArtifactsTabProps {
@@ -103,6 +104,11 @@ export const ArtifactsTab: React.FC<ArtifactsTabProps> = ({
         filtered.map((art) => {
           const badge = getArtifactBadge(art.name)
           const isAudio = isAudioMedia(art.name)
+          const compatible = getCompatibleTools(art.name).filter((t) => t.compatible)
+          const compatTitle =
+            compatible.length > 0
+              ? `Fits: ${compatible.map((t) => t.toolName).join(', ')}`
+              : 'No tool accepts this file type as input'
           return (
             <div
               key={art.path}
@@ -122,6 +128,19 @@ export const ArtifactsTab: React.FC<ArtifactsTabProps> = ({
                     <span>{(art.size / 1024 / 1024).toFixed(2)} MB</span>
                     <span>•</span>
                     <span>{formatTimeAgo(art.mtime * 1000)}</span>
+                    <span>•</span>
+                    <span
+                      title={compatTitle}
+                      className={
+                        compatible.length > 0
+                          ? 'font-bold text-[#2E6B47]'
+                          : 'italic text-[#7C5339]/70'
+                      }
+                    >
+                      {compatible.length > 0
+                        ? `✓ fits ${compatible[0].toolName}${compatible.length > 1 ? ` +${compatible.length - 1}` : ''}`
+                        : 'no tool match'}
+                    </span>
                   </div>
                 </div>
               </div>

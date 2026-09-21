@@ -23,6 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
   Calendar,
+  X,
 } from 'lucide-react'
 import {
   api,
@@ -32,12 +33,7 @@ import {
   type MediaPackage,
 } from '../../lib/api'
 
-function formatSize(bytes: number): string {
-  if (!bytes) return '0 B'
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
+import { formatSize, describeSubtitleTrack, subtitleTrackLabel, runDisplayName } from '../../lib/mediaLabels'
 
 function formatDate(timestamp: number): string {
   if (!timestamp) return ''
@@ -98,6 +94,9 @@ export default function UnifiedMediaRunsHub({
   const [activeMediaPackage, setActiveMediaPackage] = useState<MediaPackage | null>(null)
   const [activeTab, setActiveTab] = useState<'latest' | 'timeline' | 'files'>('latest')
   const [expandedRuns, setExpandedRuns] = useState<Set<string>>(new Set())
+  const [timelineStatusFilter, setTimelineStatusFilter] = useState<'all' | 'completed' | 'failed'>('all')
+  const [failureBannerDismissed, setFailureBannerDismissed] = useState(false)
+  const [packageOverride, setPackageOverride] = useState<MediaPackage | null>(null)
   const [filesPage, setFilesPage] = useState(1)
   const filesPerPage = 12
 
@@ -133,6 +132,8 @@ export default function UnifiedMediaRunsHub({
 
   useEffect(() => {
     loadMedia()
+    setFailureBannerDismissed(false)
+    setPackageOverride(null)
   }, [pipelineRuns.length, highlightRunId])
 
   const copyPath = (path: string) => {
@@ -153,6 +154,31 @@ export default function UnifiedMediaRunsHub({
   const packages = mediaData?.packages || []
   const allFiles = mediaData?.all_files || []
 
+  /** Jump from a timeline run to its package in the Latest tab. */
+  const findPackageForBundle = (bundleName?: string) => {
+    if (!bundleName) return undefined
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '')
+    const want = norm(bundleName)
+    if (!want) return undefined
+    return packages.find((p) => {
+      const got = norm(p.title)
+      return got === want || got.includes(want) || want.includes(got)
+    })
+  }
+  const viewPackageForRun = (bundleName?: string) => {
+    const pkg = findPackageForBundle(bundleName)
+    if (pkg) {
+      setActiveMediaPackage(pkg)
+      setPackageOverride(pkg)
+    }
+    setActiveTab('latest')
+  }
+
+  const showFailedTimeline = () => {
+    setTimelineStatusFilter('failed')
+    setActiveTab('timeline')
+  }
+
   const latestRun = pipelineRuns[0] || null
   const latestIsFailed = latestRun?.status === 'failed'
   const latestFailedStep = latestRun?.steps.find((s) => s.status === 'failed')
@@ -168,6 +194,9 @@ export default function UnifiedMediaRunsHub({
     // fallback to first successful package (has video)
     return packages.find((p) => p.video) || packages[0]
   }, [packages, activeMediaPackage, pipelineRuns, latestIsFailed])
+
+  // Failed-latest view honors an explicit timeline Package jump; otherwise latest success.
+  const failedViewPackage = packageOverride || latestSuccessPackage
 
   const filteredFiles = allFiles.filter((f) => {
     if (f.name.includes('_scratch') || f.name.startsWith('scratch_')) return false
@@ -190,6 +219,18 @@ export default function UnifiedMediaRunsHub({
     return groups
   }, [pipelineRuns])
 
+  const filteredGroupedRuns = useMemo(() => {
+    if (timelineStatusFilter === 'all') return groupedRuns
+    const out: Record<string, PipelineRunGroup[]> = {}
+    for (const [label, runs] of Object.entries(groupedRuns)) {
+      const kept = runs.filter((r) =>
+        timelineStatusFilter === 'failed' ? r.status === 'failed' : r.status === 'completed',
+      )
+      if (kept.length) out[label] = kept
+    }
+    return out
+  }, [groupedRuns, timelineStatusFilter])
+
   const successCount = pipelineRuns.filter((r) => r.status === 'completed').length
   const failedCount = pipelineRuns.filter((r) => r.status === 'failed').length
 
@@ -205,8 +246,16 @@ export default function UnifiedMediaRunsHub({
             <div>
               <h2 className="text-sm font-bold text-[#4E220F]">Outputs • Organized by Recency</h2>
               <p className="text-[11px] text-[#7C5339]">
-                {successCount} successful • {failedCount} failed • {packages.length} packages • {allFiles.length} files
-                {latestRun && <span className="ml-2 font-mono">Latest: {relativeTime(latestRun.timestamp)} • {latestRun.pipeline_run_id.slice(0, 8)}</span>}
+                {pipelineRuns.length} runs • {allFiles.length} files • {successCount} successful •{' '}
+                {failedCount > 0 ? (
+                  <button onClick={showFailedTimeline} className="font-bold text-[#A83232] underline underline-offset-2 hover:text-[#862727]" title="Show failed runs in timeline">
+                    {failedCount} failed
+                  </button>
+                ) : (
+                  <span>0 failed</span>
+                )}{' '}
+                • {packages.length} packages
+                {latestRun && <span className="ml-2 font-mono">Latest: {relativeTime(latestRun.timestamp)} • {runDisplayName(latestRun)}</span>}
               </p>
             </div>
           </div>
@@ -248,14 +297,18 @@ export default function UnifiedMediaRunsHub({
             </div>
           ) : latestIsFailed ? (
             <div className="space-y-4">
+              {!failureBannerDismissed && (
               <div className="rounded-2xl border-2 border-[#A83232]/40 bg-[#FDF2F2] p-5 space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="flex size-7 items-center justify-center rounded-lg bg-[#A83232] text-[#FDFBF7]"><AlertTriangle className="size-4" /></span>
                   <div>
                     <h3 className="text-sm font-bold text-[#A83232]">Latest run failed — no new outputs produced</h3>
-                    <p className="text-xs text-[#7C5339] font-mono">{latestRun.pipeline_run_id} • {formatDate(latestRun.timestamp)} • {relativeTime(latestRun.timestamp)}</p>
+                    <p className="text-xs text-[#7C5339] font-mono">{runDisplayName(latestRun)} • {latestRun.pipeline_run_id} • {formatDate(latestRun.timestamp)} • {relativeTime(latestRun.timestamp)}</p>
                   </div>
                   <span className="ml-auto text-[10px] font-bold px-2 py-1 rounded-full bg-[#A83232] text-[#FDFBF7]">FAILED</span>
+                  <button onClick={() => setFailureBannerDismissed(true)} className="p-1 rounded-lg text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F]" title="Dismiss — previous outputs below">
+                    <X className="size-4" />
+                  </button>
                 </div>
                 {latestFailedStep && (
                   <div className="rounded-xl bg-[#FFFFFF] border border-[#A83232]/20 p-3 text-xs">
@@ -270,15 +323,16 @@ export default function UnifiedMediaRunsHub({
                   <span className="text-[11px] text-[#7C5339] self-center">Fix API keys / provider, then re-run. Previous successful outputs shown below.</span>
                 </div>
               </div>
-              {latestSuccessPackage && (
+              )}
+              {failedViewPackage && (
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[#7C5339] mb-2 flex items-center gap-2"><CheckCircle2 className="size-3.5 text-[#2E6B47]" /> Previous successful outputs (not from failed run)</p>
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 rounded-2xl border border-[#B0BA99]/60 bg-[#F7F1DE]/30 p-5">
                     <div className="lg:col-span-7 space-y-2">
                       <div className="rounded-xl overflow-hidden bg-black aspect-video border border-[#B0BA99] shadow-inner">
-                        {latestSuccessPackage.video ? (
-                          <video controls preload="metadata" crossOrigin="anonymous" className="w-full h-full object-contain" src={latestSuccessPackage.video.preview_url}>
-                            {latestSuccessPackage.subtitles.map((sub, idx) => (
+                        {failedViewPackage.video ? (
+                          <video controls preload="metadata" crossOrigin="anonymous" className="w-full h-full object-contain" src={failedViewPackage.video.preview_url}>
+                            {failedViewPackage.subtitles.map((sub, idx) => (
                               <track key={sub.name} kind="subtitles" src={sub.preview_url} label={sub.name} default={idx === 0} />
                             ))}
                           </video>
@@ -287,30 +341,30 @@ export default function UnifiedMediaRunsHub({
                         )}
                       </div>
                       <div className="flex items-center justify-between text-[11px] text-[#7C5339] font-mono px-1">
-                        <span className="truncate">{latestSuccessPackage.video?.name}</span>
-                        <span>{latestSuccessPackage.video ? formatSize(latestSuccessPackage.video.size) : ''} • {latestSuccessPackage.video ? relativeTime(latestSuccessPackage.video.mtime) : ''}</span>
+                        <span className="truncate">{failedViewPackage.video?.name}</span>
+                        <span>{failedViewPackage.video ? formatSize(failedViewPackage.video.size) : ''} • {failedViewPackage.video ? relativeTime(failedViewPackage.video.mtime) : ''}</span>
                       </div>
                     </div>
                     <div className="lg:col-span-5 space-y-3">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-[#B0BA99] text-[#4E220F]">Previous Package</span>
-                        <span className="font-mono text-[10px] text-[#7C5339]">{latestSuccessPackage.video ? formatDate(latestSuccessPackage.video.mtime) : ''}</span>
+                        <span className="font-mono text-[10px] text-[#7C5339]">{failedViewPackage.video ? formatDate(failedViewPackage.video.mtime) : ''}</span>
                       </div>
-                      <h3 className="text-sm font-bold text-[#4E220F] leading-tight truncate">{latestSuccessPackage.title}</h3>
+                      <h3 className="text-sm font-bold text-[#4E220F] leading-tight truncate">{failedViewPackage.title}</h3>
                       <div className="space-y-1.5">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-[#7C5339]">Subtitles</span>
                         <div className="space-y-1.5">
-                          {latestSuccessPackage.subtitles.map((sub) => (
+                          {failedViewPackage.subtitles.map((sub) => (
                             <div key={sub.name} className="flex items-center justify-between p-2 rounded-xl bg-[#FFFFFF] border border-[#B0BA99]/70 text-xs">
-                              <span className="font-mono truncate pr-2">{sub.name}</span>
+                              <span className="font-mono truncate pr-2" title={sub.name}>{subtitleTrackLabel(sub.name, sub.size)}</span>
                               <a href={sub.download_url} download={sub.name} className="p-1 rounded-lg bg-[#9D6638] text-[#FDFBF7]"><Download className="size-3" /></a>
                             </div>
                           ))}
-                          {latestSuccessPackage.subtitles.length === 0 && <p className="text-xs text-[#7C5339] italic">No subtitles in this package</p>}
+                          {failedViewPackage.subtitles.length === 0 && <p className="text-xs text-[#7C5339] italic">No subtitles in this package</p>}
                         </div>
                       </div>
                       {(() => {
-                        const successRun = pipelineRuns.find((r) => r.bundle_name === latestSuccessPackage.title) || pipelineRuns.find((r) => r.status === 'completed')
+                        const successRun = pipelineRuns.find((r) => r.bundle_name === failedViewPackage.title) || pipelineRuns.find((r) => r.status === 'completed')
                         return successRun ? (
                           <a href={api.downloadPipelineRunUrl(workspaceId, successRun.pipeline_run_id)} className="inline-flex w-full justify-center items-center gap-1.5 rounded-xl border border-[#9D6638] bg-[#EDE5CD] px-3.5 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 mt-2"><Package className="size-3.5 text-[#9D6638]" /> Download This Output as ZIP (Browser)</a>
                         ) : null
@@ -352,12 +406,12 @@ export default function UnifiedMediaRunsHub({
                         ) : (
                           <div className="space-y-1.5">
                             {activeMediaPackage.subtitles.map((sub) => {
-                              const isEnglish = sub.name.includes('.en.') || sub.name.toLowerCase().includes('english')
+                              const { language } = describeSubtitleTrack(sub.name)
                               return (
                                 <div key={sub.name} className="flex items-center justify-between p-2 rounded-xl bg-[#FFFFFF] border border-[#B0BA99]/70 text-xs">
                                   <div className="flex items-center gap-2 min-w-0">
-                                    <Captions className={`size-3.5 shrink-0 ${isEnglish ? 'text-[#9D6638]' : 'text-[#7C5339]'}`} />
-                                    <span className="font-mono truncate">{isEnglish ? '🌐 English' : sub.name}</span>
+                                    <Captions className={`size-3.5 shrink-0 ${language ? 'text-[#9D6638]' : 'text-[#7C5339]'}`} />
+                                    <span className="font-mono truncate" title={sub.name}>{language ? `🌐 ${subtitleTrackLabel(sub.name, sub.size)}` : subtitleTrackLabel(sub.name, sub.size)}</span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <button onClick={() => onPreviewArtifact(sub.name, sub.size, sub.preview_url, sub.download_url)} className="p-1 rounded-lg border border-[#B0BA99] hover:bg-[#EDE5CD]"><Eye className="size-3" /></button>
@@ -434,7 +488,35 @@ export default function UnifiedMediaRunsHub({
             </div>
           ) : (
             <div className="space-y-6">
-              {Object.entries(groupedRuns).map(([dateLabel, runs]) => (
+              <div className="sticky top-0 z-10 -mx-1 px-1 py-1 bg-[#FFFFFF]/95 backdrop-blur flex flex-wrap items-center gap-1.5">
+                {(
+                  [
+                    { key: 'all', label: 'All', count: pipelineRuns.length },
+                    { key: 'completed', label: 'Completed', count: successCount },
+                    { key: 'failed', label: 'Failed', count: failedCount },
+                  ] as const
+                ).map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => setTimelineStatusFilter(f.key)}
+                    className={`inline-flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-bold transition-all ${
+                      timelineStatusFilter === f.key
+                        ? f.key === 'failed'
+                          ? 'bg-[#A83232] text-[#FDFBF7] shadow-xs'
+                          : 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
+                        : 'text-[#4E220F] border border-[#B0BA99] hover:bg-[#EDE5CD]'
+                    }`}
+                  >
+                    {f.label} <span className="font-mono text-[10px] opacity-80">({f.count})</span>
+                  </button>
+                ))}
+              </div>
+              {Object.keys(filteredGroupedRuns).length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/20 p-8 text-center">
+                  <p className="text-xs font-bold">No {timelineStatusFilter} runs</p>
+                </div>
+              ) : null}
+              {Object.entries(filteredGroupedRuns).map(([dateLabel, runs]) => (
                 <div key={dateLabel} className="space-y-3">
                   <div className="flex items-center gap-2">
                     <Calendar className="size-3.5 text-[#9D6638]" />
@@ -454,14 +536,19 @@ export default function UnifiedMediaRunsHub({
                             <div className="flex flex-wrap items-center gap-2">
                               {isHighlighted && <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#9D6638] text-[#FDFBF7] animate-pulse">● NEW</span>}
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${isFailed ? 'bg-[#A83232] text-[#FDFBF7]' : 'bg-[#2E6B47] text-[#FDFBF7]'}`}>{isFailed ? 'FAILED' : 'COMPLETED'}</span>
+                              <span className="text-xs font-bold truncate max-w-[240px]" title={group.pipeline_run_id}>{runDisplayName(group)}</span>
                               <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-[#EDE5CD] border border-[#B0BA99] font-bold">{group.pipeline_run_id.slice(0, 8)}</span>
-                              <span className="text-xs font-bold truncate max-w-[200px]">{group.pipeline_name}</span>
                               <span className="font-mono text-[10px] text-[#7C5339] flex items-center gap-1"><Clock className="size-3" />{new Date(group.timestamp * 1000).toLocaleTimeString()} • {relativeTime(group.timestamp)}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <button onClick={() => toggleRun(group.pipeline_run_id)} className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1 text-xs font-bold hover:bg-[#EDE5CD]">
                                 {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />} {isExpanded ? 'Hide' : 'Files'}
                               </button>
+                              {group.bundle_name && findPackageForBundle(group.bundle_name) && (
+                                <button onClick={() => viewPackageForRun(group.bundle_name)} className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1 text-xs font-bold hover:bg-[#EDE5CD]" title={`Open package “${group.bundle_name}” in Latest Output`}>
+                                  <Package className="size-3 text-[#9D6638]" /> Package
+                                </button>
+                              )}
                               {group.steps[0]?.id && (
                                 <button onClick={() => onInspectRun(group.steps[0].id)} className="p-1.5 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] hover:bg-[#EDE5CD]" title="Logs"><FileTerminal className="size-3.5" /></button>
                               )}

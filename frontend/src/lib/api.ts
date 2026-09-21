@@ -330,6 +330,21 @@ export const api = {
     request<{ stopped: boolean }>(`/api/workspaces/${workspaceId}/pipeline/stop`, {
       method: 'POST',
     }),
+  resolvePipelineUrl: (workspaceId: string, url: string) =>
+    request<{
+      ok: boolean
+      title?: string
+      duration_seconds?: number | null
+      uploader?: string | null
+      extractor?: string | null
+      thumbnail?: string | null
+      is_live?: boolean
+      error?: string
+    }>(`/api/workspaces/${workspaceId}/pipeline/resolve-url`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    }),
   deleteWorkspaceMedia: (workspaceId: string, filename: string) =>
     request<{ deleted: boolean }>(`/api/workspaces/${workspaceId}/media/${encodeURIComponent(filename)}`, {
       method: 'DELETE',

@@ -50,6 +50,66 @@ export default function UniversalPipelineRunModal({
   const [translateToEnglish, setTranslateToEnglish] = useState(false)
   const [expandedNodeIds, setExpandedNodeIds] = useState<Set<string>>(new Set())
 
+  // Pre-run URL check: per entry-input key `${nodeId}:${paramKey}`
+  type UrlPreview =
+    | { state: 'idle' }
+    | { state: 'checking' }
+    | { state: 'ready'; title: string; duration?: number | null; uploader?: string | null }
+    | { state: 'error'; error: string }
+    | { state: 'overridden' }
+  const [urlPreviews, setUrlPreviews] = useState<Record<string, UrlPreview>>({})
+  const previewReqRef = useRef(0)
+
+  const isValidHttpUrl = (v: string) => {
+    try {
+      const u = new URL(String(v || '').trim())
+      return u.protocol === 'http:' || u.protocol === 'https:'
+    } catch {
+      return false
+    }
+  }
+
+  const formatDuration = (secs?: number | null) => {
+    if (secs === undefined || secs === null || Number.isNaN(secs)) return null
+    const s = Math.round(secs)
+    const h = Math.floor(s / 3600)
+    const m = Math.floor((s % 3600) / 60)
+    const r = s % 60
+    return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}` : `${m}:${String(r).padStart(2, '0')}`
+  }
+
+  const resolveEntryUrl = (nodeId: string, paramKey: string, rawUrl: string) => {
+    const key = `${nodeId}:${paramKey}`
+    const url = String(rawUrl || '').trim()
+    if (!url) {
+      setUrlPreviews((prev) => ({ ...prev, [key]: { state: 'idle' } }))
+      return
+    }
+    if (!isValidHttpUrl(url)) {
+      setUrlPreviews((prev) => ({ ...prev, [key]: { state: 'error', error: 'Not a valid http(s) URL.' } }))
+      return
+    }
+    const reqId = ++previewReqRef.current
+    setUrlPreviews((prev) => ({ ...prev, [key]: { state: 'checking' } }))
+    api
+      .resolvePipelineUrl(workspaceId, url)
+      .then((res) => {
+        if (previewReqRef.current !== reqId) return
+        if (res.ok) {
+          setUrlPreviews((prev) => ({
+            ...prev,
+            [key]: { state: 'ready', title: res.title || 'Untitled', duration: res.duration_seconds ?? null, uploader: res.uploader ?? null },
+          }))
+        } else {
+          setUrlPreviews((prev) => ({ ...prev, [key]: { state: 'error', error: res.error || 'Could not resolve URL.' } }))
+        }
+      })
+      .catch(() => {
+        if (previewReqRef.current !== reqId) return
+        setUrlPreviews((prev) => ({ ...prev, [key]: { state: 'error', error: 'Metadata lookup failed.' } }))
+      })
+  }
+
   // Duplicate / Existing Detection State
   const [checkingExisting, setCheckingExisting] = useState(false)
   const [duplicateMatches, setDuplicateMatches] = useState<
@@ -62,20 +122,27 @@ export default function UniversalPipelineRunModal({
   const activeEntryInputs = resolvedFlow ? resolvedFlow.entryInputs : inputs
   const nodeConfigs = resolvedFlow ? resolvedFlow.nodeConfigs : []
 
-  // Initialize form values and translation state
+  // Parent passes fresh dagNodes/resolvedFlow identities on every render —
+  // snapshot them so open-time init never re-fires mid-edit.
+  const latestRef = useRef({ dagNodes, resolvedFlow, activeEntryInputs })
+  latestRef.current = { dagNodes, resolvedFlow, activeEntryInputs }
+
+  // Initialize form values and translation state (open-time only)
   useEffect(() => {
     if (!isOpen) return
+    const { dagNodes: openDagNodes, resolvedFlow: openFlow, activeEntryInputs: openInputs } = latestRef.current
+    const openNodeConfigs = openFlow ? openFlow.nodeConfigs : []
     const initial: Record<string, Record<string, any>> = {}
 
     // 1. Initialize existing node params from dagNodes
-    for (const dn of dagNodes) {
+    for (const dn of openDagNodes) {
       if (dn.params) {
         initial[dn.id] = { ...(dn.params as Record<string, any>) }
       }
     }
 
     // 2. Populate entry inputs defaults
-    for (const inp of activeEntryInputs) {
+    for (const inp of openInputs) {
       if (!initial[inp.nodeId]) initial[inp.nodeId] = {}
       if (initial[inp.nodeId][inp.paramKey] === undefined) {
         initial[inp.nodeId][inp.paramKey] =
@@ -88,7 +155,7 @@ export default function UniversalPipelineRunModal({
     }
 
     // 3. Populate nodeConfigs defaults
-    for (const group of nodeConfigs) {
+    for (const group of openNodeConfigs) {
       if (!initial[group.nodeId]) initial[group.nodeId] = {}
       for (const p of group.parameters) {
         if (initial[group.nodeId][p.paramKey] === undefined) {
@@ -103,15 +170,15 @@ export default function UniversalPipelineRunModal({
     }
 
     // 4. Initialize translation toggle
-    if (resolvedFlow?.hasTranslationNode && resolvedFlow.translationNodeId) {
-      const transNodeId = resolvedFlow.translationNodeId
-      if (resolvedFlow.translationToolId === 'transcriber') {
-        const isTrans = initial[transNodeId]?.task === 'translate' || resolvedFlow.isTranslationEnabled
+    if (openFlow?.hasTranslationNode && openFlow.translationNodeId) {
+      const transNodeId = openFlow.translationNodeId
+      if (openFlow.translationToolId === 'transcriber') {
+        const isTrans = initial[transNodeId]?.task === 'translate' || openFlow.isTranslationEnabled
         setTranslateToEnglish(!!isTrans)
         if (isTrans) {
           initial[transNodeId].task = 'translate'
         }
-      } else if (resolvedFlow.translationToolId === 'subtitle_translator') {
+      } else if (openFlow.translationToolId === 'subtitle_translator') {
         const isEn = initial[transNodeId]?.target_lang === 'English' || !initial[transNodeId]?.target_lang
         setTranslateToEnglish(isEn)
         if (isEn) {
@@ -123,7 +190,11 @@ export default function UniversalPipelineRunModal({
     setFormValues(initial)
     setValidationError(null)
     setDuplicateMatches(null)
-  }, [isOpen, resolvedFlow, dagNodes])
+    setUrlPreviews({})
+    setExpandedNodeIds(new Set())
+    previewReqRef.current++
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
 
   // A11y: focus trap, ESC to close, return focus on close
   useEffect(() => {
@@ -178,6 +249,83 @@ export default function UniversalPipelineRunModal({
 
   if (!isOpen) return null
 
+  // ---- Run overrides: baseline = canvas value (currentVal) ?? schema default ----
+  const paramBaseline = (nodeId: string, paramKey: string): unknown => {
+    for (const group of nodeConfigs) {
+      if (group.nodeId !== nodeId) continue
+      const p = group.parameters.find((pp) => pp.paramKey === paramKey)
+      if (!p) continue
+      return p.currentVal !== undefined && p.currentVal !== '' ? p.currentVal : p.defaultVal
+    }
+    for (const inp of activeEntryInputs) {
+      if (inp.nodeId === nodeId && inp.paramKey === paramKey) {
+        return inp.currentVal !== undefined && inp.currentVal !== '' ? inp.currentVal : inp.defaultVal
+      }
+    }
+    return undefined
+  }
+
+  const isParamChanged = (nodeId: string, paramKey: string): boolean => {
+    const baseline = paramBaseline(nodeId, paramKey)
+    if (baseline === undefined) return false
+    try {
+      return JSON.stringify(formValues[nodeId]?.[paramKey]) !== JSON.stringify(baseline)
+    } catch {
+      return formValues[nodeId]?.[paramKey] !== baseline
+    }
+  }
+
+  const changedCountForNode = (nodeId: string): { changed: number; total: number } => {
+    const group = nodeConfigs.find((g) => g.nodeId === nodeId)
+    if (!group) return { changed: 0, total: 0 }
+    let changed = 0
+    for (const p of group.parameters) {
+      if (isParamChanged(nodeId, p.paramKey)) changed++
+    }
+    return { changed, total: group.parameters.length }
+  }
+
+  const totalOverrides = nodeConfigs.reduce((acc, g) => acc + changedCountForNode(g.nodeId).changed, 0)
+
+  const resetNodeToDefaults = (nodeId: string) => {
+    const group = nodeConfigs.find((g) => g.nodeId === nodeId)
+    if (!group) return
+    setFormValues((prev) => {
+      const next = { ...(prev[nodeId] || {}) }
+      for (const p of group.parameters) {
+        const baseline = paramBaseline(nodeId, p.paramKey)
+        if (baseline !== undefined) next[p.paramKey] = baseline
+      }
+      return { ...prev, [nodeId]: next }
+    })
+  }
+
+  // ---- Start gating: required URL inputs must resolve before commit ----
+  const urlGateStates = activeEntryInputs
+    .filter((inp) => inp.isUrl)
+    .map((inp) => {
+      const val = String(formValues[inp.nodeId]?.[inp.paramKey] ?? '').trim()
+      const preview = urlPreviews[`${inp.nodeId}:${inp.paramKey}`] || { state: 'idle' as const }
+      return { inp, val, preview }
+    })
+  const urlGateBlock = urlGateStates.find(
+    (g) => !g.val || g.preview.state === 'idle' || g.preview.state === 'checking' || g.preview.state === 'error',
+  )
+  const startBlockedReason = !urlGateBlock
+    ? null
+    : !urlGateBlock.val
+    ? `Enter a URL for "${urlGateBlock.inp.title}".`
+    : urlGateBlock.preview.state === 'checking'
+    ? 'Verifying media URL…'
+    : urlGateBlock.preview.state === 'error'
+    ? 'URL could not be verified — fix it or run anyway.'
+    : 'Blur the URL field to verify it.'
+
+  const stepCount = nodeConfigs.length > 0 ? nodeConfigs.length : dagNodes.length
+  const translationStepName = resolvedFlow?.translationNodeId
+    ? nodeConfigs.find((g) => g.nodeId === resolvedFlow.translationNodeId)?.toolName
+    : undefined
+
   const handleFieldChange = (nodeId: string, paramKey: string, val: any) => {
     setFormValues((prev) => ({
       ...prev,
@@ -186,6 +334,11 @@ export default function UniversalPipelineRunModal({
         [paramKey]: val,
       },
     }))
+    // A changed URL invalidates its preview — blur the field to re-verify.
+    if (activeEntryInputs.some((inp) => inp.nodeId === nodeId && inp.paramKey === paramKey && inp.isUrl)) {
+      const key = `${nodeId}:${paramKey}`
+      setUrlPreviews((prev) => (prev[key] ? { ...prev, [key]: { state: 'idle' } } : prev))
+    }
     if (validationError) setValidationError(null)
     if (duplicateMatches) setDuplicateMatches(null)
   }
@@ -289,7 +442,9 @@ export default function UniversalPipelineRunModal({
                 {pipelineTitle}
               </h3>
               <p className="text-xs text-[#7C5339]">
-                Configure parameters and start pipeline execution
+                {stepCount} step{stepCount === 1 ? '' : 's'}
+                {totalOverrides > 0 && ` · ${totalOverrides} override${totalOverrides === 1 ? '' : 's'}`}
+                {resolvedFlow?.hasTranslationNode && ` · translation ${translateToEnglish ? 'on' : 'off'}`}
               </p>
             </div>
           </div>
@@ -306,14 +461,28 @@ export default function UniversalPipelineRunModal({
           <div className="border-b border-[#B0BA99]/30 bg-[#F7F1DE]/60 px-6 py-2.5">
             <div className="flex items-center gap-2 overflow-x-auto text-xs font-semibold text-[#7C5339] no-scrollbar">
               <span className="text-[11px] uppercase tracking-wider font-bold text-[#4E220F]/60">Flow:</span>
-              {toolSteps.map((step, idx) => (
-                <React.Fragment key={idx}>
-                  {idx > 0 && <ArrowRight className="size-3.5 text-[#9D6638] shrink-0" />}
-                  <span className={`px-2 py-0.5 rounded-md shrink-0 ${idx === 0 ? 'bg-[#9D6638]/15 text-[#9D6638] font-bold border border-[#9D6638]/30' : 'bg-[#EDE5CD]/70 text-[#4E220F]'}`}>
-                    {step}
-                  </span>
-                </React.Fragment>
-              ))}
+              {toolSteps.map((step, idx) => {
+                const isTransStep = translationStepName !== undefined && step === translationStepName
+                const transOff = isTransStep && !translateToEnglish
+                return (
+                  <React.Fragment key={idx}>
+                    {idx > 0 && <ArrowRight className="size-3.5 text-[#9D6638] shrink-0" />}
+                    <span
+                      className={`px-2 py-0.5 rounded-md shrink-0 ${
+                        transOff
+                          ? 'bg-[#EDE5CD]/40 text-[#7C5339]/60 line-through'
+                          : idx === 0
+                          ? 'bg-[#9D6638]/15 text-[#9D6638] font-bold border border-[#9D6638]/30'
+                          : 'bg-[#EDE5CD]/70 text-[#4E220F]'
+                      }`}
+                      title={transOff ? 'Translation is off for this run' : undefined}
+                    >
+                      {step}
+                      {transOff && ' · off'}
+                    </span>
+                  </React.Fragment>
+                )
+              })}
             </div>
           </div>
         )}
@@ -400,49 +569,7 @@ export default function UniversalPipelineRunModal({
                 </div>
               )}
 
-              {/* SECTION 1: Dedicated Translation Control (Prominent Card) */}
-              {resolvedFlow?.hasTranslationNode && (
-                <div className="rounded-2xl border-2 border-[#9D6638]/50 bg-[#F7F1DE]/70 p-4 space-y-3 shadow-2xs">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex size-8 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7] shadow-2xs">
-                        <Languages className="size-4.5" />
-                      </span>
-                      <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-[#4E220F]">
-                          English Subtitles & Translation
-                        </h4>
-                        <p className="text-[11px] text-[#7C5339]">
-                          Automatically translate spoken language into English subtitles.
-                        </p>
-                      </div>
-                    </div>
-
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={translateToEnglish}
-                        onChange={(e) => handleToggleTranslation(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-[#B0BA99] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#B0BA99] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#9D6638]"></div>
-                    </label>
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] font-mono text-[#7C5339] pt-2 border-t border-[#B0BA99]/40">
-                    <span className="font-bold text-[#4E220F]">Translation Status:</span>
-                    <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] uppercase ${
-                      translateToEnglish
-                        ? 'bg-[#9D6638] text-[#FDFBF7]'
-                        : 'bg-[#EDE5CD] text-[#7C5339] border border-[#B0BA99]'
-                    }`}>
-                      {translateToEnglish ? '🌐 Whisper Translate to English' : 'Original Language (No Translation)'}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* SECTION 2: Required Entry Inputs (URLs, Files) */}
+              {/* SECTION 1: Required Entry Inputs (URLs, Files) */}
               <div className="space-y-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#7C5339] flex items-center gap-1.5">
                   <Link className="size-3.5 text-[#9D6638]" /> Primary Pipeline Inputs
@@ -523,13 +650,70 @@ export default function UniversalPipelineRunModal({
                             ))}
                           </select>
                         ) : (
-                          <input
-                            type={inp.isUrl ? 'url' : inp.type === 'number' ? 'number' : 'text'}
-                            value={String(val)}
-                            onChange={(e) => handleFieldChange(inp.nodeId, inp.paramKey, e.target.value)}
-                            placeholder={inp.isUrl ? 'https://www.youtube.com/watch?v=...' : `Enter ${inp.title}...`}
-                            className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-2 text-xs text-[#4E220F] font-medium placeholder-[#7C5339]/50 focus:border-[#9D6638] focus:outline-none"
-                          />
+                          <>
+                            <input
+                              type={inp.isUrl ? 'url' : inp.type === 'number' ? 'number' : 'text'}
+                              value={String(val)}
+                              onChange={(e) => handleFieldChange(inp.nodeId, inp.paramKey, e.target.value)}
+                              onBlur={
+                                inp.isUrl
+                                  ? (e) => resolveEntryUrl(inp.nodeId, inp.paramKey, e.target.value)
+                                  : undefined
+                              }
+                              placeholder={inp.isUrl ? 'https://www.youtube.com/watch?v=...' : `Enter ${inp.title}...`}
+                              className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-2 text-xs text-[#4E220F] font-medium placeholder-[#7C5339]/50 focus:border-[#9D6638] focus:outline-none"
+                            />
+                            {inp.isUrl && (() => {
+                              const preview = urlPreviews[`${inp.nodeId}:${inp.paramKey}`]
+                              if (!preview || preview.state === 'idle') return null
+                              if (preview.state === 'checking') {
+                                return (
+                                  <p className="text-[11px] font-mono text-[#7C5339] animate-pulse">
+                                    Verifying media URL…
+                                  </p>
+                                )
+                              }
+                              if (preview.state === 'ready') {
+                                const dur = formatDuration(preview.duration)
+                                return (
+                                  <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2E6B47]">
+                                    <CheckCircle2 className="size-3.5 shrink-0" />
+                                    <span className="truncate">
+                                      {preview.title}
+                                      {dur && ` · ${dur}`}
+                                      {preview.uploader && ` · ${preview.uploader}`}
+                                    </span>
+                                  </p>
+                                )
+                              }
+                              if (preview.state === 'overridden') {
+                                return (
+                                  <p className="text-[11px] font-mono text-[#7C5339]">
+                                    Unverified URL — running anyway.
+                                  </p>
+                                )
+                              }
+                              return (
+                                <p className="flex flex-wrap items-center gap-x-2 text-[11px] font-semibold text-[#A83232]">
+                                  <span className="inline-flex items-center gap-1">
+                                    <AlertCircle className="size-3.5 shrink-0" /> {preview.error}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setUrlPreviews((prev) => ({
+                                        ...prev,
+                                        [`${inp.nodeId}:${inp.paramKey}`]: { state: 'overridden' },
+                                      }))
+                                    }
+                                    className="font-bold text-[#9D6638] hover:text-[#86542C] underline underline-offset-2"
+                                  >
+                                    Run anyway
+                                  </button>
+                                </p>
+                              )
+                            })()}
+                          </>
                         )}
                       </div>
                     )
@@ -550,8 +734,40 @@ export default function UniversalPipelineRunModal({
                   </div>
 
                   <div className="space-y-2">
+                    {/* Translation as a normal step row — same affordances, toggle inline */}
+                    {resolvedFlow?.hasTranslationNode && (
+                      <div className="rounded-xl border border-[#B0BA99]/70 bg-[#FFFFFF] overflow-hidden shadow-2xs">
+                        <div className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[#F7F1DE]/50 text-left">
+                          <div className="flex items-center gap-2">
+                            <Languages className="size-3.5 text-[#9D6638]" />
+                            <span className="font-mono text-xs font-bold text-[#4E220F]">
+                              {translationStepName || 'English Subtitles & Translation'}
+                            </span>
+                            <span
+                              className={`font-mono text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase ${
+                                translateToEnglish
+                                  ? 'bg-[#9D6638] text-[#FDFBF7]'
+                                  : 'bg-[#EDE5CD] text-[#7C5339] border border-[#B0BA99]'
+                              }`}
+                            >
+                              {translateToEnglish ? 'on' : 'off'}
+                            </span>
+                          </div>
+                          <label className="relative inline-flex items-center cursor-pointer" title="Toggle English translation for this run">
+                            <input
+                              type="checkbox"
+                              checked={translateToEnglish}
+                              onChange={(e) => handleToggleTranslation(e.target.checked)}
+                              className="sr-only peer"
+                            />
+                            <div className="w-9 h-5 bg-[#B0BA99] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#B0BA99] after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#9D6638]"></div>
+                          </label>
+                        </div>
+                      </div>
+                    )}
                     {nodeConfigs.map((nodeCfg) => {
                       const isExpanded = expandedNodeIds.has(nodeCfg.nodeId)
+                      const { changed, total } = changedCountForNode(nodeCfg.nodeId)
                       return (
                         <div
                           key={nodeCfg.nodeId}
@@ -563,12 +779,18 @@ export default function UniversalPipelineRunModal({
                             className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[#F7F1DE]/50 hover:bg-[#EDE5CD]/50 text-left transition-colors"
                           >
                             <div className="flex items-center gap-2">
+                              {changed > 0 && <span className="h-2 w-2 rounded-full bg-[#9D6638]" title={`${changed} override${changed === 1 ? '' : 's'}`} />}
                               <span className="font-mono text-xs font-bold text-[#4E220F]">
                                 {nodeCfg.toolName}
                               </span>
                               <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-[#EDE5CD] text-[#7C5339]">
                                 {nodeCfg.toolId}
                               </span>
+                              {changed > 0 && (
+                                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-[#9D6638]/15 text-[#9D6638] font-bold border border-[#9D6638]/30">
+                                  {changed} of {total} changed
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-1.5 text-[#7C5339] text-xs">
                               <span className="text-[10px] font-mono">{nodeCfg.parameters.length} settings</span>
@@ -578,12 +800,30 @@ export default function UniversalPipelineRunModal({
 
                           {isExpanded && (
                             <div className="p-3.5 space-y-3 bg-[#FFFFFF] border-t border-[#B0BA99]/30">
+                              {changed > 0 && (
+                                <div className="flex items-center justify-between rounded-lg bg-[#F7F1DE]/60 px-2.5 py-1.5">
+                                  <span className="text-[11px] font-mono text-[#7C5339]">
+                                    {changed} override{changed === 1 ? '' : 's'} for this run
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => resetNodeToDefaults(nodeCfg.nodeId)}
+                                    className="text-[11px] font-bold text-[#9D6638] hover:text-[#86542C] transition-colors"
+                                  >
+                                    Reset to defaults
+                                  </button>
+                                </div>
+                              )}
                               {nodeCfg.parameters.map((param) => {
                                 const val = formValues[nodeCfg.nodeId]?.[param.paramKey] ?? param.defaultVal ?? ''
+                                const paramChanged = isParamChanged(nodeCfg.nodeId, param.paramKey)
                                 return (
                                   <div key={param.paramKey} className="space-y-1">
                                     <div className="flex items-center justify-between text-xs font-bold text-[#4E220F]">
-                                      <span>{param.title}</span>
+                                      <span className="flex items-center gap-1.5">
+                                        {paramChanged && <span className="h-1.5 w-1.5 rounded-full bg-[#9D6638]" />}
+                                        {param.title}
+                                      </span>
                                       {param.defaultVal !== undefined && (
                                         <span className="font-mono text-[10px] text-[#7C5339] font-normal">
                                           Default: {String(param.defaultVal)}
@@ -649,22 +889,28 @@ export default function UniversalPipelineRunModal({
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-between border-t border-[#B0BA99]/40 bg-[#EDE5CD]/50 px-6 py-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl px-4 py-2 text-xs font-semibold text-[#7C5339] hover:bg-[#EDE5CD] transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={checkingExisting}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#9D6638] px-5 py-2.5 text-xs font-bold text-[#FDFBF7] shadow-sm hover:bg-[#86542C] transition-all active:scale-95 disabled:opacity-50"
-            >
-              <Play className="size-3.5 fill-current" />
-              {checkingExisting ? 'Verifying...' : 'Start Pipeline Run'}
-            </button>
+          <div className="border-t border-[#B0BA99]/40 bg-[#EDE5CD]/50 px-6 py-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-xl px-4 py-2 text-xs font-semibold text-[#7C5339]/70 hover:bg-[#EDE5CD] hover:text-[#7C5339] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={checkingExisting || startBlockedReason !== null}
+                title={startBlockedReason || `Start ${stepCount} step${stepCount === 1 ? '' : 's'} — runs in background`}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#9D6638] px-5 py-2.5 text-xs font-bold text-[#FDFBF7] shadow-sm hover:bg-[#86542C] transition-all active:scale-95 disabled:opacity-50"
+              >
+                <Play className="size-3.5 fill-current" />
+                {checkingExisting ? 'Verifying...' : `Start · ${stepCount} step${stepCount === 1 ? '' : 's'}`}
+              </button>
+            </div>
+            <p className="text-[11px] text-[#7C5339] text-right">
+              {startBlockedReason || 'Runs in background — progress in Activity & Records.'}
+            </p>
           </div>
         </form>
       )}
