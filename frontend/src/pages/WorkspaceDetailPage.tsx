@@ -68,6 +68,10 @@ export default function WorkspaceDetailPage() {
   const prevPipelineIdsRef = useRef<Set<string>>(new Set())
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const clearCanvasSelection = () => {
+    setSelectedCanvasNode(null)
+  }
+
   const refreshRuns = useCallback(() => {
     if (!id) return
     setRefreshing(true)
@@ -336,6 +340,7 @@ export default function WorkspaceDetailPage() {
               }}
               collapsed={inspectorCollapsed}
               onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
+              onClearSelection={clearCanvasSelection}
               onStepFinished={refreshRuns}
             />
           </div>

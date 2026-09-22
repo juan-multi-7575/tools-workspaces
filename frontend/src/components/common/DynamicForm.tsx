@@ -28,6 +28,7 @@ export interface SchemaField {
   minimum?: number
   maximum?: number
   step?: number
+  unit?: string
   widget?: 'text' | 'textarea' | 'secret' | 'select' | 'artifact_picker' | 'code' | 'url'
   placeholder?: string
 }
@@ -401,33 +402,46 @@ export default function DynamicForm({
             key === 'raw_args' ||
             isArtifactField
 
-          return (
-            <div
-              key={key}
-              className={`space-y-2 rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-3.5 transition-all hover:border-[#9D6638]/70 shadow-xs ${
-                isFullWidth ? 'sm:col-span-2' : ''
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <label className="font-bold text-[#4E220F] text-xs flex items-center gap-1.5">
-                  {field.title || key}
-                </label>
-                {val !== undefined && (
-                  <button
-                    type="button"
-                    onClick={() => setField(key, undefined)}
-                    className="flex items-center gap-1 font-mono text-[10px] text-[#7C5339] hover:text-[#A83232] transition-colors"
-                  >
-                    <RotateCcw className="size-2.5" /> reset
-                  </button>
-                )}
-              </div>
-
-              {field.description && (
-                <p className="text-[11px] text-[#7C5339] leading-relaxed">{field.description}</p>
+          const fieldHelper = (() => {
+          const parts: string[] = []
+          if (field.unit) parts.push(field.unit)
+          if (field.default !== undefined && val !== undefined && val !== field.default) {
+            parts.push(`Default: ${String(field.default)}`)
+          }
+          if (field.minimum !== undefined || field.maximum !== undefined) {
+            parts.push(`Range: ${field.minimum ?? '−∞'}…${field.maximum ?? '+∞'}`)
+          }
+          return parts.join(' · ')
+        })()
+        return (
+          <div key={key} className={`space-y-2 rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-3.5 transition-all hover:border-[#9D6638]/70 shadow-xs ${
+            isFullWidth ? 'sm:col-span-2' : ''
+          }`}>
+            <div className="flex items-center justify-between">
+              <label className="font-bold text-[#4E220F] text-xs flex items-center gap-1.5">
+                {field.title || key}
+              </label>
+              {val !== undefined && (
+                <button
+                  type="button"
+                  onClick={() => setField(key, undefined)}
+                  className="flex items-center gap-1 font-mono text-[10px] text-[#7C5339] hover:text-[#A83232] transition-colors"
+                >
+                  <RotateCcw className="size-2.5" /> reset
+                </button>
               )}
+            </div>
 
-              {/* UNIVERSAL FILE PICKER: Drag & Drop + Click to Browse + Server Upload + Artifact Picker */}
+{field.description && (
+              <p className="text-[11px] text-[#7C5339] leading-relaxed">{field.description}</p>
+            )}
+            {fieldHelper && (
+              <p className="text-[10px] font-mono text-[#7C5339]/80 leading-tight">
+                {fieldHelper}
+              </p>
+            )}
+
+            {/* UNIVERSAL FILE PICKER: Drag & Drop + Click to Browse + Server Upload + Artifact Picker */}
               {isArtifactField ? (
                 <UniversalFileInput
                   value={val !== undefined ? String(val) : ''}

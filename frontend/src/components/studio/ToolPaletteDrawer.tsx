@@ -122,19 +122,20 @@ export default function ToolPaletteDrawer({
       </div>
 
       {/* Categories Filter Pills (with counts) */}
-      <div className="px-2.5 py-2 border-b border-[#B0BA99]/30 flex flex-wrap gap-1">
+      <div className="px-2.5 py-2 border-b border-[#B0BA99]/30 flex flex-nowrap gap-1 overflow-x-auto scrollbar-none">
         {categories.map((cat) => (
           <button
             key={cat.name}
             onClick={() => setSelectedCategory(cat.name)}
-            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
               selectedCategory === cat.name
                 ? 'bg-[#9D6638] text-[#FDFBF7] shadow-2xs'
                 : 'bg-[#FFFFFF] border border-[#B0BA99]/60 text-[#7C5339] hover:bg-[#EDE5CD]'
             }`}
             title={`${cat.count} tool${cat.count === 1 ? '' : 's'}`}
           >
-            {cat.name} <span className="font-mono opacity-75">({cat.count})</span>
+            {cat.name === 'all' ? 'All' : cat.name}{' '}
+            <span className="font-mono opacity-75">({cat.count})</span>
           </button>
         ))}
       </div>

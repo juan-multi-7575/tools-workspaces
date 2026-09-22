@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
   Settings2,
   Sliders,
   Play,
   CheckCircle2,
+  Copy,
+  X,
   AlertCircle,
   Clock,
   Terminal,
@@ -21,6 +23,7 @@ export default function NodeInspectorPanel({
   collapsed,
   onToggleCollapse,
   onStepFinished,
+  onClearSelection,
   nodeCount,
   edgeCount,
   lastRun,
@@ -41,12 +44,23 @@ export default function NodeInspectorPanel({
   collapsed: boolean
   onToggleCollapse: () => void
   onStepFinished?: () => void
+  onClearSelection?: () => void
   nodeCount?: number
   edgeCount?: number
   lastRun?: { name: string; status: string } | null
 }) {
   const [runningStep, setRunningStep] = useState(false)
   const [stepStatus, setStepStatus] = useState<string | null>(null)
+  const [copiedId, setCopiedId] = useState(false)
+  const [testInputMode, setTestInputMode] = useState<'auto' | 'latest' | 'fixture'>('auto')
+
+  const copyNodeId = useCallback(() => {
+    if (!selectedNode?.id) return
+    navigator.clipboard.writeText(selectedNode.id).then(() => {
+      setCopiedId(true)
+      setTimeout(() => setCopiedId(false), 1500)
+    }).catch(() => {})
+  }, [selectedNode?.id])
 
   if (collapsed) {
     return (
@@ -97,13 +111,31 @@ export default function NodeInspectorPanel({
             Node Inspector
           </span>
         </div>
-        <button
-          onClick={onToggleCollapse}
-          className="p-1 rounded-lg border border-[#B0BA99]/60 hover:bg-[#EDE5CD] text-[#7C5339] hover:text-[#4E220F] transition-colors"
-          title="Collapse Inspector"
-        >
-          <ChevronRight className="size-3.5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={copyNodeId}
+            className="p-1 rounded-lg border border-[#B0BA99]/60 hover:bg-[#EDE5CD] text-[#7C5339] hover:text-[#4E220F] transition-colors"
+            title={copiedId ? 'Copied!' : 'Copy node id'}
+          >
+            {copiedId ? <CheckCircle2 className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+          </button>
+          {onClearSelection && (
+            <button
+              onClick={onClearSelection}
+              className="p-1 rounded-lg border border-[#A83232]/40 hover:bg-[#A83232] text-[#7C5339] hover:text-[#FFFFFF] transition-colors"
+              title="Clear selection"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+          <button
+            onClick={onToggleCollapse}
+            className="p-1 rounded-lg border border-[#B0BA99]/60 hover:bg-[#EDE5CD] text-[#7C5339] hover:text-[#4E220F] transition-colors"
+            title="Collapse Inspector"
+          >
+            <ChevronRight className="size-3.5" />
+          </button>
+        </div>
       </div>
 
       {!selectedNode ? (
@@ -152,13 +184,20 @@ export default function NodeInspectorPanel({
         <div className="flex-1 overflow-y-auto p-3 pb-20 space-y-3.5">
           {/* Node Summary Card */}
           <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-3 shadow-2xs space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <span className="font-mono text-[10px] uppercase font-bold text-[#7C5339]">
                 Selected Node
               </span>
-              <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-[#EDE5CD] border border-[#B0BA99]/60 text-[#4E220F] font-bold">
-                {selectedNode.id}
-              </span>
+              <div className="flex items-center gap-1.5">
+                {toolManifest?.category && (
+                  <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-[#9D6638]/10 border border-[#9D6638]/30 text-[#9D6638] font-bold uppercase">
+                    {toolManifest.category}
+                  </span>
+                )}
+                <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-[#EDE5CD] border border-[#B0BA99]/60 text-[#4E220F] font-bold">
+                  {selectedNode.id}
+                </span>
+              </div>
             </div>
             <h3 className="text-sm font-bold text-[#4E220F]">{selectedNode.label}</h3>
             {toolManifest?.description && (
@@ -195,11 +234,13 @@ export default function NodeInspectorPanel({
 
           {/* Node Parameter Form */}
           <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-3 shadow-2xs space-y-2.5">
-            <div className="flex items-center justify-between border-b border-[#B0BA99]/40 pb-1.5">
+            <div className="flex items-center justify-between border-b border-[#B0BA99]/50 pb-1.5">
               <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#4E220F]">
                 Tool Parameters
               </span>
-              <span className="font-mono text-[9px] text-[#7C5339]">Auto-saved</span>
+              <span className="font-mono text-[9px] text-[#7C5339]">
+                Edits apply to the next run
+              </span>
             </div>
 
             <DynamicForm
@@ -214,6 +255,38 @@ export default function NodeInspectorPanel({
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7C5339] flex items-center gap-1">
               <Terminal className="size-3 text-[#9D6638]" /> Single-Step Test
             </span>
+            <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-[#B0BA99]/60 bg-[#F7F1DE]/40 p-1.5 text-[10px] font-bold text-[#4E220F]">
+              <span className="text-[#7C5339] font-normal mr-1">Test input:</span>
+              {[
+                { key: 'auto', label: 'Auto' },
+                { key: 'latest', label: 'Latest upstream' },
+                { key: 'fixture', label: 'Pick fixture' },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setTestInputMode(opt.key as typeof testInputMode)}
+                  className={`px-2 py-0.5 rounded-lg transition-all ${
+                    testInputMode === opt.key
+                      ? 'bg-[#9D6638] text-[#FDFBF7]'
+                      : 'bg-[#FFFFFF] border border-[#B0BA99] hover:bg-[#EDE5CD]'
+                  }`}
+                  title={
+                    opt.key === 'auto'
+                      ? 'Use the latest available upstream output automatically'
+                      : opt.key === 'latest'
+                        ? 'Pull the most recent upstream artifact into this step'
+                        : 'Choose an existing artifact to feed this step'
+                  }
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-[#7C5339] leading-relaxed">
+              Runs this tool in isolation using your current parameters.
+              {testInputMode === 'latest' && ' Uses the most recent upstream output.'}
+              {testInputMode === 'fixture' && ' Prompts you to pick an existing artifact.'}
+            </p>
             <button
               onClick={handleTestRun}
               disabled={runningStep}

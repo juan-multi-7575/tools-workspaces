@@ -137,46 +137,49 @@ function DeletableEdge({
 }
 
 /** Custom Tool Node with per-node delete button and clear ports */
-function ToolNode({ id, data, selected }: NodeProps<Node<ToolNodeData>>) {
-  const { setNodes, setEdges } = useReactFlow()
+  function ToolNode({ id, data, selected }: NodeProps<Node<ToolNodeData>>) {
+    const { setNodes, setEdges } = useReactFlow()
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setNodes((nds) => nds.filter((n) => n.id !== id))
-    setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id))
-  }
+    const handleDelete = (e: React.MouseEvent) => {
+      e.stopPropagation()
+      setNodes((nds) => nds.filter((n) => n.id !== id))
+      setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id))
+    }
 
-  const status = data.status || 'idle'
+    const status = data.status || 'idle'
 
-  // Dynamic status styling
-  let containerStyle = 'w-72 rounded-2xl border p-3.5 text-[#4E220F] shadow-md transition-all duration-200 relative bg-[#FFFFFF] '
-  if (status === 'running') {
-    containerStyle += 'border-[#9D6638] ring-3 ring-[#9D6638]/40 shadow-xl animate-pulse '
-  } else if (status === 'completed') {
-    containerStyle += 'border-emerald-600 ring-2 ring-emerald-500/30 shadow-md '
-  } else if (status === 'failed') {
-    containerStyle += 'border-[#A83232] ring-3 ring-[#A83232]/50 shadow-xl bg-red-50/20 '
-  } else if (status === 'skipped') {
-    containerStyle += 'border-dashed border-[#B0BA99] opacity-50 bg-[#EDE5CD]/20 '
-  } else if (status === 'pending') {
-    containerStyle += 'border-amber-400/80 border-dashed bg-amber-50/20 '
-  } else if (selected) {
-    containerStyle += 'border-[#9D6638] ring-2 ring-[#9D6638]/40 shadow-lg '
-  } else {
-    containerStyle += 'border-[#B0BA99] hover:border-[#9D6638] '
-  }
+    // Dynamic status styling
+    let containerStyle = 'w-72 rounded-2xl border p-3.5 text-[#4E220F] shadow-md transition-all duration-200 relative bg-[#FFFFFF] '
+    if (status === 'running') {
+      containerStyle += 'border-[#9D6638] ring-3 ring-[#9D6638]/40 shadow-xl animate-pulse '
+    } else if (status === 'completed') {
+      containerStyle += 'border-emerald-600 ring-2 ring-emerald-500/30 shadow-md '
+    } else if (status === 'failed') {
+      containerStyle += 'border-[#A83232] ring-3 ring-[#A83232]/50 shadow-xl bg-red-50/20 '
+    } else if (status === 'skipped') {
+      containerStyle += 'border-dashed border-[#B0BA99] opacity-50 bg-[#EDE5CD]/20 '
+    } else if (status === 'pending') {
+      containerStyle += 'border-amber-400/80 border-dashed bg-amber-50/20 '
+    } else if (selected) {
+      containerStyle += 'border-[#9D6638] ring-2 ring-[#9D6638]/40 shadow-lg '
+    } else {
+      containerStyle += 'border-[#B0BA99] hover:border-[#9D6638] '
+    }
 
-  return (
-    <div className={containerStyle}>
-      {/* Remove Node Button */}
-      <button
-        type="button"
-        onClick={handleDelete}
-        className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-[#FFFFFF] border border-[#B0BA99] text-[#7C5339] hover:bg-[#A83232] hover:text-[#FFFFFF] hover:border-[#A83232] shadow-sm transition-all active:scale-90"
-        title="Remove tool from canvas"
-      >
-        <X className="size-3" />
-      </button>
+    return (
+      <div className={`${containerStyle} group`}>
+        {/* Remove Node Button — reveal only on hover/selection so it never
+            collides with the edge handles users drag to rewire. */}
+        <button
+          type="button"
+          onClick={handleDelete}
+          className={`absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-[#FFFFFF] border border-[#B0BA99] text-[#7C5339] hover:bg-[#A83232] hover:text-[#FFFFFF] hover:border-[#A83232] shadow-sm transition-all active:scale-90 ${
+            selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+          }`}
+          title="Remove tool from canvas"
+        >
+          <X className="size-3" />
+        </button>
 
       {/* Target (Input) Handles */}
       {data.inputKinds.map((kind, i) => (
@@ -258,13 +261,41 @@ function ToolNode({ id, data, selected }: NodeProps<Node<ToolNodeData>>) {
         </div>
       )}
 
-      <div className="mt-2 flex items-center justify-between border-t border-[#B0BA99]/50 pt-2 text-[9px] font-mono text-[#7C5339] font-medium">
-        <span className="truncate max-w-[110px]" title={`in: ${data.inputKinds.join(', ')}`}>
-          in: {data.inputKinds.join(', ')}
+      <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-[#B0BA99]/50 pt-2">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-[#7C5339] shrink-0">
+          In:
         </span>
-        <span className="truncate max-w-[110px]" title={`out: ${data.outputKinds.join(', ')}`}>
-          out: {data.outputKinds.join(', ')}
+        {data.inputKinds.map((kind) => (
+          <span
+            key={`in-${kind}`}
+            className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-md border"
+            style={{
+              color: getPortColor(kind),
+              borderColor: getPortColor(kind),
+              background: `${getPortColor(kind)}1A`,
+            }}
+            title={`Input: ${kind}`}
+          >
+            {kind}
+          </span>
+        ))}
+        <span className="text-[9px] font-bold uppercase tracking-wider text-[#7C5339] shrink-0 ml-1">
+          Out:
         </span>
+        {data.outputKinds.map((kind) => (
+          <span
+            key={`out-${kind}`}
+            className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-md border"
+            style={{
+              color: getPortColor(kind),
+              borderColor: getPortColor(kind),
+              background: `${getPortColor(kind)}1A`,
+            }}
+            title={`Output: ${kind}`}
+          >
+            {kind}
+          </span>
+        ))}
       </div>
 
       {/* Source (Output) Handles */}
@@ -458,6 +489,10 @@ function PipelineCanvasInner({
           }))
           setNodes(loadedNodes)
           setEdges(loadedEdges)
+          // A freshly fetched graph has no guaranteed layout — lay it out
+          // left-to-right and fit it, so the canvas never loads with nodes
+          // pinned to the bottom strip under dead space.
+          setNodes(applyArrangedPositions(loadedNodes, loadedEdges))
         }
         setTimeout(() => fitView({ padding: 0.2 }), 80)
       })
@@ -752,23 +787,26 @@ function PipelineCanvasInner({
     setStatus(null)
   }
 
-  /** Auto-arrange nodes in a clean DAG flow from left to right */
-  const autoArrange = useCallback(() => {
-    if (nodes.length === 0) return
-
+  /** Compute clean left-to-right DAG positions for the given nodes/edges.
+   *  Pure helper so both the live auto-arrange and the initial load can lay
+   *  out a freshly fetched graph without depending on a stale closure. */
+  function computeArrangedPositions(
+    srcNodes: Node<ToolNodeData>[],
+    srcEdges: Edge[],
+  ): { id: string; position: { x: number; y: number } }[] {
     const inDegree: Record<string, number> = {}
     const children: Record<string, string[]> = {}
-    nodes.forEach((n) => {
+    srcNodes.forEach((n) => {
       inDegree[n.id] = 0
       children[n.id] = []
     })
-    edges.forEach((e) => {
+    srcEdges.forEach((e) => {
       if (inDegree[e.target] !== undefined) inDegree[e.target]++
       if (children[e.source]) children[e.source].push(e.target)
     })
 
     const levels: Record<string, number> = {}
-    const queue = nodes.filter((n) => inDegree[n.id] === 0).map((n) => n.id)
+    const queue = srcNodes.filter((n) => inDegree[n.id] === 0).map((n) => n.id)
     queue.forEach((id) => (levels[id] = 0))
 
     let front = 0
@@ -782,27 +820,40 @@ function PipelineCanvasInner({
     }
 
     const levelGroups: Record<number, string[]> = {}
-    nodes.forEach((n) => {
+    srcNodes.forEach((n) => {
       const lvl = levels[n.id] || 0
       if (!levelGroups[lvl]) levelGroups[lvl] = []
       levelGroups[lvl].push(n.id)
     })
 
-    const nextNodes = nodes.map((n) => {
+    return srcNodes.map((n) => {
       const lvl = levels[n.id] || 0
       const group = levelGroups[lvl] || [n.id]
       const idxInGroup = group.indexOf(n.id)
       return {
-        ...n,
-        position: {
-          x: 60 + lvl * 320,
-          y: 60 + idxInGroup * 180,
-        },
+        id: n.id,
+        position: { x: 60 + lvl * 320, y: 60 + idxInGroup * 180 },
       }
     })
+  }
 
-    setNodes(nextNodes)
-    setTimeout(() => fitView({ padding: 0.2 }), 50)
+  function applyArrangedPositions(
+    srcNodes: Node<ToolNodeData>[],
+    srcEdges: Edge[],
+  ): Node<ToolNodeData>[] {
+    const positions = computeArrangedPositions(srcNodes, srcEdges)
+    const posById = new Map(positions.map((p) => [p.id, p.position]))
+    return srcNodes.map((n) => {
+      const pos = posById.get(n.id)
+      return pos ? { ...n, position: pos } : n
+    })
+  }
+
+  /** Auto-arrange nodes in a clean DAG flow from left to right */
+  const autoArrange = useCallback(() => {
+    if (nodes.length === 0) return
+    setNodes(applyArrangedPositions(nodes, edges))
+    setTimeout(() => fitView({ padding: 0.2 }), 60)
   }, [nodes, edges, setNodes, fitView])
 
   const buildDAGPayload = (): { nodes: DAGNode[]; edges: DAGEdge[] } => {

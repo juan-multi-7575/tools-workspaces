@@ -222,6 +222,26 @@ export default function UniversalPipelineRunModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
+  // Validate every URL entry input on mount (and whenever the form values
+  // change). Without this the Start button stays disabled behind the
+  // "Blur the URL field to verify it" hint even for a pre-filled URL.
+  const urlRevalidateSig = activeEntryInputs
+    .filter((i) => i.isUrl)
+    .map((i) => `${i.nodeId}:${i.paramKey}:${String(formValues[i.nodeId]?.[i.paramKey] ?? '')}`)
+    .join('|')
+  useEffect(() => {
+    if (!isOpen) return
+    for (const inp of activeEntryInputs) {
+      if (!inp.isUrl) continue
+      const val = String(formValues[inp.nodeId]?.[inp.paramKey] ?? '').trim()
+      if (!val) continue
+      const key = `${inp.nodeId}:${inp.paramKey}`
+      setTouchedUrls((prev) => new Set(prev).add(key))
+      resolveEntryUrl(inp.nodeId, inp.paramKey, val)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, urlRevalidateSig])
+
   // A11y: focus trap, ESC to close, return focus on close
   useEffect(() => {
     if (!isOpen) return
@@ -367,7 +387,7 @@ export default function UniversalPipelineRunModal({
     ? 'Verifying media URL…'
     : urlGateBlock.preview.state === 'error'
     ? 'URL could not be verified — fix it or run anyway.'
-    : 'Blur the URL field to verify it.'
+    : 'URL not verified yet — verifying automatically…'
 
   // Derive missing provider keys from node configs + live form values (advisory only)
   const missingKeyWarnings: { toolName: string; provider: string }[] = (() => {
@@ -444,6 +464,13 @@ export default function UniversalPipelineRunModal({
       const text = await navigator.clipboard.readText()
       if (text) {
         handleFieldChange(nodeId, paramKey, text.trim())
+        // A pasted URL must be re-verified immediately — otherwise Start
+        // stays blocked on the blur-only hint even with a valid URL in the
+        // field, which is exactly the dead-end users hit before.
+        if (activeEntryInputs.some((inp) => inp.nodeId === nodeId && inp.paramKey === paramKey && inp.isUrl)) {
+          setTouchedUrls((prev) => new Set(prev).add(`${nodeId}:${paramKey}`))
+          resolveEntryUrl(nodeId, paramKey, text.trim())
+        }
       }
     } catch {
       // Ignore clipboard permission errors
@@ -517,7 +544,7 @@ export default function UniversalPipelineRunModal({
               <p className="text-xs text-[#7C5339]">
                 {stepCount} step{stepCount === 1 ? '' : 's'}
                 {totalOverrides > 0 && ` · ${totalOverrides} override${totalOverrides === 1 ? '' : 's'}`}
-                {resolvedFlow?.hasTranslationNode && ` · translation ${translateToEnglish ? 'on' : 'off'}`}
+                {resolvedFlow?.hasTranslationNode && ` · translation ${translateToEnglish ? 'on' : 'original language'}`}
               </p>
             </div>
           </div>
@@ -541,17 +568,19 @@ export default function UniversalPipelineRunModal({
                   <React.Fragment key={idx}>
                     {idx > 0 && <ArrowRight className="size-3.5 text-[#9D6638] shrink-0" />}
                     <span
-                      className={`px-2 py-0.5 rounded-md shrink-0 ${
-                        transOff
-                          ? 'bg-[#EDE5CD]/40 text-[#7C5339]/60 line-through'
+                      className={`px-2 py-0.5 rounded-md shrink-0 font-mono text-[11px] ${
+                        isTransStep
+                          ? transOff
+                            ? 'bg-[#EDE5CD] text-[#7C5339] border border-[#B0BA99]'
+                            : 'bg-[#9D6638]/15 text-[#9D6638] font-bold border border-[#9D6638]/30'
                           : idx === 0
                           ? 'bg-[#9D6638]/15 text-[#9D6638] font-bold border border-[#9D6638]/30'
                           : 'bg-[#EDE5CD]/70 text-[#4E220F]'
                       }`}
-                      title={transOff ? 'Translation is off for this run' : undefined}
+                      title={transOff ? 'Runs in original-language transcription mode' : undefined}
                     >
                       {step}
-                      {transOff && ' · off'}
+                      {transOff && ' · original language'}
                     </span>
                   </React.Fragment>
                 )
@@ -659,7 +688,7 @@ export default function UniversalPipelineRunModal({
               {/* SECTION 1: Required Entry Inputs (URLs, Files) */}
               <div className="space-y-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#7C5339] flex items-center gap-1.5">
-                  <Link className="size-3.5 text-[#9D6638]" /> Primary Pipeline Inputs
+                  <Link className="size-3.5 text-[#9D6638]" /> Pipeline Input{activeEntryInputs.length === 1 ? '' : 's'}
                 </span>
 
                 {activeEntryInputs.length === 0 ? (
@@ -753,49 +782,53 @@ export default function UniversalPipelineRunModal({
                               placeholder={inp.isUrl ? 'https://www.youtube.com/watch?v=...' : `Enter ${inp.title}...`}
                               className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-2 text-xs text-[#4E220F] font-medium placeholder-[#7C5339]/50 focus:border-[#9D6638] focus:outline-none"
                             />
-                            {inp.isUrl && (() => {
-                              const key = `${inp.nodeId}:${inp.paramKey}`
-                              const preview = urlPreviews[key]
-                              const val = String(formValues[inp.nodeId]?.[inp.paramKey] ?? '').trim()
-                              if ((!preview || preview.state === 'idle') && touchedUrls.has(key) && !val) {
+                            {/* Reserved inline status slot: always mounted so the
+                                input block never shifts height when an error or
+                                preview appears/disappears. */}
+                            <div className="min-h-[18px]">
+                              {inp.isUrl && (() => {
+                                const key = `${inp.nodeId}:${inp.paramKey}`
+                                const preview = urlPreviews[key]
+                                const val = String(formValues[inp.nodeId]?.[inp.paramKey] ?? '').trim()
+                                if ((!preview || preview.state === 'idle') && touchedUrls.has(key) && !val) {
+                                  return (
+                                    <p className="text-[11px] font-semibold text-[#A83232]">
+                                      A URL is required to run this pipeline.
+                                    </p>
+                                  )
+                                }
+                                if (!preview || preview.state === 'idle') return null
+                                if (preview.state === 'checking') {
+                                  return (
+                                    <p className="text-[11px] font-mono text-[#7C5339] animate-pulse">
+                                      Verifying media URL…
+                                    </p>
+                                  )
+                                }
+                                if (preview.state === 'ready') {
+                                  const dur = formatDuration(preview.duration)
+                                  return (
+                                    <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2E6B47]">
+                                      <CheckCircle2 className="size-3.5 shrink-0" />
+                                      <span className="truncate">
+                                        {preview.title}
+                                        {dur && ` · ${dur}`}
+                                        {preview.uploader && ` · ${preview.uploader}`}
+                                      </span>
+                                    </p>
+                                  )
+                                }
+                                if (preview.state === 'overridden') {
+                                  return (
+                                    <p className="text-[11px] font-mono text-[#7C5339]">
+                                      Unverified URL — running anyway.
+                                    </p>
+                                  )
+                                }
                                 return (
-                                  <p className="text-[11px] font-semibold text-[#A83232]">
-                                    A URL is required to run this pipeline.
-                                  </p>
-                                )
-                              }
-                              if (!preview || preview.state === 'idle') return null
-                              if (preview.state === 'checking') {
-                                return (
-                                  <p className="text-[11px] font-mono text-[#7C5339] animate-pulse">
-                                    Verifying media URL…
-                                  </p>
-                                )
-                              }
-                              if (preview.state === 'ready') {
-                                const dur = formatDuration(preview.duration)
-                                return (
-                                  <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2E6B47]">
-                                    <CheckCircle2 className="size-3.5 shrink-0" />
-                                    <span className="truncate">
-                                      {preview.title}
-                                      {dur && ` · ${dur}`}
-                                      {preview.uploader && ` · ${preview.uploader}`}
-                                    </span>
-                                  </p>
-                                )
-                              }
-                              if (preview.state === 'overridden') {
-                                return (
-                                  <p className="text-[11px] font-mono text-[#7C5339]">
-                                    Unverified URL — running anyway.
-                                  </p>
-                                )
-                              }
-                              return (
-                                <p className="flex flex-wrap items-center gap-x-2 text-[11px] font-semibold text-[#A83232]">
-                                  <span className="inline-flex items-center gap-1">
-                                    <AlertCircle className="size-3.5 shrink-0" /> {preview.error}
+                                  <p className="flex flex-wrap items-center gap-x-2 text-[11px] font-semibold text-[#A83232]">
+                                    <span className="inline-flex items-center gap-1">
+                                      <AlertCircle className="size-3.5 shrink-0" /> {preview.error}
                                   </span>
                                   <button
                                     type="button"
@@ -812,6 +845,7 @@ export default function UniversalPipelineRunModal({
                                 </p>
                               )
                             })()}
+                            </div>
                           </>
                         )}
                       </div>
@@ -831,6 +865,9 @@ export default function UniversalPipelineRunModal({
                       {nodeConfigs.length} customizable step{nodeConfigs.length === 1 ? '' : 's'}
                     </span>
                   </div>
+                  <p className="text-[10px] text-[#7C5339] font-mono">
+                    Overrides here apply to this run only; other values use the canvas node defaults.
+                  </p>
 
                   <div className="space-y-2">
                     {/* Translation as a normal step row — same affordances, toggle inline */}
@@ -850,6 +887,11 @@ export default function UniversalPipelineRunModal({
                               }`}
                             >
                               {translateToEnglish ? 'on' : 'off'}
+                            </span>
+                            <span className="font-mono text-[10px] text-[#7C5339] font-normal ml-1">
+                              {translateToEnglish
+                                ? 'Translates to English subtitles'
+                                : 'Original-language transcript & subtitles'}
                             </span>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer" title="Toggle English translation for this run">
