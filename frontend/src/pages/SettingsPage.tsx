@@ -4,6 +4,7 @@ import { api, type ProviderInfo } from '../lib/api'
 
 export default function SettingsPage() {
   const [maxConcurrent, setMaxConcurrent] = useState(2)
+  const [initialMaxConcurrent, setInitialMaxConcurrent] = useState<number | null>(null)
   const [providers, setProviders] = useState<Record<string, ProviderInfo>>({})
   const [keys, setKeys] = useState<string[]>([])
   const [keyInputs, setKeyInputs] = useState<Record<string, string>>({})
@@ -27,6 +28,7 @@ export default function SettingsPage() {
   })
   const [savingYtdlp, setSavingYtdlp] = useState(false)
   const [upgradingNightly, setUpgradingNightly] = useState(false)
+  const [initialYtdlpSettings, setInitialYtdlpSettings] = useState<typeof ytdlpSettings | null>(null)
 
   const refresh = async () => {
     const [dl, prov, keyList, depList, ytdlp] = await Promise.all([
@@ -37,10 +39,12 @@ export default function SettingsPage() {
       api.getYtdlpSettings(),
     ])
     setMaxConcurrent(dl.max_concurrent)
+    setInitialMaxConcurrent(dl.max_concurrent)
     setProviders(prov.providers)
     setKeys(keyList.providers)
     setDeps(depList.dependencies)
     setYtdlpSettings(ytdlp)
+    setInitialYtdlpSettings(ytdlp)
   }
 
   useEffect(() => {
@@ -52,20 +56,28 @@ export default function SettingsPage() {
     try {
       const res = await api.updateDownloadSettings(maxConcurrent)
       setMaxConcurrent(res.max_concurrent)
+      setInitialMaxConcurrent(res.max_concurrent)
     } finally {
       setSavingQueue(false)
     }
   }
+
+  const isConcurrencyDirty = initialMaxConcurrent !== null && maxConcurrent !== initialMaxConcurrent
 
   const saveYtdlp = async () => {
     setSavingYtdlp(true)
     try {
       const res = await api.updateYtdlpSettings(ytdlpSettings)
       setYtdlpSettings(res)
+      setInitialYtdlpSettings(res)
     } finally {
       setSavingYtdlp(false)
     }
   }
+
+  const isYtdlpDirty =
+    initialYtdlpSettings !== null &&
+    JSON.stringify(ytdlpSettings) !== JSON.stringify(initialYtdlpSettings)
 
   const upgradeYtdlpNightly = async (channel: string) => {
     setUpgradingNightly(true)
@@ -74,6 +86,7 @@ export default function SettingsPage() {
       await runCheck()
       const ytdlp = await api.getYtdlpSettings()
       setYtdlpSettings(ytdlp)
+      setInitialYtdlpSettings(ytdlp)
     } finally {
       setUpgradingNightly(false)
     }
@@ -139,6 +152,9 @@ export default function SettingsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <p className="text-[11px] text-[#7C5339]">Number of simultaneous downloads allowed before queueing.</p>
+            {isConcurrencyDirty && (
+              <p className="mt-1 text-[10px] text-[#7C5339]">Unsaved changes</p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -151,7 +167,7 @@ export default function SettingsPage() {
             />
             <button
               onClick={saveConcurrency}
-              disabled={savingQueue}
+              disabled={savingQueue || !isConcurrencyDirty}
               className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-4 py-2 text-xs font-bold text-[#FDFBF7] shadow-sm transition-all hover:bg-[#86542C] active:scale-95 disabled:opacity-40"
             >
               <Save className="size-3.5" />
@@ -249,7 +265,7 @@ export default function SettingsPage() {
             </button>
             <button
               onClick={saveYtdlp}
-              disabled={savingYtdlp}
+              disabled={savingYtdlp || !isYtdlpDirty}
               className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-4 py-1.5 text-xs font-bold text-[#FDFBF7] shadow-sm transition-all hover:bg-[#86542C] active:scale-95 disabled:opacity-40"
             >
               <Save className="size-3.5" />
@@ -257,6 +273,9 @@ export default function SettingsPage() {
             </button>
           </div>
         </div>
+        {isYtdlpDirty && (
+          <p className="text-[10px] text-[#7C5339]">Unsaved changes</p>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="rounded-xl border border-[#B0BA99]/80 bg-[#F7F1DE]/60 p-3.5 space-y-1.5">

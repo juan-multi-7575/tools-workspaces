@@ -63,6 +63,7 @@ export default function WorkspaceDetailPage() {
   const updateParamsRef = useRef<((params: Record<string, unknown>) => void) | null>(null)
 
   const [justCompletedRunId, setJustCompletedRunId] = useState<string | null>(null)
+  const [mediaRefreshKey, setMediaRefreshKey] = useState(0)
   const [outputBanner, setOutputBanner] = useState<{ title: string; subtitle?: string } | null>(null)
   const prevPipelineIdsRef = useRef<Set<string>>(new Set())
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -156,6 +157,7 @@ export default function WorkspaceDetailPage() {
     if (confirm(`Permanently delete media file ${filename}?`)) {
       await api.deleteWorkspaceMedia(id, filename)
       refreshRuns()
+      setMediaRefreshKey((k) => k + 1)
     }
   }
 
@@ -358,6 +360,7 @@ export default function WorkspaceDetailPage() {
           runs={runs}
           onRefresh={refreshRuns}
           highlightRunId={justCompletedRunId}
+          mediaRefreshKey={mediaRefreshKey}
           onPreviewArtifact={(name, size, previewUrl, downloadUrl) =>
             setPreviewTarget({ name, size, previewUrl, downloadUrl })
           }

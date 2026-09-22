@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Route, Routes, useNavigate } from 'react-router-dom'
+import { NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { Wrench, FolderTree, Settings, Smartphone, Terminal } from 'lucide-react'
 import ToolsPage from './pages/ToolsPage'
 import WorkspacesPage from './pages/WorkspacesPage'
@@ -110,6 +110,7 @@ export default function App() {
             <Route path="/workspaces/:id" element={<WorkspaceDetailPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/remote" element={<RemoteControlPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
 

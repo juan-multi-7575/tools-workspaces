@@ -12,6 +12,17 @@ def test_remote_info_shape(client):
     assert body["token"] == get_token()
 
 
+def test_remote_rotate_issues_new_token(client):
+    old = get_token()
+    resp = client.post("/api/remote/rotate")
+    assert resp.status_code == 200
+    new = resp.json()["token"]
+    assert new
+    assert new != old
+    assert get_token() == new
+    assert client.get("/api/remote/info").json()["token"] == new
+
+
 def test_remote_enqueue_requires_valid_token(client, monkeypatch):
     import app.tools.downloader as dl
 

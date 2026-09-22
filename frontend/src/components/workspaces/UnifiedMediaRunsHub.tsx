@@ -75,12 +75,14 @@ export default function UnifiedMediaRunsHub({
   onInspectRun,
   onRemoveRun,
   onRemoveMediaItem,
+  mediaRefreshKey,
 }: {
   workspaceId: string
   pipelineRuns: PipelineRunGroup[]
   runs: Run[]
   onRefresh: () => void
   highlightRunId?: string | null
+  mediaRefreshKey?: number
   onPreviewArtifact: (name: string, size: number, previewUrl: string, downloadUrl: string) => void
   onInspectRun: (runId: string) => void
   onRemoveRun: (runId: string) => void
@@ -135,7 +137,7 @@ export default function UnifiedMediaRunsHub({
     loadMedia()
     setFailureBannerDismissed(false)
     setPackageOverride(null)
-  }, [pipelineRuns.length, highlightRunId])
+  }, [pipelineRuns.length, highlightRunId, mediaRefreshKey])
 
   const copyPath = (path: string) => {
     navigator.clipboard.writeText(path)
@@ -236,7 +238,7 @@ export default function UnifiedMediaRunsHub({
   const failedCount = pipelineRuns.filter((r) => r.status === 'failed').length
 
   return (
-    <div className="space-y-6 text-[#4E220F]">
+    <div className="space-y-6 pb-24 text-[#4E220F]">
       {/* Top summary + sub-tabs */}
       <div className="rounded-3xl border border-[#B0BA99] bg-[#FFFFFF] p-4 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -542,7 +544,7 @@ export default function UnifiedMediaRunsHub({
                               <span className="font-mono text-[10px] text-[#7C5339] flex items-center gap-1"><Clock className="size-3" />{new Date(group.timestamp * 1000).toLocaleTimeString()} • {relativeTime(group.timestamp)}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <button onClick={() => toggleRun(group.pipeline_run_id)} className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1 text-xs font-bold hover:bg-[#EDE5CD]">
+                              <button onClick={() => toggleRun(group.pipeline_run_id)} disabled={group.media.all_artifacts.length === 0} aria-disabled={group.media.all_artifacts.length === 0} className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1 text-xs font-bold hover:bg-[#EDE5CD] disabled:opacity-50 disabled:cursor-not-allowed">
                                 {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />} {isExpanded ? 'Hide' : 'Files'}
                               </button>
                               {group.bundle_name && findPackageForBundle(group.bundle_name) && (
@@ -551,10 +553,10 @@ export default function UnifiedMediaRunsHub({
                                 </button>
                               )}
                               {group.steps[0]?.id && (
-                                <button onClick={() => onInspectRun(group.steps[0].id)} className="p-1.5 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] hover:bg-[#EDE5CD]" title="Logs"><FileTerminal className="size-3.5" /></button>
+                                <button onClick={() => onInspectRun(group.steps[0].id)} className="p-1.5 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] hover:bg-[#EDE5CD]" title="Logs" aria-label="View logs"><FileTerminal className="size-3.5" /></button>
                               )}
                               {group.steps[0]?.id && (
-                                <button onClick={() => onRemoveRun(group.steps[0].id)} className="p-1.5 rounded-lg border border-[#A83232]/30 bg-[#FFFFFF] text-[#A83232] hover:bg-[#A83232] hover:text-[#FFFFFF]"><Trash2 className="size-3.5" /></button>
+                                <button onClick={() => onRemoveRun(group.steps[0].id)} title="Delete run" aria-label="Delete run" className="p-1.5 rounded-lg border border-[#A83232]/30 bg-[#FFFFFF] text-[#A83232] hover:bg-[#A83232] hover:text-[#FFFFFF]"><Trash2 className="size-3.5" /></button>
                               )}
                             </div>
                           </div>
@@ -569,9 +571,13 @@ export default function UnifiedMediaRunsHub({
                                 {idx + 1}. {st.tool_id} <span className={`size-1.5 rounded-full ${st.status === 'completed' ? 'bg-[#2E6B47]' : st.status === 'failed' ? 'bg-[#FDFBF7]' : 'bg-amber-400'}`} />
                               </span>
                             ))}
-                            <a href={api.downloadPipelineRunUrl(workspaceId, group.pipeline_run_id)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#9D6638] bg-[#EDE5CD] text-[#4E220F] text-xs font-bold hover:bg-[#B0BA99]/40 ml-auto"><Package className="size-3 text-[#9D6638]" /> Download ZIP</a>
+                            {group.media.all_artifacts.length === 0 ? (
+                              <span className="ml-auto text-[11px] italic text-[#7C5339]">No outputs</span>
+                            ) : (
+                              <a href={api.downloadPipelineRunUrl(workspaceId, group.pipeline_run_id)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#9D6638] bg-[#EDE5CD] text-[#4E220F] text-xs font-bold hover:bg-[#B0BA99]/40 ml-auto"><Package className="size-3 text-[#9D6638]" /> Download ZIP</a>
+                            )}
                             {group.media.video && !isFailed && (
-                              <button onClick={() => onPreviewArtifact(group.media.video!.name, group.media.video!.size, group.media.video!.preview_url, group.media.video!.download_url)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#9D6638] text-[#FDFBF7] text-xs font-bold"><Play className="size-3 fill-current" /> Preview</button>
+                              <button onClick={() => onPreviewArtifact(group.media.video!.name, group.media.video!.size, group.media.video!.preview_url, group.media.video!.download_url)} title={group.media.video.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#9D6638] text-[#FDFBF7] text-xs font-bold"><Play className="size-3 fill-current" /> Preview</button>
                             )}
                           </div>
                           {isExpanded && (
@@ -622,9 +628,11 @@ export default function UnifiedMediaRunsHub({
                 <button
                   key={cat.key}
                   onClick={() => { setFileCategoryFilter(cat.key); setFilesPage(1) }}
+                  disabled={cat.count === 0}
+                  aria-disabled={cat.count === 0}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition-all ${
                     fileCategoryFilter === cat.key ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs' : 'text-[#4E220F] hover:bg-[#EDE5CD]'
-                  }`}
+                  } ${cat.count === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <span>{cat.label}</span>
                   <span className="font-mono text-[10px] opacity-80">({cat.count})</span>
@@ -664,21 +672,31 @@ export default function UnifiedMediaRunsHub({
                       </div>
                       <div className="min-w-0">
                         <p className="font-mono text-xs font-bold truncate" title={file.name}>{file.name}</p>
-                        <div className="flex items-center gap-2 text-[10px] text-[#7C5339] font-mono mt-0.5">
+                        <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#7C5339] font-mono mt-0.5">
                           <span>{formatSize(file.size)}</span>
                           <span>•</span>
                           <span>{relativeTime(file.mtime)}</span>
                           <span className="hidden sm:inline">• {file.category}</span>
+                          {(file.bundle_name || file.pipeline_run_id) && (
+                            <button
+                              onClick={() => viewPackageForRun(file.bundle_name)}
+                              title={file.pipeline_run_id ? `Run ${file.pipeline_run_id}` : file.bundle_name}
+                              className="hidden sm:inline-flex items-center gap-1 max-w-[160px] truncate rounded-md border border-[#B0BA99] bg-[#EDE5CD]/70 px-1.5 py-px text-[9px] font-bold text-[#4E220F] hover:bg-[#B0BA99]/40"
+                            >
+                              <span className="truncate">{file.bundle_name || file.pipeline_run_id!.slice(0, 8)}</span>
+                              <span className="underline underline-offset-2">View run</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => copyPath(file.name)} className="p-1.5 rounded-lg border border-[#B0BA99] hover:bg-[#EDE5CD]" title="Copy">
+                      <button onClick={() => copyPath(file.name)} className="p-1.5 rounded-lg border border-[#B0BA99] hover:bg-[#EDE5CD]" title="Copy" aria-label="Copy filename">
                         {copiedPath === file.name ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
                       </button>
-                      <button onClick={() => onPreviewArtifact(file.name, file.size, file.preview_url, file.download_url)} className="p-1.5 rounded-lg border border-[#B0BA99] hover:bg-[#EDE5CD]" title="Preview"><Eye className="size-3" /></button>
-                      <a href={file.download_url} download={file.name} className="p-1.5 rounded-lg bg-[#9D6638] text-[#FDFBF7] hover:bg-[#86542C]" title="Download"><Download className="size-3" /></a>
-                      <button onClick={() => onRemoveMediaItem(file.name)} className="p-1.5 rounded-lg border border-[#A83232]/30 text-[#A83232] hover:bg-[#A83232] hover:text-[#FFFFFF]" title="Delete"><Trash2 className="size-3" /></button>
+                      <button onClick={() => onPreviewArtifact(file.name, file.size, file.preview_url, file.download_url)} className="p-1.5 rounded-lg border border-[#B0BA99] hover:bg-[#EDE5CD]" title="Preview" aria-label="Preview file"><Eye className="size-3" /></button>
+                      <a href={file.download_url} download={file.name} className="p-1.5 rounded-lg bg-[#9D6638] text-[#FDFBF7] hover:bg-[#86542C]" title="Download" aria-label="Download file"><Download className="size-3" /></a>
+                      <button onClick={() => onRemoveMediaItem(file.name)} className="p-1.5 rounded-lg border border-[#A83232]/30 text-[#A83232] hover:bg-[#A83232] hover:text-[#FFFFFF]" title="Delete" aria-label="Delete file"><Trash2 className="size-3" /></button>
                     </div>
                   </div>
                 ))}

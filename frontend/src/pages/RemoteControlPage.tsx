@@ -6,7 +6,7 @@ import {
   Check,
   Radio,
 } from 'lucide-react'
-import { api, type DownloadTask } from '../lib/api'
+import { api, resolveUrl, type DownloadTask } from '../lib/api'
 
 const STATUS_LABEL: Record<string, string> = {
   queued: 'Queued',
@@ -22,6 +22,21 @@ export default function RemoteControlPage() {
   const [tasks, setTasks] = useState<DownloadTask[]>([])
   const [copied, setCopied] = useState(false)
   const [tokenCopied, setTokenCopied] = useState(false)
+  const [rotating, setRotating] = useState(false)
+
+  const rotateToken = async () => {
+    if (!window.confirm('Rotate the session token? Paired devices will need the new token.')) return
+    setRotating(true)
+    try {
+      const res = await fetch(resolveUrl('/api/remote/rotate'), { method: 'POST' })
+      const data = await res.json()
+      if (data?.token) setToken(data.token)
+    } catch {
+      /* ignore */
+    } finally {
+      setRotating(false)
+    }
+  }
   const isLocalhostUrl = /^(https?:\/\/)(localhost|127\.0\.0\.1)(:\d+)?\//i.test(connectUrl)
 
   const copyToken = () => {
@@ -91,10 +106,17 @@ export default function RemoteControlPage() {
       <div className="border-b border-[#B0BA99] pb-4">
         <div className="flex items-center gap-2.5">
           <h1 className="text-xl font-bold tracking-tight text-[#4E220F]">LAN Remote Control</h1>
-          <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#B0BA99]/40 border border-[#B0BA99] text-[#4E220F] flex items-center gap-1.5 font-bold">
-            <span className="h-2 w-2 rounded-full bg-[#9D6638] animate-pulse" />
-            BROADCASTING
-          </span>
+          {!isLocalhostUrl ? (
+            <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#B0BA99]/40 border border-[#B0BA99] text-[#4E220F] flex items-center gap-1.5 font-bold">
+              <span className="h-2 w-2 rounded-full bg-[#9D6638] animate-pulse" />
+              BROADCASTING
+            </span>
+          ) : (
+            <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#EDE5CD] border border-[#B0BA99] text-[#7C5339] flex items-center gap-1.5 font-bold">
+              <span className="h-2 w-2 rounded-full bg-[#B0BA99]" />
+              LOCAL ONLY
+            </span>
+          )}
         </div>
         <p className="mt-1 text-xs text-[#7C5339]">
           Pair with any mobile device or secondary computer on the local network for remote download control.
@@ -131,7 +153,7 @@ export default function RemoteControlPage() {
                 </div>
               )}
             </div>
-            <p className="font-mono text-[10px] text-[#7C5339] text-center">QR encodes the connection URL above</p>
+            <p className="font-mono text-[10px] text-[#7C5339] text-center">QR encodes the connection URL shown here</p>
           </div>
 
           <div className="flex-1 space-y-3.5 w-full">
@@ -158,7 +180,7 @@ export default function RemoteControlPage() {
               <div className="rounded-xl border border-[#9D6638]/50 bg-[#F5C86B]/20 p-3 text-[11px] text-[#4E220F] leading-relaxed">
                 <span className="font-bold">Heads up:</span> you opened this page via localhost, so this URL and QR
                 only work on this machine. To pair a phone, open this page through your LAN address instead
-                (e.g. <span className="font-mono">http://&lt;your-lan-ip&gt;:5173/remote</span>) and re-scan.
+                (e.g. <span className="font-mono">http://&lt;your-lan-ip&gt;:8000/remote</span>) and re-scan.
               </div>
             )}
             <div className="rounded-xl border border-[#B0BA99]/70 bg-[#EDE5CD]/50 p-3 font-mono text-[11px] text-[#7C5339] space-y-1">
@@ -174,6 +196,14 @@ export default function RemoteControlPage() {
                   >
                     {tokenCopied ? <Check className="size-3 text-[#9D6638]" /> : <Copy className="size-3" />}
                     {tokenCopied ? 'Copied' : 'Copy token'}
+                  </button>
+                  <button
+                    onClick={rotateToken}
+                    disabled={rotating}
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#A83232]/40 bg-transparent px-2 py-1 text-[10px] font-bold text-[#A83232] hover:bg-[#A83232]/10 transition-colors disabled:opacity-40"
+                    title="Rotate session token"
+                  >
+                    {rotating ? 'Rotating…' : 'Rotate token'}
                   </button>
                 </span>
               </div>

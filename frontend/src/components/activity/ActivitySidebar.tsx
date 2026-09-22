@@ -136,6 +136,18 @@ export default function ActivitySidebar({
     }
   }, [autoOpened, totalActive, open, setOpen, setAutoOpened])
 
+  // Auto-select first non-empty tab on drawer open (downloads → artifacts → runs)
+  const prevOpenRef = useRef(open)
+  useEffect(() => {
+    if (open && !prevOpenRef.current) {
+      if (downloadTasks.length > 0) setActiveTab('downloads')
+      else if (artifacts.length > 0) setActiveTab('artifacts')
+      else if (toolExecutions.length > 0) setActiveTab('runs')
+      else setActiveTab('downloads')
+    }
+    prevOpenRef.current = open
+  }, [open, downloadTasks.length, artifacts.length, toolExecutions.length, setActiveTab])
+
   // Map backwards-compatible tab names if needed
   const normalizedTab: ActivityTabType =
     (activeTab as string) === 'history'
@@ -158,12 +170,12 @@ export default function ActivitySidebar({
         </div>
         <span className="tracking-tight font-medium">Activity & Records</span>
         {totalActive > 0 ? (
-          <span className="flex items-center gap-1.5 font-mono text-[11px] font-bold text-[#4E220F] bg-[#B0BA99]/40 border border-[#9D6638]/40 px-2 py-0.5 rounded-full">
+          <span title={`${downloadTasks.length} downloads · ${artifacts.length} artifacts · ${toolExecutions.length} runs`} className="flex items-center gap-1.5 font-mono text-[11px] font-bold text-[#4E220F] bg-[#B0BA99]/40 border border-[#9D6638]/40 px-2 py-0.5 rounded-full">
             <span className="h-2 w-2 rounded-full bg-[#9D6638] animate-pulse" />
             {totalActive} active
           </span>
         ) : (
-          <span className="font-mono text-[11px] text-[#7C5339] bg-[#EDE5CD] px-2 py-0.5 rounded-full">
+          <span title={`${downloadTasks.length} downloads · ${artifacts.length} artifacts · ${toolExecutions.length} runs`} className="font-mono text-[11px] text-[#7C5339] bg-[#EDE5CD] px-2 py-0.5 rounded-full">
             {downloadTasks.length + artifacts.length + toolExecutions.length}
           </span>
         )}
@@ -255,7 +267,7 @@ export default function ActivitySidebar({
                   }`}
                 >
                   <Wrench className="size-3.5" />
-                  <span>Tool Runs</span>
+                  <span>Tool Runs (this session)</span>
                   {activeTools > 0 ? (
                     <span className="ml-1 rounded-full bg-[#FDFBF7] px-1.5 py-0.2 text-[9px] font-bold text-[#9D6638]">
                       {activeTools}

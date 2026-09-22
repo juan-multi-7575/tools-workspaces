@@ -72,6 +72,7 @@ export default function ToolsPage({
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [viewFormat, setViewFormat] = useState<ViewFormat>('grid')
   const [inspectorToolId, setInspectorToolId] = useState<string | null>(null)
+  const [showDeprecated, setShowDeprecated] = useState(false)
   
   const [runTarget, setRunTarget] = useState<ToolManifest | null>(null)
   const [params, setParams] = useState<Record<string, unknown>>({})
@@ -115,9 +116,19 @@ export default function ToolsPage({
     loadToolsCatalog()
   }, [])
 
+  const isDeprecatedAlias = (tool: { description?: string }) =>
+    (tool.description || '').includes('[deprecated alias]')
+
+  const deprecatedCount = useMemo(() => tools.filter(isDeprecatedAlias).length, [tools])
+
+  const visibleTools = useMemo(
+    () => (showDeprecated ? tools : tools.filter((t) => !isDeprecatedAlias(t))),
+    [tools, showDeprecated],
+  )
+
   const filteredTools = useMemo(() => {
     const q = search.trim().toLowerCase()
-    const list = tools.filter((t) => {
+    const list = visibleTools.filter((t) => {
       const matchCategory = selectedCategory === 'All' || (t.category || 'General') === selectedCategory
       if (!matchCategory) return false
       if (!q) return true
@@ -137,14 +148,11 @@ export default function ToolsPage({
       if (b.id === 'ai_model_health_check') return 1
       return 0
     })
-  }, [tools, search, selectedCategory])
+  }, [visibleTools, search, selectedCategory])
 
   const inspectorTool = useMemo(() => {
     return tools.find((t) => t.id === inspectorToolId) || null
   }, [tools, inspectorToolId])
-
-  const isDeprecatedAlias = (tool: { description?: string }) =>
-    (tool.description || '').includes('[deprecated alias]')
 
   const openRun = (tool: ToolManifest) => {
     setRunTarget(tool)
@@ -319,9 +327,9 @@ export default function ToolsPage({
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl font-bold tracking-tight text-[#4E220F]">Universal Tool Workbench</h1>
             <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#B0BA99]/40 border border-[#B0BA99] text-[#4E220F] font-semibold">
-              {filteredTools.length === tools.length
-                ? `${tools.length} Registered Tools`
-                : `${filteredTools.length} of ${tools.length} shown`}
+              {filteredTools.length === visibleTools.length
+                ? `${visibleTools.length} Registered Tools`
+                : `${filteredTools.length} of ${visibleTools.length} shown`}
             </span>
           </div>
           <p className="mt-1 text-xs text-[#7C5339]">
@@ -396,7 +404,7 @@ export default function ToolsPage({
       {/* Category Pills Bar */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         {CATEGORIES.map((cat) => {
-          const count = cat === 'All' ? tools.length : tools.filter((t) => (t.category || 'General') === cat).length
+          const count = cat === 'All' ? visibleTools.length : visibleTools.filter((t) => (t.category || 'General') === cat).length
           const active = selectedCategory === cat
           return (
             <button
@@ -419,6 +427,18 @@ export default function ToolsPage({
             </button>
           )
         })}
+        {deprecatedCount > 0 && (
+          <button
+            onClick={() => setShowDeprecated((v) => !v)}
+            className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
+              showDeprecated
+                ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
+                : 'bg-[#EDE5CD]/70 text-[#4E220F] border border-dashed border-[#B0BA99]/70 hover:bg-[#EDE5CD] hover:border-[#B0BA99]'
+            }`}
+          >
+            <span>{showDeprecated ? 'Hide deprecated' : `Show deprecated (${deprecatedCount})`}</span>
+          </button>
+        )}
       </div>
 
       {/* Main Content Areas based on View Format */}
@@ -543,8 +563,8 @@ export default function ToolsPage({
                   )}
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-[#B0BA99]/40 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#7C5339]">
+                <div className="mt-4 pt-3 border-t border-[#B0BA99]/40 flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 flex-wrap items-center gap-1 font-mono text-[10px] text-[#7C5339]">
                     <span className="rounded bg-[#EDE5CD] px-1.5 py-0.5 border border-[#B0BA99]/50 font-medium">
                       in: {tool.input_kinds.join(', ')}
                     </span>
@@ -559,7 +579,7 @@ export default function ToolsPage({
                       e.stopPropagation()
                       openRun(tool)
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-3 py-1.5 text-xs font-bold text-[#FDFBF7] shadow-xs transition-all hover:bg-[#86542C] active:scale-95"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#9D6638] px-3 py-1.5 text-xs font-bold text-[#FDFBF7] shadow-xs transition-all hover:bg-[#86542C] active:scale-95"
                   >
                     <Play className="size-3 fill-current" />
                     Run
@@ -641,7 +661,7 @@ export default function ToolsPage({
                             e.stopPropagation()
                             openRun(tool)
                           }}
-                          className="inline-flex items-center gap-1 rounded-lg bg-[#9D6638] px-2.5 py-1 text-xs font-bold text-[#FDFBF7] hover:bg-[#86542C] transition-all"
+                          className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg bg-[#9D6638] px-2.5 py-1 text-xs font-bold text-[#FDFBF7] hover:bg-[#86542C] transition-all"
                         >
                           <Play className="size-3 fill-current" />
                           Run

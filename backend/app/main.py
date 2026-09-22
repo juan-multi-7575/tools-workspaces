@@ -609,6 +609,11 @@ async def remote_info(request: Request):
     return {"token": get_token(), "connect_url": f"{base}/remote", "host": base}
 
 
+@app.post("/api/remote/rotate")
+async def remote_rotate():
+    return {"token": regenerate_token()}
+
+
 @app.post("/api/remote/downloads")
 async def remote_enqueue(payload: dict):
     if payload.get("token") != get_token():

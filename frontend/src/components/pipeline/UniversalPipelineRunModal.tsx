@@ -52,6 +52,28 @@ export default function UniversalPipelineRunModal({
   const [translateToEnglish, setTranslateToEnglish] = useState(false)
   const [expandedNodeIds, setExpandedNodeIds] = useState<Set<string>>(new Set())
 
+  // Provider-key preflight (advisory only — never blocks Start)
+  const [keyStatus, setKeyStatus] = useState<{ needsKey: Record<string, boolean>; configured: string[] } | null>(null)
+  useEffect(() => {
+    if (!isOpen) return
+    let cancelled = false
+    Promise.all([api.listProviders(), api.listKeys()])
+      .then(([prov, keys]) => {
+        if (cancelled) return
+        const needsKey: Record<string, boolean> = {}
+        for (const [pid, info] of Object.entries(prov.providers || {})) {
+          needsKey[pid.toLowerCase()] = !!info.needs_key
+        }
+        setKeyStatus({ needsKey, configured: (keys.providers || []).map((p) => String(p).toLowerCase()) })
+      })
+      .catch(() => {
+        if (!cancelled) setKeyStatus(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen])
+
   // Pre-run URL check: per entry-input key `${nodeId}:${paramKey}`
   type UrlPreview =
     | { state: 'idle' }
@@ -347,6 +369,34 @@ export default function UniversalPipelineRunModal({
     ? 'URL could not be verified — fix it or run anyway.'
     : 'Blur the URL field to verify it.'
 
+  // Derive missing provider keys from node configs + live form values (advisory only)
+  const missingKeyWarnings: { toolName: string; provider: string }[] = (() => {
+    if (!keyStatus) return []
+    const configured = new Set(keyStatus.configured)
+    const needed = new Map<string, string>()
+    const consider = (toolId: string, toolName: string, provider: unknown) => {
+      const p = String(provider ?? '').trim().toLowerCase()
+      if (!p || p === 'auto' || p === 'faster-whisper' || p === 'local') return
+      if (!keyStatus.needsKey[p]) return
+      if (configured.has(p)) return
+      if (!needed.has(p)) needed.set(p, toolName || toolId)
+    }
+    for (const dn of dagNodes) {
+      const override = formValues[dn.id]?.provider ?? (dn.params as Record<string, unknown> | undefined)?.provider
+      if (override !== undefined) consider(dn.tool_id, dn.tool_id, override)
+    }
+    for (const g of nodeConfigs) {
+      const live = formValues[g.nodeId]?.provider
+      if (live !== undefined) {
+        consider(g.toolId, g.toolName, live)
+      } else {
+        const p = g.parameters.find((pp) => pp.paramKey === 'provider')
+        if (p) consider(g.toolId, g.toolName, p.currentVal ?? p.defaultVal)
+      }
+    }
+    return [...needed.entries()].map(([provider, toolName]) => ({ toolName, provider }))
+  })()
+
   const stepCount = nodeConfigs.length > 0 ? nodeConfigs.length : dagNodes.length
 
   const handleFieldChange = (nodeId: string, paramKey: string, val: any) => {
@@ -585,6 +635,20 @@ export default function UniversalPipelineRunModal({
           /* Form Content */
           <form onSubmit={handlePreRunCheck} className="flex flex-col flex-1 overflow-hidden">
             <div className="p-6 space-y-5 overflow-y-auto flex-1">
+              {missingKeyWarnings.map(({ toolName, provider }) => (
+                <div
+                  key={provider}
+                  className="flex flex-wrap items-center gap-x-2 rounded-xl border border-[#9D6638]/50 bg-[#F5C86B]/20 p-3 text-[11px] font-semibold text-[#4E220F]"
+                >
+                  <AlertCircle className="size-4 shrink-0 text-[#9D6638]" />
+                  <span>
+                    {toolName} needs {provider === 'openai' ? 'an' : 'a'} {provider} key — add it in{' '}
+                    <a href="/settings" className="font-bold text-[#9D6638] underline underline-offset-2 hover:text-[#86542C]">
+                      Settings
+                    </a>
+                  </span>
+                </div>
+              ))}
               {validationError && (
                 <div className="flex items-center gap-2 rounded-xl border border-[#A83232]/40 bg-[#A83232]/10 p-3 text-xs font-semibold text-[#A83232]">
                   <AlertCircle className="size-4 shrink-0" />
