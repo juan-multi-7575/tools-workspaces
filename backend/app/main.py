@@ -96,8 +96,13 @@ async def get_tool(tool_id: str):
 
 @app.post("/api/workspaces")
 async def create(payload: dict):
-    name = payload.get("name", "Untitled")
-    ws = create_workspace(name)
+    name = (payload or {}).get("name", "Untitled")
+    if not str(name or "").strip():
+        raise HTTPException(status_code=422, detail="Workspace name must not be empty.")
+    try:
+        ws = create_workspace(name)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
     return ws
 
 

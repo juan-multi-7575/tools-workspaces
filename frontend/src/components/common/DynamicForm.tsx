@@ -389,8 +389,11 @@ export default function DynamicForm({
           const field = rawField as SchemaField
           const type = field.type || 'string'
           const val = value[key]
+          // Booleans always render as checkboxes — even when the key name
+          // looks like a file path (e.g. restrict_filenames).
           const isArtifactField =
-            key.includes('input') || key.includes('file') || key.includes('path') || key === 'paths'
+            type !== 'boolean' &&
+            (key.includes('input') || key.includes('file') || key.includes('path') || key === 'paths')
           const isFullWidth =
             field.widget === 'code' ||
             field.widget === 'textarea' ||
@@ -408,9 +411,6 @@ export default function DynamicForm({
               <div className="flex items-center justify-between">
                 <label className="font-bold text-[#4E220F] text-xs flex items-center gap-1.5">
                   {field.title || key}
-                  <span className="font-mono text-[9px] text-[#7C5339] px-1.5 py-0.2 rounded-full bg-[#EDE5CD] border border-[#B0BA99]/60 font-semibold">
-                    {type}
-                  </span>
                 </label>
                 {val !== undefined && (
                   <button
@@ -462,7 +462,7 @@ export default function DynamicForm({
                     className="size-4 rounded border-[#B0BA99] bg-[#F7F1DE] accent-[#9D6638] cursor-pointer"
                   />
                   <label htmlFor={`field-${key}`} className="text-xs font-semibold text-[#4E220F] select-none cursor-pointer">
-                    Enable {field.title || key}
+                    {Boolean(val ?? field.default ?? false) ? 'Enabled' : 'Disabled'}
                   </label>
                 </div>
               ) : field.widget === 'secret' ? (
@@ -498,6 +498,8 @@ export default function DynamicForm({
               ) : (
                 <input
                   type={type === 'number' || type === 'integer' ? 'number' : 'text'}
+                  min={(type === 'number' || type === 'integer') && field.minimum !== undefined ? field.minimum : undefined}
+                  max={(type === 'number' || type === 'integer') && field.maximum !== undefined ? field.maximum : undefined}
                   value={val !== undefined ? String(val) : (field.default !== undefined ? String(field.default) : '')}
                   onChange={(e) =>
                     setField(

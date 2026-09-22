@@ -42,6 +42,7 @@ const CATEGORIES = [
   'Security',
   'AI & Tutoring',
   'Custom / Personal',
+  'General',
 ]
 
 type ViewFormat = 'grid' | 'table' | 'inspector'
@@ -102,8 +103,6 @@ export default function ToolsPage({
               setParams({ input_path: inputParam })
             }
           }
-        } else if (tools.length > 0) {
-          setInspectorToolId(tools[0].id)
         }
       })
       .catch((err) => {
@@ -141,8 +140,11 @@ export default function ToolsPage({
   }, [tools, search, selectedCategory])
 
   const inspectorTool = useMemo(() => {
-    return tools.find((t) => t.id === inspectorToolId) || filteredTools[0] || tools[0] || null
-  }, [tools, filteredTools, inspectorToolId])
+    return tools.find((t) => t.id === inspectorToolId) || null
+  }, [tools, inspectorToolId])
+
+  const isDeprecatedAlias = (tool: { description?: string }) =>
+    (tool.description || '').includes('[deprecated alias]')
 
   const openRun = (tool: ToolManifest) => {
     setRunTarget(tool)
@@ -317,7 +319,9 @@ export default function ToolsPage({
           <div className="flex items-center gap-2.5">
             <h1 className="text-xl font-bold tracking-tight text-[#4E220F]">Universal Tool Workbench</h1>
             <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#B0BA99]/40 border border-[#B0BA99] text-[#4E220F] font-semibold">
-              {tools.length} Registered Tools
+              {filteredTools.length === tools.length
+                ? `${tools.length} Registered Tools`
+                : `${filteredTools.length} of ${tools.length} shown`}
             </span>
           </div>
           <p className="mt-1 text-xs text-[#7C5339]">
@@ -444,6 +448,15 @@ export default function ToolsPage({
           <Wrench className="mx-auto size-7 text-[#9D6638] mb-2 opacity-60" />
           <p className="text-sm font-bold text-[#4E220F]">No matching tools found</p>
           <p className="mt-1 text-xs text-[#7C5339]">Try selecting another category or clearing your search filter.</p>
+          <button
+            onClick={() => {
+              setSearch('')
+              setSelectedCategory('All')
+            }}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-4 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#EDE5CD] transition-colors"
+          >
+            Clear search & filters
+          </button>
         </div>
       ) : viewFormat === 'grid' ? (
         /* FORMAT 1: GRID CARDS */
@@ -472,7 +485,12 @@ export default function ToolsPage({
                   </div>
 
                   <h2 className="text-sm font-bold tracking-tight text-[#4E220F] group-hover:text-[#9D6638] transition-colors">
-                    {tool.name}
+                    {tool.name}{' '}
+                    {isDeprecatedAlias(tool) && (
+                      <span className="ml-1 align-middle font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#B0BA99]/40 border border-[#B0BA99] text-[#7C5339]">
+                        deprecated
+                      </span>
+                    )}
                   </h2>
                   <p className="mt-1.5 text-xs text-[#7C5339] line-clamp-2 leading-relaxed">
                     {tool.description}
@@ -679,7 +697,7 @@ export default function ToolsPage({
                     {st?.status === 'failed' && (
                       <AlertCircle className="size-3 text-[#A83232]" />
                     )}
-                    <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-[#B0BA99]/30 text-[#4E220F] border border-[#B0BA99]/50">
+                    <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-[#B0BA99]/30 text-[#4E220F] border border-[#B0BA99]/50 whitespace-nowrap">
                       {t.category || 'Gen'}
                     </span>
                   </div>
@@ -850,6 +868,13 @@ export default function ToolsPage({
                   </div>
                 </div>
               )}
+            </div>
+          )}
+          {!inspectorTool && (
+            <div className="rounded-2xl border-2 border-dashed border-[#B0BA99] bg-[#EDE5CD]/30 p-10 text-center space-y-2">
+              <Cpu className="mx-auto size-8 text-[#9D6638] opacity-60" />
+              <p className="text-sm font-bold text-[#4E220F]">Select a tool to inspect</p>
+              <p className="text-xs text-[#7C5339]">Click any card or list row to see its description, port mapping, and parameter schema.</p>
             </div>
           )}
         </div>

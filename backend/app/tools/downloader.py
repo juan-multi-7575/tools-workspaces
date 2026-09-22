@@ -604,6 +604,7 @@ class DownloaderTool(Tool):
                 "type": "string",
                 "title": "Video Container Format",
                 "enum": ["mp4", "mkv", "webm", "ogg"],
+                "default": "mp4",
                 "enumLabels": {
                     "mp4": "MP4 (Universal standard)",
                     "mkv": "MKV (Matroska / Subtitle friendly)",
@@ -629,7 +630,7 @@ class DownloaderTool(Tool):
             "writeautomaticsub": {
                 "type": "boolean",
                 "title": "Download Auto-Generated Subtitles",
-                "description": "Download automatic / speech-to-text captions",
+                "description": "Download auto-generated / speech-to-text captions",
             },
             "subtitleslangs": {
                 "type": "string",
@@ -672,6 +673,7 @@ class DownloaderTool(Tool):
                 "type": "integer",
                 "title": "Max Downloads Limit",
                 "placeholder": "10",
+                "minimum": 1,
                 "description": "Maximum number of files to download from a playlist/channel",
             },
             "limit_rate": {
@@ -684,6 +686,7 @@ class DownloaderTool(Tool):
                 "type": "integer",
                 "title": "Concurrent Fragments",
                 "placeholder": "4",
+                "minimum": 1,
                 "description": "Number of parallel threads for dash/hls stream downloads",
             },
             "output_template": {

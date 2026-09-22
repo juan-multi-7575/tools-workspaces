@@ -8,6 +8,8 @@ export default function WorkspacesPage() {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(true)
   const [viewFormat, setViewFormat] = useState<'grid' | 'table'>('grid')
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; runs: number } | null>(null)
 
   const refresh = () => {
     api.listWorkspaces().then(({ workspaces }) => {
@@ -18,20 +20,39 @@ export default function WorkspacesPage() {
 
   useEffect(refresh, [])
 
+  useEffect(() => {
+    if (!pendingDelete) return
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPendingDelete(null)
+    }
+    window.addEventListener('keydown', onEsc)
+    return () => window.removeEventListener('keydown', onEsc)
+  }, [pendingDelete])
+
   const create = async () => {
     if (!name.trim()) return
-    await api.createWorkspace(name.trim())
-    setName('')
-    refresh()
+    setCreateError(null)
+    try {
+      await api.createWorkspace(name.trim())
+      setName('')
+      refresh()
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : 'Could not create workspace.')
+    }
   }
 
   const remove = async (id: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (confirm(`Delete workspace "${id}" and all its runs?`)) {
-      await api.deleteWorkspace(id)
-      refresh()
-    }
+    const ws = workspaces.find((w) => w.id === id)
+    setPendingDelete({ id, runs: ws?.pipeline_runs ?? ws?.runs?.length ?? 0 })
+  }
+
+  const confirmRemove = async () => {
+    if (!pendingDelete) return
+    await api.deleteWorkspace(pendingDelete.id)
+    setPendingDelete(null)
+    refresh()
   }
 
   return (
@@ -79,22 +100,32 @@ export default function WorkspacesPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && create()}
-              placeholder="New workspace name…"
-              className="w-full sm:w-64 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-2 text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:outline-none shadow-xs font-medium"
-            />
-            <button
-              onClick={create}
-              disabled={!name.trim()}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#9D6638] px-4 py-2 text-xs font-bold text-[#FDFBF7] shadow-sm transition-all hover:bg-[#86542C] active:scale-95 disabled:opacity-40"
-            >
-              <Plus className="size-3.5" />
-              Create
-            </button>
+          <div className="flex flex-col gap-1 w-full sm:w-auto">
+            <div className="flex items-center gap-2">
+              <input
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  if (createError) setCreateError(null)
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && create()}
+                placeholder="New workspace name… (letters, numbers, dashes)"
+                maxLength={64}
+                className="w-full sm:w-64 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-2 text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:outline-none shadow-xs font-medium"
+              />
+              <button
+                onClick={create}
+                disabled={!name.trim()}
+                title={name.trim() ? `Create workspace "${name.trim()}"` : 'Enter a name first'}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#9D6638] px-4 py-2 text-xs font-bold text-[#FDFBF7] shadow-sm transition-all hover:bg-[#86542C] active:scale-95 disabled:opacity-40"
+              >
+                <Plus className="size-3.5" />
+                Create
+              </button>
+            </div>
+            {createError && (
+              <p className="text-[11px] font-semibold text-[#A83232]">{createError}</p>
+            )}
           </div>
         </div>
       </div>
@@ -129,8 +160,9 @@ export default function WorkspacesPage() {
                   </div>
                   <button
                     onClick={(e) => remove(ws.id, e)}
+                    aria-label={`Delete workspace ${ws.name}`}
                     className="rounded-lg p-1.5 text-[#7C5339] transition-colors hover:bg-[#A83232]/15 hover:text-[#A83232]"
-                    title="Delete workspace"
+                    title={`Delete workspace "${ws.name}"`}
                   >
                     <Trash2 className="size-3.5" />
                   </button>
@@ -150,9 +182,12 @@ export default function WorkspacesPage() {
                   <Layers className="size-3 text-[#9D6638]" />
                   {ws.templates?.length || 0} templates
                 </span>
-                <span className="font-semibold text-[#4E220F] flex items-center gap-1">
+                <span
+                  className="font-semibold text-[#4E220F] flex items-center gap-1"
+                  title={`${ws.runs?.length || 0} standalone tool runs`}
+                >
                   <HardDrive className="size-3 text-[#9D6638]" />
-                  {ws.runs?.length || 0} runs executed
+                  {ws.pipeline_runs ?? ws.runs?.length ?? 0} pipeline runs
                 </span>
               </div>
             </Link>
@@ -187,12 +222,15 @@ export default function WorkspacesPage() {
                     </td>
                     <td className="px-4 py-3 font-mono text-[11px]">
                       <span className="rounded bg-[#EDE5CD] px-2 py-0.5 border border-[#B0BA99]/50 font-semibold">
-                        {ws.templates?.length || 0} templates saved
+                        {ws.templates?.length || 0} templates
                       </span>
                     </td>
                     <td className="px-4 py-3 font-mono text-[11px]">
-                      <span className="rounded bg-[#B0BA99]/30 px-2 py-0.5 border border-[#B0BA99] font-bold text-[#4E220F]">
-                        {ws.runs?.length || 0} runs
+                      <span
+                        className="rounded bg-[#B0BA99]/30 px-2 py-0.5 border border-[#B0BA99] font-bold text-[#4E220F]"
+                        title={`${ws.runs?.length || 0} standalone tool runs`}
+                      >
+                        {ws.pipeline_runs ?? ws.runs?.length ?? 0} pipeline runs
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -206,8 +244,9 @@ export default function WorkspacesPage() {
                         </Link>
                         <button
                           onClick={(e) => remove(ws.id, e)}
+                          aria-label={`Delete workspace ${ws.name}`}
                           className="rounded-lg border border-[#B0BA99] bg-[#EDE5CD] p-1.5 text-[#7C5339] hover:bg-[#A83232]/15 hover:text-[#A83232] transition-colors"
-                          title="Delete Workspace"
+                          title={`Delete workspace "${ws.name}"`}
                         >
                           <Trash2 className="size-3.5" />
                         </button>
@@ -217,6 +256,47 @@ export default function WorkspacesPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Custom delete confirmation (replaces native confirm) */}
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="absolute inset-0" onClick={() => setPendingDelete(null)} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-ws-title"
+            className="relative w-full max-w-md rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] shadow-2xl overflow-hidden"
+          >
+            <div className="px-6 py-4 space-y-2">
+              <h3 id="delete-ws-title" className="text-sm font-bold text-[#4E220F] flex items-center gap-2">
+                <Trash2 className="size-4 text-[#A83232]" />
+                Delete workspace?
+              </h3>
+              <p className="text-xs text-[#7C5339] leading-relaxed">
+                Delete workspace <span className="font-mono font-bold text-[#4E220F]">“{pendingDelete.id}”</span> and{' '}
+                {pendingDelete.runs === 0
+                  ? 'its configuration'
+                  : `all ${pendingDelete.runs} recorded run${pendingDelete.runs === 1 ? '' : 's'}`}
+                ? This cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-[#B0BA99]/40 bg-[#EDE5CD]/50 px-6 py-3.5">
+              <button
+                onClick={() => setPendingDelete(null)}
+                className="rounded-xl px-4 py-2 text-xs font-semibold text-[#7C5339] hover:bg-[#EDE5CD] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRemove}
+                className="rounded-xl bg-[#A83232] px-4 py-2 text-xs font-bold text-[#FDFBF7] hover:bg-[#862727] transition-all active:scale-95"
+              >
+                Delete workspace
+              </button>
+            </div>
           </div>
         </div>
       )}

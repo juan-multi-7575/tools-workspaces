@@ -648,6 +648,19 @@ function PipelineCanvasInner({
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [saveCanvasNow, undo, redo])
 
+  // Close the More menu on Escape
+  useEffect(() => {
+    if (!moreOpen) return
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMoreOpen(false)
+        setClearArmed(false)
+      }
+    }
+    window.addEventListener('keydown', onEsc)
+    return () => window.removeEventListener('keydown', onEsc)
+  }, [moreOpen])
+
   useEffect(() => {
     if (initialTools && initialTools.length > 0) {
       setTools(initialTools)
@@ -675,10 +688,34 @@ function PipelineCanvasInner({
     [setEdges],
   )
 
+  // Internal clicks win: the parent echoes our selection back through
+  // externalSelectedNodeId, which must never override a newer user click
+  // (that echo previously froze the inspector on the first-selected node).
   const selected = useMemo(() => {
-    const targetId = externalSelectedNodeId !== undefined ? externalSelectedNodeId : selectedNodeId
+    const targetId = selectedNodeId ?? externalSelectedNodeId
     return nodes.find((n) => n.id === targetId)
   }, [nodes, selectedNodeId, externalSelectedNodeId])
+
+  const notifyNodeSelected = useCallback(
+    (node: Node<ToolNodeData> | undefined) => {
+      if (!onSelectNode) return
+      if (node) {
+        onSelectNode({
+          id: node.id,
+          toolId: node.data.toolId,
+          label: node.data.label,
+          params: node.data.params || {},
+          status: node.data.status,
+          durationSeconds: node.data.durationSeconds,
+          errorMessage: node.data.errorMessage,
+          cached: node.data.cached,
+        })
+      } else {
+        onSelectNode(null)
+      }
+    },
+    [onSelectNode],
+  )
   const selectedEdge = useMemo(() => edges.find((e) => e.id === selectedEdgeId), [edges, selectedEdgeId])
 
   const { setOpen: setActivityOpen, setActiveTab: setActivityTab, setAutoOpened } = useActivityTracker()
@@ -689,24 +726,12 @@ function PipelineCanvasInner({
   }, [nodes, edges, onGraphStats])
 
   // Sync selection to parent inspector if requested
+  // Sync selection to parent inspector if requested (covers param/status
+  // updates; user clicks also notify directly so the echo prop can never
+  // freeze the inspector).
   useEffect(() => {
-    if (onSelectNode) {
-      if (selected) {
-        onSelectNode({
-          id: selected.id,
-          toolId: selected.data.toolId,
-          label: selected.data.label,
-          params: selected.data.params || {},
-          status: selected.data.status,
-          durationSeconds: selected.data.durationSeconds,
-          errorMessage: selected.data.errorMessage,
-          cached: selected.data.cached,
-        })
-      } else {
-        onSelectNode(null)
-      }
-    }
-  }, [selected, onSelectNode])
+    notifyNodeSelected(selected)
+  }, [selected, notifyNodeSelected])
 
   const addTool = (manifest: ToolManifest) => {
     const id = `${manifest.id}-${nodes.length + 1}`
@@ -1299,14 +1324,17 @@ function PipelineCanvasInner({
           onNodeClick={(_, node) => {
             setSelectedNodeId(node.id)
             setSelectedEdgeId(null)
+            notifyNodeSelected(node as Node<ToolNodeData>)
           }}
           onEdgeClick={(_, edge) => {
             setSelectedEdgeId(edge.id)
             setSelectedNodeId(null)
+            notifyNodeSelected(undefined)
           }}
           onPaneClick={() => {
             setSelectedNodeId(null)
             setSelectedEdgeId(null)
+            notifyNodeSelected(undefined)
           }}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
@@ -1388,6 +1416,11 @@ function PipelineCanvasInner({
         inputs={runModalInputs}
         toolSteps={nodes.map((n) => n.data.label || n.data.toolId)}
         resolvedFlow={resolvedFlow}
+        translationStepLabel={
+          resolvedFlow?.translationNodeId
+            ? nodes.find((n) => n.id === resolvedFlow.translationNodeId)?.data.label
+            : undefined
+        }
       />
     </div>
   )

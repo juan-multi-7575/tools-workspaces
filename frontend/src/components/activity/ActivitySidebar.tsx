@@ -199,6 +199,7 @@ export default function ActivitySidebar({
                 </button>
                 <button
                   onClick={() => setOpen(false)}
+                  aria-label="Close activity panel"
                   className="rounded-lg p-1.5 text-[#7C5339] transition-colors hover:bg-[#B0BA99]/30 hover:text-[#4E220F] cursor-pointer"
                 >
                   <X className="size-4" />

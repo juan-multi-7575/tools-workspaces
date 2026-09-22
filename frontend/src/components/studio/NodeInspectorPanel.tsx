@@ -149,7 +149,7 @@ export default function NodeInspectorPanel({
           )}
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto p-3 space-y-3.5">
+        <div className="flex-1 overflow-y-auto p-3 pb-20 space-y-3.5">
           {/* Node Summary Card */}
           <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-3 shadow-2xs space-y-2">
             <div className="flex items-center justify-between">

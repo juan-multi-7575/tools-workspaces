@@ -21,6 +21,15 @@ export default function RemoteControlPage() {
   const [connectUrl, setConnectUrl] = useState('')
   const [tasks, setTasks] = useState<DownloadTask[]>([])
   const [copied, setCopied] = useState(false)
+  const [tokenCopied, setTokenCopied] = useState(false)
+  const isLocalhostUrl = /^(https?:\/\/)(localhost|127\.0\.0\.1)(:\d+)?\//i.test(connectUrl)
+
+  const copyToken = () => {
+    if (!token) return
+    navigator.clipboard?.writeText(token).catch(() => {})
+    setTokenCopied(true)
+    setTimeout(() => setTokenCopied(false), 1500)
+  }
   const sources = useRef<Record<string, EventSource>>({})
 
   useEffect(() => {
@@ -90,6 +99,11 @@ export default function RemoteControlPage() {
         <p className="mt-1 text-xs text-[#7C5339]">
           Pair with any mobile device or secondary computer on the local network for remote download control.
         </p>
+        <ol className="mt-2 space-y-1 text-[11px] text-[#7C5339] list-decimal list-inside">
+          <li>Connect your phone to the same Wi-Fi as this machine.</li>
+          <li>Scan the QR code below (it encodes the connection URL).</li>
+          <li>Enter the session token when asked — a new token is issued on every server restart.</li>
+        </ol>
       </div>
 
       {/* QR Pairing & Connection Details */}
@@ -107,14 +121,17 @@ export default function RemoteControlPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-6 pt-1">
-          <div className="rounded-2xl border-2 border-[#B0BA99] bg-[#F7F1DE] p-4 shadow-sm">
-            {connectUrl ? (
-              <QRCodeSVG value={connectUrl} size={140} fgColor="#4E220F" bgColor="#F7F1DE" />
-            ) : (
-              <div className="size-[140px] bg-[#EDE5CD] flex items-center justify-center text-[#7C5339] font-mono text-xs">
-                Generating…
-              </div>
-            )}
+          <div className="flex flex-col items-center gap-2">
+            <div className="rounded-2xl border-2 border-[#B0BA99] bg-[#F7F1DE] p-4 shadow-sm">
+              {connectUrl ? (
+                <QRCodeSVG value={connectUrl} size={140} fgColor="#4E220F" bgColor="#F7F1DE" />
+              ) : (
+                <div className="size-[140px] bg-[#EDE5CD] flex items-center justify-center text-[#7C5339] font-mono text-xs">
+                  Generating…
+                </div>
+              )}
+            </div>
+            <p className="font-mono text-[10px] text-[#7C5339] text-center">QR encodes the connection URL above</p>
           </div>
 
           <div className="flex-1 space-y-3.5 w-full">
@@ -137,10 +154,28 @@ export default function RemoteControlPage() {
               </div>
             </div>
 
+            {isLocalhostUrl && (
+              <div className="rounded-xl border border-[#9D6638]/50 bg-[#F5C86B]/20 p-3 text-[11px] text-[#4E220F] leading-relaxed">
+                <span className="font-bold">Heads up:</span> you opened this page via localhost, so this URL and QR
+                only work on this machine. To pair a phone, open this page through your LAN address instead
+                (e.g. <span className="font-mono">http://&lt;your-lan-ip&gt;:5173/remote</span>) and re-scan.
+              </div>
+            )}
             <div className="rounded-xl border border-[#B0BA99]/70 bg-[#EDE5CD]/50 p-3 font-mono text-[11px] text-[#7C5339] space-y-1">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span>SESSION TOKEN:</span>
-                <span className="text-[#4E220F] font-bold">{token ? `${token.slice(0, 10)}…` : '—'}</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-[#4E220F] font-bold">{token ? `${token.slice(0, 10)}…` : '—'}</span>
+                  <button
+                    onClick={copyToken}
+                    disabled={!token}
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] px-2 py-1 text-[10px] font-bold text-[#4E220F] hover:bg-[#EDE5CD] transition-colors disabled:opacity-40"
+                    title="Copy full session token"
+                  >
+                    {tokenCopied ? <Check className="size-3 text-[#9D6638]" /> : <Copy className="size-3" />}
+                    {tokenCopied ? 'Copied' : 'Copy token'}
+                  </button>
+                </span>
               </div>
               <p className="text-[10px] text-[#7C5339]">
                 A fresh cryptographic token is provisioned on server initialization.

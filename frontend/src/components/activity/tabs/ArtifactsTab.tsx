@@ -47,7 +47,10 @@ function formatTimeAgo(timestamp: number): string {
   const elapsedMin = Math.floor(elapsedSec / 60)
   if (elapsedMin < 60) return `${elapsedMin}m ago`
   const elapsedHours = Math.floor(elapsedMin / 60)
-  return `${elapsedHours}h ago`
+  if (elapsedHours < 48) return `${elapsedHours}h ago`
+  const elapsedDays = Math.floor(elapsedHours / 24)
+  if (elapsedDays < 30) return `${elapsedDays}d ago`
+  return `${Math.floor(elapsedDays / 30)}mo ago`
 }
 
 function isAudioMedia(name: string): boolean {
@@ -91,7 +94,7 @@ export const ArtifactsTab: React.FC<ArtifactsTabProps> = ({
           Server Saved Files
         </span>
         <span className="font-mono text-[10px] text-[#7C5339]">
-          {filtered.length} files found
+          {filtered.length} file{filtered.length === 1 ? '' : 's'} found
         </span>
       </div>
 
@@ -139,7 +142,7 @@ export const ArtifactsTab: React.FC<ArtifactsTabProps> = ({
                     >
                       {compatible.length > 0
                         ? `✓ fits ${compatible[0].toolName}${compatible.length > 1 ? ` +${compatible.length - 1}` : ''}`
-                        : 'no tool match'}
+                        : 'No tool match'}
                     </span>
                   </div>
                 </div>

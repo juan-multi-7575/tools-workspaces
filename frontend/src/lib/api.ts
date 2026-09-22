@@ -29,6 +29,7 @@ export interface Workspace {
   name: string
   templates: unknown[]
   runs: unknown[]
+  pipeline_runs?: number
 }
 
 export interface RunArtifact {

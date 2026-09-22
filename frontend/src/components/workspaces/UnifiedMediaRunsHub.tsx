@@ -102,6 +102,7 @@ export default function UnifiedMediaRunsHub({
 
   const loadMedia = () => {
     setLoadingMedia(true)
+    setFailureBannerDismissed(false)
     api.listWorkspaceMedia(workspaceId)
       .then((res) => {
         setMediaData(res)
@@ -366,7 +367,7 @@ export default function UnifiedMediaRunsHub({
                       {(() => {
                         const successRun = pipelineRuns.find((r) => r.bundle_name === failedViewPackage.title) || pipelineRuns.find((r) => r.status === 'completed')
                         return successRun ? (
-                          <a href={api.downloadPipelineRunUrl(workspaceId, successRun.pipeline_run_id)} className="inline-flex w-full justify-center items-center gap-1.5 rounded-xl border border-[#9D6638] bg-[#EDE5CD] px-3.5 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 mt-2"><Package className="size-3.5 text-[#9D6638]" /> Download This Output as ZIP (Browser)</a>
+                          <a href={api.downloadPipelineRunUrl(workspaceId, successRun.pipeline_run_id)} className="inline-flex w-full justify-center items-center gap-1.5 rounded-xl border border-[#9D6638] bg-[#EDE5CD] px-3.5 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 mt-2"><Package className="size-3.5 text-[#9D6638]" /> Download Full Output (.zip)</a>
                         ) : null
                       })()}
                     </div>

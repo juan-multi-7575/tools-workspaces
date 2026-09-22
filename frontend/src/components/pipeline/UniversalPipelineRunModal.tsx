@@ -31,6 +31,7 @@ interface UniversalPipelineRunModalProps {
   pipelineTitle?: string
   toolSteps?: string[]
   resolvedFlow?: ResolvedPipelineFlow
+  translationStepLabel?: string
 }
 
 export default function UniversalPipelineRunModal({
@@ -43,6 +44,7 @@ export default function UniversalPipelineRunModal({
   pipelineTitle = 'Run Pipeline',
   toolSteps = [],
   resolvedFlow,
+  translationStepLabel,
 }: UniversalPipelineRunModalProps) {
   // Map of nodeId -> { paramKey: value }
   const [formValues, setFormValues] = useState<Record<string, Record<string, any>>>({})
@@ -58,6 +60,7 @@ export default function UniversalPipelineRunModal({
     | { state: 'error'; error: string }
     | { state: 'overridden' }
   const [urlPreviews, setUrlPreviews] = useState<Record<string, UrlPreview>>({})
+  const [touchedUrls, setTouchedUrls] = useState<Set<string>>(new Set())
   const previewReqRef = useRef(0)
 
   const isValidHttpUrl = (v: string) => {
@@ -191,6 +194,7 @@ export default function UniversalPipelineRunModal({
     setValidationError(null)
     setDuplicateMatches(null)
     setUrlPreviews({})
+    setTouchedUrls(new Set())
     setExpandedNodeIds(new Set())
     previewReqRef.current++
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -250,6 +254,22 @@ export default function UniversalPipelineRunModal({
   if (!isOpen) return null
 
   // ---- Run overrides: baseline = canvas value (currentVal) ?? schema default ----
+  // Breadcrumb steps are canvas node labels; the caller passes the matching one.
+  const translationStepName =
+    translationStepLabel ||
+    (resolvedFlow?.translationNodeId
+      ? nodeConfigs.find((g) => g.nodeId === resolvedFlow.translationNodeId)?.toolName
+      : undefined)
+
+  // The translation toggle writes one param (transcriber task / translator
+  // target_lang); it is a run option, not a user param override.
+  const translationParamKey =
+    resolvedFlow?.translationNodeId && resolvedFlow?.translationToolId === 'transcriber'
+      ? { nodeId: resolvedFlow.translationNodeId, paramKey: 'task' }
+      : resolvedFlow?.translationNodeId && resolvedFlow?.translationToolId === 'subtitle_translator'
+      ? { nodeId: resolvedFlow.translationNodeId, paramKey: 'target_lang' }
+      : null
+
   const paramBaseline = (nodeId: string, paramKey: string): unknown => {
     for (const group of nodeConfigs) {
       if (group.nodeId !== nodeId) continue
@@ -266,6 +286,9 @@ export default function UniversalPipelineRunModal({
   }
 
   const isParamChanged = (nodeId: string, paramKey: string): boolean => {
+    if (translationParamKey && translationParamKey.nodeId === nodeId && translationParamKey.paramKey === paramKey) {
+      return false
+    }
     const baseline = paramBaseline(nodeId, paramKey)
     if (baseline === undefined) return false
     try {
@@ -293,6 +316,9 @@ export default function UniversalPipelineRunModal({
     setFormValues((prev) => {
       const next = { ...(prev[nodeId] || {}) }
       for (const p of group.parameters) {
+        if (translationParamKey && translationParamKey.nodeId === nodeId && translationParamKey.paramKey === p.paramKey) {
+          continue
+        }
         const baseline = paramBaseline(nodeId, p.paramKey)
         if (baseline !== undefined) next[p.paramKey] = baseline
       }
@@ -322,9 +348,6 @@ export default function UniversalPipelineRunModal({
     : 'Blur the URL field to verify it.'
 
   const stepCount = nodeConfigs.length > 0 ? nodeConfigs.length : dagNodes.length
-  const translationStepName = resolvedFlow?.translationNodeId
-    ? nodeConfigs.find((g) => g.nodeId === resolvedFlow.translationNodeId)?.toolName
-    : undefined
 
   const handleFieldChange = (nodeId: string, paramKey: string, val: any) => {
     setFormValues((prev) => ({
@@ -657,14 +680,26 @@ export default function UniversalPipelineRunModal({
                               onChange={(e) => handleFieldChange(inp.nodeId, inp.paramKey, e.target.value)}
                               onBlur={
                                 inp.isUrl
-                                  ? (e) => resolveEntryUrl(inp.nodeId, inp.paramKey, e.target.value)
+                                  ? (e) => {
+                                      setTouchedUrls((prev) => new Set(prev).add(`${inp.nodeId}:${inp.paramKey}`))
+                                      resolveEntryUrl(inp.nodeId, inp.paramKey, e.target.value)
+                                    }
                                   : undefined
                               }
                               placeholder={inp.isUrl ? 'https://www.youtube.com/watch?v=...' : `Enter ${inp.title}...`}
                               className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-2 text-xs text-[#4E220F] font-medium placeholder-[#7C5339]/50 focus:border-[#9D6638] focus:outline-none"
                             />
                             {inp.isUrl && (() => {
-                              const preview = urlPreviews[`${inp.nodeId}:${inp.paramKey}`]
+                              const key = `${inp.nodeId}:${inp.paramKey}`
+                              const preview = urlPreviews[key]
+                              const val = String(formValues[inp.nodeId]?.[inp.paramKey] ?? '').trim()
+                              if ((!preview || preview.state === 'idle') && touchedUrls.has(key) && !val) {
+                                return (
+                                  <p className="text-[11px] font-semibold text-[#A83232]">
+                                    A URL is required to run this pipeline.
+                                  </p>
+                                )
+                              }
                               if (!preview || preview.state === 'idle') return null
                               if (preview.state === 'checking') {
                                 return (

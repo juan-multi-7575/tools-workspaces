@@ -97,6 +97,7 @@ export default function SettingsPage() {
   }
 
   const updateDep = async (name: string) => {
+    if (!window.confirm(`Upgrade system binary "${name}" now? This modifies your local installation.`)) return
     setUpdatingDepName(name)
     try {
       await api.updateDep(name)
@@ -137,7 +138,6 @@ export default function SettingsPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold text-[#4E220F]">Max concurrent parallel downloads</p>
             <p className="text-[11px] text-[#7C5339]">Number of simultaneous downloads allowed before queueing.</p>
           </div>
           <div className="flex items-center gap-2">
@@ -209,6 +209,8 @@ export default function SettingsPage() {
                   <button
                     onClick={() => saveKey(pid)}
                     disabled={!info.needs_key || !keyInputs[pid]}
+                    aria-label={`Save ${info.name || pid} API key`}
+                    title={!info.needs_key ? 'No key required for local runtime' : !keyInputs[pid] ? 'Paste a key above to enable Save' : `Save ${info.name || pid} key`}
                     className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-3.5 py-1.5 text-xs font-bold text-[#FDFBF7] transition-all hover:bg-[#86542C] active:scale-95 disabled:opacity-40 shadow-xs"
                   >
                     <Save className="size-3.5" />
@@ -297,7 +299,7 @@ export default function SettingsPage() {
               type="text"
               value={ytdlpSettings.cookies_file_path}
               onChange={(e) => setYtdlpSettings((s) => ({ ...s, cookies_file_path: e.target.value }))}
-              placeholder="/home/user/downloads/cookies.txt"
+              placeholder="e.g. /home/<you>/downloads/cookies.txt"
               className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-1.5 font-mono text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:outline-none"
             />
           </div>
@@ -343,7 +345,7 @@ export default function SettingsPage() {
                   <p className="font-mono text-xs font-bold text-[#4E220F]">{dep.name}</p>
                   <p className="font-mono text-[10px] text-[#7C5339] mt-0.5">
                     Installed: <span className="text-[#4E220F] font-semibold">{dep.installed ?? '—'}</span> · Latest:{' '}
-                    <span className="text-[#4E220F] font-semibold">{dep.latest ?? 'unknown'}</span>
+                    <span className="text-[#4E220F] font-semibold">{dep.latest ?? 'check failed'}</span>
                   </p>
                 </div>
 
@@ -363,14 +365,20 @@ export default function SettingsPage() {
                       </button>
                     </div>
                   ) : hasUpdate ? (
-                    <button
-                      onClick={() => updateDep(dep.name)}
-                      disabled={isUpdating}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-3.5 py-1.5 text-xs font-bold text-[#FDFBF7] shadow-sm transition-all hover:bg-[#86542C] active:scale-95 disabled:opacity-40"
-                    >
-                      <ArrowUpCircle className="size-3.5" />
-                      {isUpdating ? 'Upgrading…' : 'Upgrade'}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 font-mono text-[10px] text-[#86542C] bg-[#F5C86B]/30 border border-[#9D6638]/50 px-2.5 py-0.5 rounded-full font-bold">
+                        UPDATE AVAILABLE
+                      </span>
+                      <button
+                        onClick={() => updateDep(dep.name)}
+                        disabled={isUpdating}
+                        title={`Upgrade ${dep.name} from ${dep.installed} to ${dep.latest} — you will be asked to confirm`}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-3.5 py-1.5 text-xs font-bold text-[#FDFBF7] shadow-sm transition-all hover:bg-[#86542C] active:scale-95 disabled:opacity-40"
+                      >
+                        <ArrowUpCircle className="size-3.5" />
+                        {isUpdating ? 'Upgrading…' : 'Upgrade'}
+                      </button>
+                    </div>
                   ) : (
                     <span className="inline-flex items-center gap-1 font-mono text-[10px] text-[#4E220F] bg-[#B0BA99]/40 border border-[#B0BA99] px-2.5 py-0.5 rounded-full font-bold">
                       <CheckCircle2 className="size-3 text-[#9D6638]" />
