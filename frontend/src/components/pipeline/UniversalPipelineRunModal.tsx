@@ -126,12 +126,22 @@ export default function UniversalPipelineRunModal({
             [key]: { state: 'ready', title: res.title || 'Untitled', duration: res.duration_seconds ?? null, uploader: res.uploader ?? null },
           }))
         } else {
-          setUrlPreviews((prev) => ({ ...prev, [key]: { state: 'error', error: res.error || 'Could not resolve URL.' } }))
+          const rawErr = res.error || ''
+          const isEnvOrTraceback = /ModuleNotFoundError|No module named|ImportError|Traceback/i.test(rawErr)
+          const errorMsg = isEnvOrTraceback
+            ? 'Live preview unavailable (direct execution will be used)'
+            : (res.error || 'Could not resolve URL.')
+          setUrlPreviews((prev) => ({ ...prev, [key]: { state: 'error', error: errorMsg } }))
         }
       })
-      .catch(() => {
+      .catch((err) => {
         if (previewReqRef.current !== reqId) return
-        setUrlPreviews((prev) => ({ ...prev, [key]: { state: 'error', error: 'Metadata lookup failed.' } }))
+        const rawErr = err instanceof Error ? err.message : String(err || '')
+        const isEnvOrTraceback = /ModuleNotFoundError|No module named|ImportError|Traceback/i.test(rawErr)
+        const errorMsg = isEnvOrTraceback
+          ? 'Live preview unavailable (direct execution will be used)'
+          : 'Metadata lookup failed.'
+        setUrlPreviews((prev) => ({ ...prev, [key]: { state: 'error', error: errorMsg } }))
       })
   }
 
@@ -368,26 +378,30 @@ export default function UniversalPipelineRunModal({
     })
   }
 
-  // ---- Start gating: required URL inputs must resolve before commit ----
-  const urlGateStates = activeEntryInputs
-    .filter((inp) => inp.isUrl)
-    .map((inp) => {
-      const val = String(formValues[inp.nodeId]?.[inp.paramKey] ?? '').trim()
-      const preview = urlPreviews[`${inp.nodeId}:${inp.paramKey}`] || { state: 'idle' as const }
-      return { inp, val, preview }
-    })
-  const urlGateBlock = urlGateStates.find(
-    (g) => !g.val || g.preview.state === 'idle' || g.preview.state === 'checking' || g.preview.state === 'error',
-  )
-  const startBlockedReason = !urlGateBlock
-    ? null
-    : !urlGateBlock.val
-    ? `Enter a URL for "${urlGateBlock.inp.title}".`
-    : urlGateBlock.preview.state === 'checking'
-    ? 'Verifying media URL…'
-    : urlGateBlock.preview.state === 'error'
-    ? 'URL could not be verified — fix it or run anyway.'
-    : 'URL not verified yet — verifying automatically…'
+  // ---- Start gating: only disable if required inputs are actually empty or URL is malformed ----
+  const emptyRequiredInput = activeEntryInputs.find((inp) => {
+    const val = formValues[inp.nodeId]?.[inp.paramKey]
+    if (inp.isUrl || inp.isFilePath) {
+      return !val || String(val).trim() === ''
+    }
+    return false
+  })
+
+  const invalidUrlInput = activeEntryInputs.find((inp) => {
+    if (!inp.isUrl) return false
+    const val = String(formValues[inp.nodeId]?.[inp.paramKey] ?? '').trim()
+    return val !== '' && !isValidHttpUrl(val)
+  })
+
+  const startBlockedReason = emptyRequiredInput
+    ? emptyRequiredInput.isUrl
+      ? `Enter a URL for "${emptyRequiredInput.title}".`
+      : `Select a file for "${emptyRequiredInput.title}".`
+    : invalidUrlInput
+    ? `Enter a valid URL for "${invalidUrlInput.title}".`
+    : null
+
+  const canSubmit = !checkingExisting && startBlockedReason === null
 
   // Derive missing provider keys from node configs + live form values (advisory only)
   const missingKeyWarnings: { toolName: string; provider: string }[] = (() => {
@@ -749,9 +763,9 @@ export default function UniversalPipelineRunModal({
                               className="size-4 rounded border-[#B0BA99] text-[#9D6638] focus:ring-[#9D6638]"
                             />
                             <span className="text-xs font-bold text-[#4E220F]">
-                              {Boolean(val) ? 'Enabled' : 'Disabled'}
+                              {val ? 'Enabled' : 'Disabled'}
                             </span>
-                            <span className="text-[11px] text-[#7C5339]">— {Boolean(val) ? 'Yes' : 'No'}</span>
+                            <span className="text-[11px] text-[#7C5339]">— {val ? 'Yes' : 'No'}</span>
                           </label>
                         ) : inp.enumOptions && inp.enumOptions.length > 0 ? (
                           <select
@@ -826,24 +840,11 @@ export default function UniversalPipelineRunModal({
                                   )
                                 }
                                 return (
-                                  <p className="flex flex-wrap items-center gap-x-2 text-[11px] font-semibold text-[#A83232]">
-                                    <span className="inline-flex items-center gap-1">
-                                      <AlertCircle className="size-3.5 shrink-0" /> {preview.error}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setUrlPreviews((prev) => ({
-                                        ...prev,
-                                        [`${inp.nodeId}:${inp.paramKey}`]: { state: 'overridden' },
-                                      }))
-                                    }
-                                    className="font-bold text-[#9D6638] hover:text-[#86542C] underline underline-offset-2"
-                                  >
-                                    Run anyway
-                                  </button>
-                                </p>
-                              )
+                                  <p className="flex items-center gap-1.5 text-[11px] font-medium text-[#7C5339]">
+                                    <AlertCircle className="size-3.5 shrink-0 text-[#9D6638]" />
+                                    <span>{preview.error || 'Live preview unavailable (direct execution will be used)'}</span>
+                                  </p>
+                                )
                             })()}
                             </div>
                           </>
@@ -983,7 +984,7 @@ export default function UniversalPipelineRunModal({
                                           className="size-4 rounded border-[#B0BA99] text-[#9D6638] focus:ring-[#9D6638]"
                                         />
                                         <span className="text-xs font-bold text-[#4E220F]">
-                                          {Boolean(val) ? 'Enabled' : 'Disabled'}
+                                          {val ? 'Enabled' : 'Disabled'}
                                         </span>
                                       </label>
                                     ) : param.enumOptions && param.enumOptions.length > 0 ? (
@@ -1041,7 +1042,7 @@ export default function UniversalPipelineRunModal({
               </button>
               <button
                 type="submit"
-                disabled={checkingExisting || startBlockedReason !== null}
+                disabled={!canSubmit}
                 title={startBlockedReason || `Start ${stepCount} step${stepCount === 1 ? '' : 's'} — runs in background`}
                 className="inline-flex items-center gap-2 rounded-xl bg-[#9D6638] px-5 py-2.5 text-xs font-bold text-[#FDFBF7] shadow-sm hover:bg-[#86542C] transition-all active:scale-95 disabled:opacity-50"
               >
