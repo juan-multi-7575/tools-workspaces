@@ -325,7 +325,8 @@ export default function ToolsPage({
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6 text-[#4E220F] min-w-0">
+    <div className="h-full overflow-y-auto p-4 sm:p-6">
+      <div className="w-full max-w-7xl mx-auto space-y-6 text-[#4E220F] min-w-0">
       {/* Header bar & View Switcher */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#B0BA99] pb-4">
         <div>
@@ -1253,6 +1254,7 @@ export default function ToolsPage({
           </div>
         </div>
       )}
+    </div>
     </div>
   )
 }

@@ -195,9 +195,9 @@ export default function WorkspaceDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 text-[#4E220F]">
+    <div className="h-full w-full flex flex-col min-h-0 p-3 sm:p-4 text-[#4E220F] gap-2.5 overflow-hidden">
       {/* Top Breadcrumbs & Workspace Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#B0BA99] pb-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#B0BA99] pb-3 shrink-0">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Link
@@ -240,7 +240,7 @@ export default function WorkspaceDetailPage() {
 
       {/* Post-run outputs focus banner */}
       {outputBanner && (
-        <div className="rounded-2xl border-2 border-[#9D6638]/50 bg-[#9D6638] px-5 py-3 flex items-center justify-between gap-4 shadow-md animate-in slide-in-from-top-2">
+        <div className="rounded-2xl border-2 border-[#9D6638]/50 bg-[#9D6638] px-5 py-3 flex items-center justify-between gap-4 shadow-md animate-in slide-in-from-top-2 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <span className="flex size-8 items-center justify-center rounded-xl bg-[#FDFBF7] text-[#9D6638] shrink-0">
               <CheckCircle2 className="size-4" />
@@ -265,7 +265,7 @@ export default function WorkspaceDetailPage() {
       )}
 
       {/* Segmented View Switcher: 2 Clean Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#B0BA99]/60 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#B0BA99]/60 pb-2.5 shrink-0">
         <div className="inline-flex flex-wrap rounded-xl border border-[#B0BA99] bg-[#EDE5CD]/70 p-1 gap-1">
           <button
             onClick={() => setView('pipeline')}
@@ -313,81 +313,85 @@ export default function WorkspaceDetailPage() {
       </div>
 
       {/* 1. Integrated Studio Workbench View */}
-      <div style={{ display: view === 'pipeline' ? 'block' : 'none' }}>
-        <div className="rounded-2xl border-2 border-[#B0BA99] bg-[#FFFFFF] shadow-xs overflow-hidden flex flex-col">
-          {/* Main Studio Horizontal Split: Left Palette + Center Canvas + Right Inspector */}
-          <div className="flex flex-1 min-h-[620px] relative overflow-hidden">
-            {/* Left Tool Palette Drawer */}
-            <ToolPaletteDrawer
-              tools={tools}
-              onAddTool={(tool) => {
-                if (addToolRef.current) addToolRef.current(tool)
-              }}
-              collapsed={paletteCollapsed}
-              onToggleCollapse={() => setPaletteCollapsed(!paletteCollapsed)}
-            />
+      <div
+        style={{ display: view === 'pipeline' ? 'flex' : 'none' }}
+        className="flex-1 min-h-0 flex flex-col rounded-2xl border-2 border-[#B0BA99] bg-[#FFFFFF] shadow-xs overflow-hidden"
+      >
+        {/* Main Studio Horizontal Split: Left Palette + Center Canvas + Right Inspector */}
+        <div className="flex-1 min-h-0 flex relative overflow-hidden">
+          {/* Left Tool Palette Drawer */}
+          <ToolPaletteDrawer
+            tools={tools}
+            onAddTool={(tool) => {
+              if (addToolRef.current) addToolRef.current(tool)
+            }}
+            collapsed={paletteCollapsed}
+            onToggleCollapse={() => setPaletteCollapsed(!paletteCollapsed)}
+          />
 
-            {/* Center Canvas */}
-            <div className="flex-1 p-3 overflow-hidden flex flex-col bg-[#F7F1DE]/40">
-              <PipelineCanvas
-                workspaceId={id!}
-                tools={tools}
-                onRan={() => {
-                  refreshRuns()
-                }}
-                onSelectNode={(node) => setSelectedCanvasNode(node)}
-                selectedNodeId={selectedCanvasNode?.id}
-                externalAddToolRef={addToolRef}
-                externalUpdateParamsRef={updateParamsRef}
-                onGraphStats={setGraphStats}
-              />
-            </div>
-
-            {/* Right Node Inspector Panel */}
-            <NodeInspectorPanel
-              selectedNode={selectedCanvasNode}
-              toolManifest={tools.find((t) => t.id === selectedCanvasNode?.toolId)}
+          {/* Center Canvas */}
+          <div className="flex-1 p-3 overflow-hidden flex flex-col bg-[#F7F1DE]/40">
+            <PipelineCanvas
               workspaceId={id!}
-              nodeCount={graphStats.nodeCount}
-              edgeCount={graphStats.edgeCount}
-              lastRun={
-                pipelineRuns[0]
-                  ? {
-                      name: pipelineRuns[0].bundle_name || pipelineRuns[0].pipeline_name || pipelineRuns[0].pipeline_run_id.slice(0, 8),
-                      status: pipelineRuns[0].status,
-                    }
-                  : null
-              }
-              onUpdateParams={(newParams) => {
-                if (selectedCanvasNode) {
-                  setSelectedCanvasNode({
-                    ...selectedCanvasNode,
-                    params: newParams,
-                  })
-                }
-                if (updateParamsRef.current) updateParamsRef.current(newParams)
+              tools={tools}
+              onRan={() => {
+                refreshRuns()
               }}
-              collapsed={inspectorCollapsed}
-              onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
-              onClearSelection={clearCanvasSelection}
-              onStepFinished={refreshRuns}
+              onSelectNode={(node) => setSelectedCanvasNode(node)}
+              selectedNodeId={selectedCanvasNode?.id}
+              externalAddToolRef={addToolRef}
+              externalUpdateParamsRef={updateParamsRef}
+              onGraphStats={setGraphStats}
             />
           </div>
 
-          {/* Bottom Dockable Artifacts & Media Drawer */}
-          <BottomArtifactsDock
+          {/* Right Node Inspector Panel */}
+          <NodeInspectorPanel
+            selectedNode={selectedCanvasNode}
+            toolManifest={tools.find((t) => t.id === selectedCanvasNode?.toolId)}
             workspaceId={id!}
-            onPreviewArtifact={(name, size, previewUrl, downloadUrl) =>
-              setPreviewTarget({ name, size, previewUrl, downloadUrl })
+            nodeCount={graphStats.nodeCount}
+            edgeCount={graphStats.edgeCount}
+            lastRun={
+              pipelineRuns[0]
+                ? {
+                    name: pipelineRuns[0].bundle_name || pipelineRuns[0].pipeline_name || pipelineRuns[0].pipeline_run_id.slice(0, 8),
+                    status: pipelineRuns[0].status,
+                  }
+                : null
             }
-            dockExpanded={dockExpanded}
-            onToggleExpand={() => setDockExpanded(!dockExpanded)}
+            onUpdateParams={(newParams) => {
+              if (selectedCanvasNode) {
+                setSelectedCanvasNode({
+                  ...selectedCanvasNode,
+                  params: newParams,
+                })
+              }
+              if (updateParamsRef.current) updateParamsRef.current(newParams)
+            }}
+            collapsed={inspectorCollapsed}
+            onToggleCollapse={() => setInspectorCollapsed(!inspectorCollapsed)}
+            onClearSelection={clearCanvasSelection}
+            onStepFinished={refreshRuns}
           />
         </div>
+
+        {/* Bottom Dockable Artifacts & Media Drawer */}
+        <BottomArtifactsDock
+          workspaceId={id!}
+          onPreviewArtifact={(name, size, previewUrl, downloadUrl) =>
+            setPreviewTarget({ name, size, previewUrl, downloadUrl })
+          }
+          dockExpanded={dockExpanded}
+          onToggleExpand={() => setDockExpanded(!dockExpanded)}
+        />
       </div>
 
       {/* 2. Unified Media, Runs & Assets Hub View */}
-      <div style={{ display: view === 'media_hub' ? 'block' : 'none' }}>
+      <div
+        style={{ display: view === 'media_hub' ? 'block' : 'none' }}
+        className="flex-1 min-h-0 overflow-y-auto pr-1"
+      >
         <UnifiedMediaRunsHub
           workspaceId={id!}
           pipelineRuns={pipelineRuns}

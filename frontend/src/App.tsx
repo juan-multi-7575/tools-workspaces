@@ -158,7 +158,7 @@ export default function App() {
         </aside>
 
         {/* Main Application Content Area */}
-        <main className="flex-1 overflow-y-auto bg-[#F7F1DE] p-4 sm:p-6 text-[#4E220F] min-w-0 w-full">
+        <main className="flex-1 h-full min-h-0 overflow-hidden flex flex-col bg-[#F7F1DE] text-[#4E220F] min-w-0 w-full">
           <Routes>
             <Route path="/" element={<ToolsPage onOpenAudioPlayer={setActiveMedia} />} />
             <Route path="/workspaces" element={<WorkspacesPage />} />
