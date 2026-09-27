@@ -105,6 +105,19 @@ export default function ToolsPage({
     loadToolsCatalog()
   }, [])
 
+  useEffect(() => {
+    if (!runTarget) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !busy) {
+        setRunTarget(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [runTarget, busy])
+
   const isDeprecatedAlias = (tool: { description?: string }) =>
     (tool.description || '').includes('[deprecated alias]')
 
@@ -897,8 +910,19 @@ export default function ToolsPage({
 
       {/* Standalone Execution Modal Window */}
       {runTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-[#4E220F]/40 backdrop-blur-[2px] overflow-hidden">
-          <div className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl border-2 border-[#B0BA99] bg-[#F7F1DE] shadow-2xl p-4 sm:p-6 text-[#4E220F]">
+        <div
+          onClick={() => {
+            if (!busy) setRunTarget(null)
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-[#4E220F]/40 backdrop-blur-[2px] overflow-hidden"
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tool-modal-title"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-3xl max-h-[92vh] flex flex-col rounded-2xl border-2 border-[#B0BA99] bg-[#F7F1DE] shadow-2xl p-4 sm:p-6 text-[#4E220F]"
+          >
             {/* Modal Header */}
             <div className="mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#B0BA99]/60 pb-3 shrink-0">
               <div className="flex items-center gap-2.5">
@@ -906,7 +930,7 @@ export default function ToolsPage({
                   <SlidersHorizontal className="size-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-[#4E220F] flex items-center gap-2">
+                  <h3 id="tool-modal-title" className="text-sm font-bold text-[#4E220F] flex items-center gap-2">
                     {runTarget.name}
                     <span className="font-mono text-[10px] font-bold text-[#4E220F] px-2 py-0.5 rounded-full bg-[#B0BA99]/40 border border-[#B0BA99]">
                       {runTarget.category || 'General'}
