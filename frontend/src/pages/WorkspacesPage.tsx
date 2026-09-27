@@ -86,7 +86,7 @@ export default function WorkspacesPage() {
               {workspaces.length} active
             </span>
           </div>
-          <p className="mt-1 text-xs text-[#7C5339]">
+          <p className="mt-1 text-sm text-[#7C5339]">
             Named, filesystem-backed containers holding isolated artifact stores and reusable pipelines.
           </p>
         </div>
@@ -208,7 +208,7 @@ export default function WorkspacesPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-bold tracking-tight text-[#4E220F] group-hover:text-[#9D6638] transition-colors">
+                  <h2 className="text-base font-bold tracking-tight text-[#4E220F] group-hover:text-[#9D6638] transition-colors">
                     {ws.name}
                   </h2>
                   <ArrowUpRight className="size-4 text-[#7C5339] group-hover:text-[#9D6638] transition-colors" />
@@ -216,16 +216,16 @@ export default function WorkspacesPage() {
                 <p className="font-mono text-[10px] text-[#7C5339] mt-0.5">ID: {ws.id}</p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-[#B0BA99]/40 flex items-center justify-between font-mono text-[10px] text-[#7C5339]">
-                <span className="flex items-center gap-1 font-medium">
-                  <Layers className="size-3 text-[#9D6638]" />
+              <div className="mt-4 pt-3 border-t border-[#B0BA99]/40 flex items-center justify-between font-mono text-xs text-[#7C5339]">
+                <span className="flex items-center gap-1 font-semibold">
+                  <Layers className="size-3.5 text-[#9D6638]" />
                   {ws.templates?.length || 0} templates
                 </span>
                 <span
                   className="font-semibold text-[#4E220F] flex items-center gap-1"
                   title={`${ws.runs?.length || 0} standalone tool runs`}
                 >
-                  <HardDrive className="size-3 text-[#9D6638]" />
+                  <HardDrive className="size-3.5 text-[#9D6638]" />
                   {ws.pipeline_runs ?? ws.runs?.length ?? 0} pipeline runs
                 </span>
               </div>
@@ -254,19 +254,19 @@ export default function WorkspacesPage() {
                           <FolderTree className="size-3.5" />
                         </div>
                         <div>
-                          <p className="font-bold text-[#4E220F] group-hover:text-[#9D6638] transition-colors">{ws.name}</p>
+                          <p className="text-sm font-bold text-[#4E220F] group-hover:text-[#9D6638] transition-colors">{ws.name}</p>
                           <p className="font-mono text-[10px] text-[#7C5339]">{ws.id}</p>
                         </div>
                       </Link>
                     </td>
-                    <td className="px-4 py-3 font-mono text-[11px]">
+                    <td className="px-4 py-3 font-mono text-xs">
                       <span className="rounded bg-[#EDE5CD] px-2 py-0.5 border border-[#B0BA99]/50 font-semibold">
                         {ws.templates?.length || 0} templates
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-[11px]">
+                    <td className="px-4 py-3 font-mono text-xs">
                       <span
-                        className="rounded bg-[#B0BA99]/30 px-2 py-0.5 border border-[#B0BA99] font-bold text-[#4E220F]"
+                        className="rounded bg-[#B0BA99]/30 px-2 py-0.5 border border-[#B0BA99] font-semibold text-[#4E220F]"
                         title={`${ws.runs?.length || 0} standalone tool runs`}
                       >
                         {ws.pipeline_runs ?? ws.runs?.length ?? 0} pipeline runs

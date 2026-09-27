@@ -337,7 +337,7 @@ export default function ToolsPage({
                 : `${filteredTools.length} of ${visibleTools.length} shown`}
             </span>
           </div>
-          <p className="mt-1 text-xs text-[#7C5339]">
+          <p className="mt-1 text-sm text-[#4E220F]/80">
             Local-first unconstrained tool catalog. Run standalone utilities or inspect parameter schemas.
           </p>
         </div>
@@ -392,7 +392,7 @@ export default function ToolsPage({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search tools, ports..."
-              className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] pl-8 pr-3 py-1.5 text-xs text-[#4E220F] placeholder-[#7C5339]/60 transition-all focus:border-[#9D6638] focus:ring-2 focus:ring-[#9D6638]/20 focus:outline-none shadow-xs font-medium"
+              className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] pl-8 pr-3 py-1.5 text-xs font-semibold text-[#4E220F] placeholder-[#7C5339]/60 transition-all focus:border-[#9D6638] focus:ring-2 focus:ring-[#9D6638]/20 focus:outline-none shadow-xs"
             />
             {search && (
               <button
@@ -505,12 +505,12 @@ export default function ToolsPage({
                         {tool.id}
                       </span>
                     </div>
-                    <span className="rounded-md bg-[#B0BA99]/30 px-2 py-0.5 text-[10px] font-bold text-[#4E220F] border border-[#B0BA99]">
+                    <span className="rounded-md bg-[#B0BA99]/30 px-2 py-0.5 text-xs font-semibold text-[#4E220F] border border-[#B0BA99]">
                       {tool.category || 'General'}
                     </span>
                   </div>
 
-                  <h2 className="text-sm font-bold tracking-tight text-[#4E220F] group-hover:text-[#9D6638] transition-colors">
+                  <h2 className="text-base font-bold tracking-tight text-[#4E220F] group-hover:text-[#9D6638] transition-colors">
                     {tool.name}{' '}
                     {isDeprecatedAlias(tool) && (
                       <span className="ml-1 align-middle font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#B0BA99]/40 border border-[#B0BA99] text-[#7C5339]">
@@ -518,7 +518,7 @@ export default function ToolsPage({
                       </span>
                     )}
                   </h2>
-                  <p className="mt-1.5 text-xs text-[#7C5339] line-clamp-2 leading-relaxed">
+                  <p className="mt-1.5 text-sm leading-relaxed text-[#7C5339] line-clamp-2">
                     {tool.description}
                   </p>
 
@@ -570,7 +570,7 @@ export default function ToolsPage({
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-[#B0BA99]/40 flex items-center justify-between gap-2">
-                  <div className="flex min-w-0 flex-wrap items-center gap-1 font-mono text-[10px] text-[#7C5339]">
+                  <div className="flex min-w-0 flex-wrap items-center gap-1 font-mono text-xs text-[#7C5339]">
                     <span className="rounded bg-[#EDE5CD] px-1.5 py-0.5 border border-[#B0BA99]/50 font-medium">
                       in: {tool.input_kinds.join(', ')}
                     </span>
@@ -624,23 +624,23 @@ export default function ToolsPage({
                         <div className="flex items-center gap-2">
                           <CategoryIcon className="size-3.5 text-[#9D6638]" />
                           <div>
-                            <p className="font-bold text-[#4E220F]">{tool.name}</p>
+                            <p className="text-sm font-bold text-[#4E220F]">{tool.name}</p>
                             <p className="font-mono text-[10px] text-[#7C5339]">{tool.id}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="rounded-md bg-[#B0BA99]/30 px-2 py-0.5 text-[10px] font-bold text-[#4E220F] border border-[#B0BA99]">
+                        <span className="rounded-md bg-[#B0BA99]/30 px-2 py-0.5 text-xs font-medium text-[#4E220F] border border-[#B0BA99]">
                           {tool.category || 'General'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-[10px]">
-                        <span className="rounded bg-[#EDE5CD] px-1.5 py-0.5 border border-[#B0BA99]/50">
+                      <td className="px-4 py-3 font-mono text-xs">
+                        <span className="rounded bg-[#EDE5CD] px-1.5 py-0.5 border border-[#B0BA99]/50 font-medium">
                           {tool.input_kinds.join(', ')}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-[10px]">
-                        <span className="rounded bg-[#EDE5CD] px-1.5 py-0.5 border border-[#B0BA99]/50">
+                      <td className="px-4 py-3 font-mono text-xs">
+                        <span className="rounded bg-[#EDE5CD] px-1.5 py-0.5 border border-[#B0BA99]/50 font-medium">
                           {tool.output_kinds.join(', ')}
                         </span>
                       </td>
@@ -744,8 +744,8 @@ export default function ToolsPage({
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold text-[#4E220F]">{inspectorTool.name}</h2>
-                      <span className="font-mono text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#B0BA99]/40 border border-[#B0BA99] text-[#4E220F]">
+                      <h2 className="text-lg font-bold text-[#4E220F]">{inspectorTool.name}</h2>
+                      <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#B0BA99]/40 border border-[#B0BA99] text-[#4E220F]">
                         {inspectorTool.category || 'General'}
                       </span>
                     </div>
@@ -836,7 +836,7 @@ export default function ToolsPage({
                   <Info className="size-3.5 text-[#9D6638]" />
                   Tool Description
                 </h3>
-                <p className="text-xs text-[#7C5339] leading-relaxed">{inspectorTool.description}</p>
+                <p className="text-sm leading-relaxed text-[#7C5339]">{inspectorTool.description}</p>
                 {inspectorTool.tags && inspectorTool.tags.length > 0 && (
                   <div className="pt-1 flex flex-wrap gap-1.5">
                     {inspectorTool.tags.map((tag: string) => (
