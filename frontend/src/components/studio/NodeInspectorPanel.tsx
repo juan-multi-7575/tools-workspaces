@@ -11,6 +11,8 @@ import {
   Terminal,
   ChevronRight,
   ChevronLeft,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'
 import DynamicForm from '../common/DynamicForm'
 import DownloaderForm from '../tools/DownloaderForm'
@@ -54,6 +56,7 @@ export default function NodeInspectorPanel({
   const [stepStatus, setStepStatus] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState(false)
   const [testInputMode, setTestInputMode] = useState<'auto' | 'latest' | 'fixture'>('auto')
+  const [isWide, setIsWide] = useState(false)
 
   const copyNodeId = useCallback(() => {
     if (!selectedNode?.id) return
@@ -103,7 +106,11 @@ export default function NodeInspectorPanel({
   }
 
   return (
-    <div className="flex flex-col border-l border-[#B0BA99] bg-[#EDE5CD]/50 w-80 shrink-0 transition-all overflow-hidden">
+    <div
+      className={`flex flex-col border-l border-[#B0BA99] bg-[#EDE5CD]/50 shrink-0 transition-all duration-200 overflow-hidden ${
+        isWide ? 'w-[480px]' : 'w-80'
+      }`}
+    >
       {/* Header */}
       <div className="p-3 border-b border-[#B0BA99]/50 flex items-center justify-between bg-[#EDE5CD]/80">
         <div className="flex items-center gap-1.5">
@@ -117,14 +124,24 @@ export default function NodeInspectorPanel({
             onClick={copyNodeId}
             className="p-1 rounded-lg border border-[#B0BA99]/60 hover:bg-[#EDE5CD] text-[#7C5339] hover:text-[#4E220F] transition-colors"
             title={copiedId ? 'Copied!' : 'Copy node id'}
+            aria-label={copiedId ? 'Copied!' : 'Copy node id'}
           >
             {copiedId ? <CheckCircle2 className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+          </button>
+          <button
+            onClick={() => setIsWide(!isWide)}
+            className="p-1 rounded-lg border border-[#B0BA99]/60 hover:bg-[#EDE5CD] text-[#7C5339] hover:text-[#4E220F] transition-colors"
+            title={isWide ? 'Standard width (320px)' : 'Expand panel (480px)'}
+            aria-label={isWide ? 'Standard width (320px)' : 'Expand panel (480px)'}
+          >
+            {isWide ? <Minimize2 className="size-3.5" /> : <Maximize2 className="size-3.5" />}
           </button>
           {onClearSelection && (
             <button
               onClick={onClearSelection}
               className="p-1 rounded-lg border border-[#A83232]/40 hover:bg-[#A83232] text-[#7C5339] hover:text-[#FFFFFF] transition-colors"
               title="Clear selection"
+              aria-label="Clear selection"
             >
               <X className="size-3.5" />
             </button>
@@ -133,6 +150,7 @@ export default function NodeInspectorPanel({
             onClick={onToggleCollapse}
             className="p-1 rounded-lg border border-[#B0BA99]/60 hover:bg-[#EDE5CD] text-[#7C5339] hover:text-[#4E220F] transition-colors"
             title="Collapse Inspector"
+            aria-label="Collapse Inspector"
           >
             <ChevronRight className="size-3.5" />
           </button>
