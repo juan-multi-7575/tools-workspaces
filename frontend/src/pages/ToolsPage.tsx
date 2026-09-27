@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   ArrowRight,
@@ -70,6 +70,14 @@ export default function ToolsPage({
   const [toolStates, setToolStates] = useState<Record<string, ToolExecutionProgress>>({})
   const [copiedToolError, setCopiedToolError] = useState<string | null>(null)
   const [copiedPath, setCopiedPath] = useState<string | null>(null)
+  const modalBodyRef = useRef<HTMLDivElement>(null)
+  const currentToolState = runTarget ? toolStates[runTarget.id] : undefined
+
+  useEffect(() => {
+    if (currentToolState?.status === 'failed') {
+      modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [currentToolState?.status])
 
   const [searchParams] = useSearchParams()
   const { recordToolExecution, updateToolExecution } = useActivityTracker()
@@ -290,6 +298,7 @@ export default function ToolsPage({
           artifacts: [],
         }
         setToolStates((prev) => ({ ...prev, [toolId]: failState }))
+        modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
 
         updateToolExecution(execId, {
           status: 'failed',
@@ -312,6 +321,7 @@ export default function ToolsPage({
         artifacts: [],
       }
       setToolStates((prev) => ({ ...prev, [toolId]: failState }))
+      modalBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
 
       updateToolExecution(execId, {
         status: 'failed',
@@ -979,7 +989,7 @@ export default function ToolsPage({
             </div>
 
             {/* Scrollable Form & Status Body */}
-            <div className="flex-1 overflow-x-hidden overflow-y-auto pr-1 min-h-0 space-y-4">
+            <div ref={modalBodyRef} className="flex-1 overflow-x-hidden overflow-y-auto pr-1 min-h-0 space-y-4">
               {modalTab === 'results' && toolStates[runTarget.id]?.status === 'completed' ? (
                 <ToolResultViewer
                   toolId={runTarget.id}
@@ -1226,21 +1236,30 @@ export default function ToolsPage({
             </div>
 
             {/* Execution action bar */}
-            <div className="mt-3 flex items-center justify-between border-t border-[#B0BA99]/60 pt-3 shrink-0">
-              <span className="font-mono text-[10px] text-[#7C5339]">
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-[#B0BA99]/60 pt-3 shrink-0">
+              <span className="font-mono text-[10px] text-[#7C5339] shrink-0">
                 Target ID: {runTarget.id}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <button
                   onClick={() => setRunTarget(null)}
-                  className="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F] transition-colors"
+                  className="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F] transition-colors shrink-0"
                 >
                   Close
                 </button>
+                {currentToolState?.status === 'failed' && (
+                  <span
+                    className="text-xs font-semibold text-[#A83232] truncate max-w-xs flex items-center gap-1"
+                    title={currentToolState.error || 'Execution failed'}
+                  >
+                    <AlertCircle className="size-3.5 shrink-0" />
+                    <span className="truncate">{currentToolState.error || 'Execution failed'}</span>
+                  </span>
+                )}
                 {modalTab === 'results' ? (
                   <button
                     onClick={() => setModalTab('form')}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#EDE5CD] transition-all"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#EDE5CD] transition-all shrink-0"
                   >
                     <RotateCcw className="size-3.5 text-[#9D6638]" />
                     Edit Parameters
@@ -1249,7 +1268,7 @@ export default function ToolsPage({
                   <button
                     onClick={run}
                     disabled={busy}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-4 py-2 text-xs font-bold text-[#FDFBF7] shadow-md transition-all hover:bg-[#86542C] active:scale-95 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-4 py-2 text-xs font-bold text-[#FDFBF7] shadow-md transition-all hover:bg-[#86542C] active:scale-95 disabled:opacity-50 shrink-0"
                   >
                     {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5 fill-current" />}
                     {busy ? 'Executing Tool...' : 'Execute Tool'}
