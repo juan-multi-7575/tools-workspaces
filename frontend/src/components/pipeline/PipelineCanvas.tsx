@@ -41,6 +41,7 @@ import {
   Undo2,
   Redo2,
   MoreHorizontal,
+  Focus,
 } from 'lucide-react'
 import UniversalPipelineRunModal from './UniversalPipelineRunModal'
 import { resolvePipelineFlow, type PipelineEntryInput, type ResolvedPipelineFlow } from '../../lib/pipelineInputResolver'
@@ -494,7 +495,7 @@ function PipelineCanvasInner({
           // pinned to the bottom strip under dead space.
           setNodes(applyArrangedPositions(loadedNodes, loadedEdges))
         }
-        setTimeout(() => fitView({ padding: 0.2 }), 80)
+        setTimeout(() => fitView({ padding: 0.25, duration: 400 }), 80)
       })
       .catch(() => {})
       .finally(() => {
@@ -1090,7 +1091,7 @@ function PipelineCanvasInner({
     setSelectedNodeId(null)
     setSelectedEdgeId(null)
     setStatus({ ok: true, msg: `Loaded "${label}"` })
-    setTimeout(() => fitView({ padding: 0.2 }), 50)
+    setTimeout(() => fitView({ padding: 0.25, duration: 400 }), 60)
 
     // Automatically prompt input modal for 1-click convenience
     const flow = resolvePipelineFlow(nextNodes as any, nextEdges as any, tools)
@@ -1219,6 +1220,16 @@ function PipelineCanvasInner({
             <Save className="size-3.5 text-[#9D6638]" /> Save
           </button>
 
+          {/* Fit View */}
+          <button
+            type="button"
+            onClick={() => fitView({ padding: 0.2, duration: 300 })}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs"
+            title="Fit Graph to View"
+          >
+            <Focus className="size-3.5 text-[#9D6638]" /> Fit View
+          </button>
+
           {selectedEdge && (
             <button
               onClick={() => {
@@ -1249,6 +1260,14 @@ function PipelineCanvasInner({
               <>
                 <div className="fixed inset-0 z-40" onClick={() => { setMoreOpen(false); setClearArmed(false) }} />
                 <div role="menu" className="absolute right-0 top-full z-50 mt-1.5 w-56 overflow-hidden rounded-xl border border-[#B0BA99] bg-[#FFFFFF] shadow-xl">
+                  <button
+                    role="menuitem"
+                    onClick={() => { setMoreOpen(false); fitView({ padding: 0.2, duration: 300 }) }}
+                    className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#EDE5CD] transition-colors text-left"
+                    title="Fit Graph to View"
+                  >
+                    <Focus className="size-3.5 text-[#9D6638]" /> Fit Graph to View
+                  </button>
                   <button
                     role="menuitem"
                     onClick={() => { setMoreOpen(false); autoArrange() }}
@@ -1393,13 +1412,22 @@ function PipelineCanvasInner({
           deleteKeyCode={['Backspace', 'Delete']}
           elementsSelectable={true}
           fitView
+          fitViewOptions={{ padding: 0.25, duration: 400 }}
         >
           <Background color="#B0BA99" gap={18} />
           <Controls className="!bg-[#FFFFFF] !border-[#B0BA99] !fill-[#4E220F] !rounded-xl !shadow-xs" />
           <MiniMap
             nodeColor="#9D6638"
-            maskColor="rgba(247,241,222,0.85)"
-            className="!bg-[#FFFFFF] !border-[#B0BA99] !rounded-xl"
+            nodeStrokeColor="#4E220F"
+            nodeBorderRadius={4}
+            bgColor="#F7F1DE"
+            maskColor="rgba(237, 229, 205, 0.65)"
+            maskStrokeColor="#9D6638"
+            maskStrokeWidth={1.5}
+            className="!bg-[#F7F1DE]/90 !border !border-[#B0BA99]/70 !rounded-xl !shadow-xs backdrop-blur-xs opacity-75 hover:opacity-100 transition-opacity"
+            style={{ width: 140, height: 90 }}
+            pannable
+            zoomable
           />
         </ReactFlow>
       </div>
