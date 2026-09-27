@@ -33,9 +33,13 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Current parameter values with defaults
-  const extractAudio = Boolean(value.extract_audio)
-  const format = (value.format as string) || 'best'
+  // Canonical parameters with fallback to defaults
+  const downloadMode: 'video_audio' | 'audio_only' | 'video_only' =
+    (value.download_mode as any) || (value.extract_audio ? 'audio_only' : 'video_audio')
+  const isAudioOnly = downloadMode === 'audio_only'
+
+  const formatPreset = (value.format_preset as string) || (isAudioOnly ? 'audio' : 'best')
+  const audioFormat = (value.audio_format as string) || 'best'
   const writeSubs = Boolean(value.writesubtitles)
   const embedSubs = Boolean(value.embed_subs)
   const embedThumbnail = Boolean(value.embed_thumbnail)
@@ -46,8 +50,8 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
 
   // Sync external value.url changes
   useEffect(() => {
-    if (value.url && value.url !== url) {
-      setUrl(value.url as string)
+    if (value.url && typeof value.url === 'string') {
+      setUrl((prev) => (value.url !== prev ? (value.url as string) : prev))
     }
   }, [value.url])
 
@@ -91,7 +95,14 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
   }, [url])
 
   const updateParam = (key: string, val: unknown) => {
-    onChange({ ...value, [key]: val })
+    onChange({
+      download_mode: downloadMode,
+      format_preset: formatPreset,
+      audio_format: audioFormat,
+      extract_audio: isAudioOnly,
+      ...value,
+      [key]: val,
+    })
   }
 
   const handleUrlChange = (newUrl: string) => {
@@ -99,20 +110,46 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
     updateParam('url', newUrl)
   }
 
-  const setDownloadMode = (mode: 'video' | 'audio') => {
-    if (mode === 'audio') {
-      onChange({
-        ...value,
-        extract_audio: true,
-        format: 'bestaudio/best',
-      })
-    } else {
-      onChange({
-        ...value,
-        extract_audio: false,
-        format: 'bestvideo+bestaudio/best',
-      })
-    }
+  const handleModeChange = (mode: 'video_audio' | 'audio_only' | 'video_only') => {
+    const isAudio = mode === 'audio_only'
+    const nextPreset = isAudio
+      ? 'audio'
+      : (formatPreset === 'audio' ? 'best' : formatPreset)
+
+    onChange({
+      ...value,
+      download_mode: mode,
+      extract_audio: isAudio,
+      format_preset: nextPreset,
+      audio_format: audioFormat,
+    })
+  }
+
+  const handleFormatPresetChange = (preset: string) => {
+    onChange({
+      ...value,
+      download_mode: downloadMode,
+      extract_audio: isAudioOnly,
+      format_preset: preset,
+    })
+  }
+
+  const handleAudioFormatChange = (fmt: string) => {
+    onChange({
+      ...value,
+      download_mode: downloadMode,
+      extract_audio: isAudioOnly,
+      format_preset: 'audio',
+      audio_format: fmt,
+    })
+  }
+
+  const handleWriteSubsChange = (checked: boolean) => {
+    onChange({
+      ...value,
+      writesubtitles: checked,
+      embed_subs: checked ? embedSubs : false,
+    })
   }
 
   return (
@@ -188,65 +225,80 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
       {/* 2. Download Format & Quality Presets (Compact) */}
       <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-4 shadow-xs space-y-3.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Mode Switcher: Video vs Audio */}
+          {/* Mode Switcher: Video+Audio vs Audio Only vs Video Only */}
           <div className="space-y-1">
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7C5339] block">
               Download Mode
             </span>
-            <div className="inline-flex rounded-xl border border-[#B0BA99] bg-[#EDE5CD]/70 p-1">
+            <div className="inline-flex flex-wrap rounded-xl border border-[#B0BA99] bg-[#EDE5CD]/70 p-1 gap-1">
               <button
                 type="button"
-                onClick={() => setDownloadMode('video')}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
-                  !extractAudio
+                onClick={() => handleModeChange('video_audio')}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                  downloadMode === 'video_audio'
                     ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
                     : 'text-[#4E220F] hover:bg-[#EDE5CD]'
                 }`}
               >
                 <Video className="size-3.5" />
-                Video (MP4)
+                Video + Audio
               </button>
               <button
                 type="button"
-                onClick={() => setDownloadMode('audio')}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
-                  extractAudio
+                onClick={() => handleModeChange('audio_only')}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                  downloadMode === 'audio_only'
                     ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
                     : 'text-[#4E220F] hover:bg-[#EDE5CD]'
                 }`}
               >
                 <Music className="size-3.5" />
-                Audio Only (MP3)
+                Audio Only
+              </button>
+              <button
+                type="button"
+                onClick={() => handleModeChange('video_only')}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                  downloadMode === 'video_only'
+                    ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
+                    : 'text-[#4E220F] hover:bg-[#EDE5CD]'
+                }`}
+              >
+                <Film className="size-3.5" />
+                Video Only
               </button>
             </div>
           </div>
 
-          {/* Quality Selector */}
+          {/* Quality or Audio Format Selector */}
           <div className="space-y-1">
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7C5339] block">
-              Resolution / Quality
+              {isAudioOnly ? 'Audio Format' : 'Resolution / Quality'}
             </span>
-            <select
-              value={format}
-              onChange={(e) => updateParam('format', e.target.value)}
-              className="rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-3 py-1.5 text-xs font-semibold text-[#4E220F] focus:border-[#9D6638] focus:outline-none"
-            >
-              {!extractAudio ? (
-                <>
-                  <option value="bestvideo+bestaudio/best">Best Available (Highest)</option>
-                  <option value="bestvideo[height<=1080]+bestaudio/best[height<=1080]">1080p (Full HD)</option>
-                  <option value="bestvideo[height<=720]+bestaudio/best[height<=720]">720p (HD)</option>
-                  <option value="bestvideo[height<=480]+bestaudio/best[height<=480]">480p (Standard)</option>
-                </>
-              ) : (
-                <>
-                  <option value="bestaudio/best">Highest Quality (Original Bitrate)</option>
-                  <option value="bestaudio[abr<=320]/best">320 kbps (High Quality MP3)</option>
-                  <option value="bestaudio[abr<=192]/best">192 kbps (Standard Audio)</option>
-                  <option value="bestaudio[abr<=128]/best">128 kbps (Compact Audio)</option>
-                </>
-              )}
-            </select>
+            {isAudioOnly ? (
+              <select
+                value={audioFormat}
+                onChange={(e) => handleAudioFormatChange(e.target.value)}
+                className="rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-3 py-1.5 text-xs font-semibold text-[#4E220F] focus:border-[#9D6638] focus:outline-none"
+              >
+                <option value="best">Best Native Audio</option>
+                <option value="mp3">MP3 (Most Compatible)</option>
+                <option value="wav">WAV (Uncompressed PCM)</option>
+                <option value="flac">FLAC (Lossless Quality)</option>
+                <option value="m4a">M4A (Apple / AAC)</option>
+              </select>
+            ) : (
+              <select
+                value={formatPreset}
+                onChange={(e) => handleFormatPresetChange(e.target.value)}
+                className="rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-3 py-1.5 text-xs font-semibold text-[#4E220F] focus:border-[#9D6638] focus:outline-none"
+              >
+                <option value="best">Best Available (Highest)</option>
+                <option value="1080p">1080p (Full HD)</option>
+                <option value="720p">720p (HD)</option>
+                <option value="480p">480p (Standard)</option>
+              </select>
+            )}
           </div>
         </div>
 
@@ -256,7 +308,7 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
             <input
               type="checkbox"
               checked={writeSubs}
-              onChange={(e) => updateParam('writesubtitles', e.target.checked)}
+              onChange={(e) => handleWriteSubsChange(e.target.checked)}
               className="rounded border-[#B0BA99] text-[#9D6638] focus:ring-0"
             />
             <span className="flex items-center gap-1">

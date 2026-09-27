@@ -13,6 +13,7 @@ import {
   ChevronLeft,
 } from 'lucide-react'
 import DynamicForm from '../common/DynamicForm'
+import DownloaderForm from '../tools/DownloaderForm'
 import { type ToolManifest, api } from '../../lib/api'
 
 export default function NodeInspectorPanel({
@@ -243,11 +244,18 @@ export default function NodeInspectorPanel({
               </span>
             </div>
 
-            <DynamicForm
-              schema={toolManifest?.parameters_schema || {}}
-              value={selectedNode.params || {}}
-              onChange={onUpdateParams}
-            />
+            {selectedNode.toolId === 'media.download.yt-dlp' || selectedNode.toolId === 'downloader' ? (
+              <DownloaderForm
+                value={selectedNode.params || {}}
+                onChange={onUpdateParams}
+              />
+            ) : (
+              <DynamicForm
+                schema={toolManifest?.parameters_schema || {}}
+                value={selectedNode.params || {}}
+                onChange={onUpdateParams}
+              />
+            )}
           </div>
 
           {/* Quick Single-Step Execution Test */}

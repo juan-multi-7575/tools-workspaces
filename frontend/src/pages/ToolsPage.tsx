@@ -1202,19 +1202,25 @@ export default function ToolsPage({
                     return null
                   })()}
 
-                  {runTarget.id === 'ai_model_health_check' ? (
-                    <ModelHealthCheckForm value={params} onChange={setParams} />
-                  ) : runTarget.id === 'downloader' ? (
-                    <DownloaderForm value={params} onChange={setParams} />
-                  ) : runTarget.id === 'subtitle_translator' ? (
-                    <TranslatorForm value={params} onChange={setParams} />
-                  ) : (
-                    <DynamicForm
-                      schema={runTarget.parameters_schema || {}}
-                      value={params}
-                      onChange={setParams}
-                    />
-                  )}
+                  {(() => {
+                    const isDownloader = runTarget.id === 'media.download.yt-dlp' || runTarget.id === 'downloader'
+                    if (runTarget.id === 'ai_model_health_check') {
+                      return <ModelHealthCheckForm value={params} onChange={setParams} />
+                    }
+                    if (isDownloader) {
+                      return <DownloaderForm value={params} onChange={setParams} />
+                    }
+                    if (runTarget.id === 'subtitle_translator') {
+                      return <TranslatorForm value={params} onChange={setParams} />
+                    }
+                    return (
+                      <DynamicForm
+                        schema={runTarget.parameters_schema || {}}
+                        value={params}
+                        onChange={setParams}
+                      />
+                    )
+                  })()}
                 </>
               )}
             </div>
