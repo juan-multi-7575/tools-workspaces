@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import { Wrench, FolderTree, Settings, Smartphone, Terminal } from 'lucide-react'
+import { Wrench, FolderTree, Settings, Smartphone, Terminal, Menu, X } from 'lucide-react'
 import ToolsPage from './pages/ToolsPage'
 import WorkspacesPage from './pages/WorkspacesPage'
 import WorkspaceDetailPage from './pages/WorkspaceDetailPage'
@@ -19,6 +19,7 @@ const nav = [
 
 export default function App() {
   const [activeMedia, setActiveMedia] = useState<AudioPlayerMedia | null>(null)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const navigate = useNavigate()
 
   const handleSendToTool = (toolId: string, inputPath: string) => {
@@ -27,24 +28,77 @@ export default function App() {
 
   return (
     <ActivityProvider>
-      <div className="flex h-full w-full bg-[#F7F1DE] text-[#4E220F] antialiased select-none font-sans">
+      <div className="flex flex-col md:flex-row h-full w-full bg-[#F7F1DE] text-[#4E220F] antialiased select-none font-sans overflow-hidden">
+        {/* Mobile Top Navigation Header */}
+        <header className="md:hidden flex h-14 shrink-0 items-center justify-between border-b border-[#B0BA99] bg-[#EDE5CD]/90 px-4 z-20 backdrop-blur-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-8 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7] shadow-sm">
+              <Terminal className="size-4" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-bold tracking-tight text-[#4E220F] flex items-center gap-1.5">
+                Tools Garage
+                <span className="h-1.5 w-1.5 rounded-full bg-[#9D6638]" />
+              </span>
+              <span className="font-mono text-[9px] text-[#7C5339] font-medium tracking-wide uppercase">
+                v1.4.0 • Local
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen((prev) => !prev)}
+            aria-label={mobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            className="flex size-9 items-center justify-center rounded-xl border border-[#B0BA99] bg-[#F7F1DE] text-[#4E220F] hover:bg-[#B0BA99]/30 transition-colors shadow-2xs"
+          >
+            {mobileNavOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+        </header>
+
+        {/* Mobile Sidebar Backdrop Overlay */}
+        {mobileNavOpen && (
+          <div
+            className="fixed inset-0 z-30 bg-black/40 md:hidden backdrop-blur-xs transition-opacity"
+            onClick={() => setMobileNavOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
         {/* Left Navigation Sidebar */}
-        <aside className="w-60 shrink-0 border-r border-[#B0BA99] bg-[#EDE5CD]/80 flex flex-col justify-between p-4 shadow-xs">
+        <aside
+          className={cn(
+            'border-r border-[#B0BA99] bg-[#EDE5CD]/95 md:bg-[#EDE5CD]/80 flex flex-col justify-between p-4 shadow-xs transition-all duration-200',
+            'md:relative md:w-60 md:shrink-0 md:flex',
+            mobileNavOpen
+              ? 'fixed inset-y-0 left-0 z-40 w-64 shadow-2xl flex'
+              : 'hidden md:flex',
+          )}
+        >
           <div className="flex flex-col gap-6">
             {/* Brand Header */}
-            <div className="flex items-center gap-3 px-2 py-1 border-b border-[#B0BA99]/60 pb-4">
-              <div className="flex size-8 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7] shadow-sm">
-                <Terminal className="size-4" />
+            <div className="flex items-center justify-between px-2 py-1 border-b border-[#B0BA99]/60 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex size-8 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7] shadow-sm">
+                  <Terminal className="size-4" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold tracking-tight text-[#4E220F] flex items-center gap-1.5">
+                    Tools Garage
+                    <span className="h-2 w-2 rounded-full bg-[#9D6638]" />
+                  </span>
+                  <span className="font-mono text-[10px] text-[#7C5339] font-medium tracking-wide uppercase">
+                    v1.4.0 • Local
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-bold tracking-tight text-[#4E220F] flex items-center gap-1.5">
-                  Tools Garage
-                  <span className="h-2 w-2 rounded-full bg-[#9D6638]" />
-                </span>
-                <span className="font-mono text-[10px] text-[#7C5339] font-medium tracking-wide uppercase">
-                  v1.4.0 • Local
-                </span>
-              </div>
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(false)}
+                className="md:hidden flex size-8 items-center justify-center rounded-lg text-[#7C5339] hover:bg-[#B0BA99]/30 hover:text-[#4E220F] transition-colors"
+                aria-label="Close navigation"
+              >
+                <X className="size-4" />
+              </button>
             </div>
 
             {/* Navigation Links */}
@@ -59,6 +113,7 @@ export default function App() {
                   key={to}
                   to={to}
                   end={to === '/'}
+                  onClick={() => setMobileNavOpen(false)}
                   className={({ isActive }) =>
                     cn(
                       'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-150 active:scale-[0.98]',
