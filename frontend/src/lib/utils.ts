@@ -1,3 +1,14 @@
+import {
+  type LucideIcon,
+  Film,
+  FileText,
+  Image as ImageIcon,
+  Shield,
+  Sparkles,
+  Terminal,
+  Wrench,
+} from 'lucide-react'
+
 export function cn(...classes: (string | false | null | undefined)[]) {
   return classes.filter(Boolean).join(' ')
 }
@@ -48,5 +59,17 @@ export function formatTimeAgo(timestamp: number): string {
   const elapsedHours = Math.floor(elapsedMin / 60)
   return `${elapsedHours}h ago`
 }
+
+export function getCategoryIcon(category?: string): LucideIcon {
+  const cat = (category || '').toLowerCase()
+  if (cat.includes('media')) return Film
+  if (cat.includes('doc')) return FileText
+  if (cat.includes('image')) return ImageIcon
+  if (cat.includes('sec')) return Shield
+  if (cat.includes('ai') || cat.includes('tutor')) return Sparkles
+  if (cat.includes('custom') || cat.includes('personal')) return Terminal
+  return Wrench
+}
+
 
 

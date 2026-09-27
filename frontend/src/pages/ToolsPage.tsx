@@ -26,24 +26,13 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { api, API_BASE, type ToolManifest } from '../lib/api'
-import { formatFileName, getArtifactBadge } from '../lib/utils'
+import { formatFileName, getArtifactBadge, getCategoryIcon } from '../lib/utils'
 import DynamicForm from '../components/common/DynamicForm'
 import ModelHealthCheckForm from '../components/tools/ModelHealthCheckForm'
 import DownloaderForm from '../components/tools/DownloaderForm'
 import TranslatorForm from '../components/tools/TranslatorForm'
 import ToolResultViewer from '../components/tools/ToolResultViewer'
 import { useActivityTracker } from '../components/activity/ActivitySidebar'
-
-const CATEGORIES = [
-  'All',
-  'Media',
-  'Documents',
-  'Images',
-  'Security',
-  'AI & Tutoring',
-  'Custom / Personal',
-  'General',
-]
 
 type ViewFormat = 'grid' | 'table' | 'inspector'
 
@@ -126,6 +115,14 @@ export default function ToolsPage({
     [tools, showDeprecated],
   )
 
+  const categories = useMemo(() => {
+    const set = new Set<string>()
+    tools.forEach((t) => {
+      if (t.category) set.add(t.category)
+    })
+    return ['All', ...Array.from(set).sort()]
+  }, [tools])
+
   const filteredTools = useMemo(() => {
     const q = search.trim().toLowerCase()
     const list = visibleTools.filter((t) => {
@@ -142,12 +139,7 @@ export default function ToolsPage({
         t.output_kinds.some((k) => k.toLowerCase().includes(q))
       )
     })
-    // Prioritize newest tool (ai_model_health_check) at the top of the garage
-    return [...list].sort((a, b) => {
-      if (a.id === 'ai_model_health_check') return -1
-      if (b.id === 'ai_model_health_check') return 1
-      return 0
-    })
+    return [...list].sort((a, b) => a.name.localeCompare(b.name))
   }, [visibleTools, search, selectedCategory])
 
   const inspectorTool = useMemo(() => {
@@ -403,7 +395,7 @@ export default function ToolsPage({
 
       {/* Category Pills Bar */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        {CATEGORIES.map((cat) => {
+        {categories.map((cat) => {
           const count = cat === 'All' ? visibleTools.length : visibleTools.filter((t) => (t.category || 'General') === cat).length
           const active = selectedCategory === cat
           return (
@@ -483,6 +475,7 @@ export default function ToolsPage({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredTools.map((tool) => {
             const st = toolStates[tool.id]
+            const CategoryIcon = getCategoryIcon(tool.category)
             return (
               <article
                 key={tool.id}
@@ -493,7 +486,7 @@ export default function ToolsPage({
                   <div className="flex items-start justify-between gap-2 mb-2.5">
                     <div className="flex items-center gap-2">
                       <div className="flex size-7 items-center justify-center rounded-lg bg-[#EDE5CD] text-[#9D6638] group-hover:bg-[#9D6638] group-hover:text-[#FDFBF7] transition-all">
-                        <Wrench className="size-3.5" />
+                        <CategoryIcon className="size-3.5" />
                       </div>
                       <span className="font-mono text-[10px] font-bold tracking-wide text-[#7C5339] uppercase">
                         {tool.id}
@@ -607,6 +600,7 @@ export default function ToolsPage({
               <tbody className="divide-y divide-[#B0BA99]/40 font-medium">
                 {filteredTools.map((tool) => {
                   const st = toolStates[tool.id]
+                  const CategoryIcon = getCategoryIcon(tool.category)
                   return (
                     <tr
                       key={tool.id}
@@ -615,7 +609,7 @@ export default function ToolsPage({
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <Wrench className="size-3.5 text-[#9D6638]" />
+                          <CategoryIcon className="size-3.5 text-[#9D6638]" />
                           <div>
                             <p className="font-bold text-[#4E220F]">{tool.name}</p>
                             <p className="font-mono text-[10px] text-[#7C5339]">{tool.id}</p>
@@ -689,6 +683,7 @@ export default function ToolsPage({
             {filteredTools.map((t) => {
               const isSelected = inspectorTool?.id === t.id
               const st = toolStates[t.id]
+              const CategoryIcon = getCategoryIcon(t.category)
               return (
                 <div
                   key={t.id}
@@ -703,7 +698,7 @@ export default function ToolsPage({
                     <div className={`flex size-7 items-center justify-center rounded-lg ${
                       isSelected ? 'bg-[#9D6638] text-[#FDFBF7]' : 'bg-[#EDE5CD] text-[#9D6638]'
                     }`}>
-                      <Wrench className="size-3.5" />
+                      <CategoryIcon className="size-3.5" />
                     </div>
                     <div>
                       <p className="text-xs font-bold text-[#4E220F]">{t.name}</p>
