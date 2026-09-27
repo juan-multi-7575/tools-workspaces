@@ -9,6 +9,7 @@ import {
   X,
   CheckCircle2,
   Film,
+  Trash2,
 } from 'lucide-react'
 import {
   api,
@@ -146,20 +147,48 @@ export default function WorkspaceDetailPage() {
     api.listArtifacts(id, selectedRun).then(({ artifacts }) => setArtifacts(artifacts)).catch(() => {})
   }, [id, selectedRun])
 
-  const removeRun = async (runId: string) => {
-    if (!id) return
-    if (confirm(`Delete run ${runId} and its artifacts?`)) {
-      await api.deleteRun(id, runId)
-      setSelectedRun(null)
-      setArtifacts([])
-      refreshRuns()
+  const [pendingDelete, setPendingDelete] = useState<{
+    type: 'run' | 'media'
+    id: string
+    name: string
+  } | null>(null)
+
+  useEffect(() => {
+    if (!pendingDelete) return
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPendingDelete(null)
     }
+    window.addEventListener('keydown', onEsc)
+    return () => window.removeEventListener('keydown', onEsc)
+  }, [pendingDelete])
+
+  const removeRun = (runId: string) => {
+    setPendingDelete({
+      type: 'run',
+      id: runId,
+      name: runId,
+    })
   }
 
-  const removeMediaItem = async (filename: string) => {
-    if (!id) return
-    if (confirm(`Permanently delete media file ${filename}?`)) {
-      await api.deleteWorkspaceMedia(id, filename)
+  const removeMediaItem = (filename: string) => {
+    setPendingDelete({
+      type: 'media',
+      id: filename,
+      name: filename,
+    })
+  }
+
+  const confirmDelete = async () => {
+    if (!id || !pendingDelete) return
+    const { type, id: targetId } = pendingDelete
+    setPendingDelete(null)
+    if (type === 'run') {
+      await api.deleteRun(id, targetId)
+      setSelectedRun((prev) => (prev === targetId ? null : prev))
+      setArtifacts([])
+      refreshRuns()
+    } else if (type === 'media') {
+      await api.deleteWorkspaceMedia(id, targetId)
       refreshRuns()
       setMediaRefreshKey((k) => k + 1)
     }
@@ -432,6 +461,51 @@ export default function WorkspaceDetailPage() {
                 setArtifacts(next)
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Custom delete confirmation (replaces native confirm) */}
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="absolute inset-0" onClick={() => setPendingDelete(null)} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+            className="relative w-full max-w-md rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] shadow-2xl overflow-hidden"
+          >
+            <div className="px-6 py-4 space-y-2">
+              <h3 id="delete-dialog-title" className="text-sm font-bold text-[#4E220F] flex items-center gap-2">
+                <Trash2 className="size-4 text-[#A83232]" />
+                {pendingDelete.type === 'run' ? 'Delete run?' : 'Delete media file?'}
+              </h3>
+              <p className="text-xs text-[#7C5339] leading-relaxed">
+                {pendingDelete.type === 'run' ? (
+                  <>
+                    Delete run <span className="font-mono font-bold text-[#4E220F]">“{pendingDelete.name}”</span> and its artifacts? This cannot be undone.
+                  </>
+                ) : (
+                  <>
+                    Permanently delete media file <span className="font-mono font-bold text-[#4E220F]">“{pendingDelete.name}”</span>? This cannot be undone.
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 border-t border-[#B0BA99]/40 bg-[#EDE5CD]/50 px-6 py-3.5">
+              <button
+                onClick={() => setPendingDelete(null)}
+                className="rounded-xl px-4 py-2 text-xs font-semibold text-[#7C5339] hover:bg-[#EDE5CD] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="rounded-xl bg-[#A83232] px-4 py-2 text-xs font-bold text-[#FDFBF7] hover:bg-[#862727] transition-all active:scale-95"
+              >
+                {pendingDelete.type === 'run' ? 'Delete run' : 'Delete file'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,21 +1,41 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FolderTree, Plus, ArrowUpRight, Trash2, Layers, Folder, LayoutGrid, List, HardDrive } from 'lucide-react'
-import { api, type Workspace } from '../lib/api'
+import {
+  FolderTree,
+  Plus,
+  ArrowUpRight,
+  Trash2,
+  Layers,
+  Folder,
+  LayoutGrid,
+  List,
+  HardDrive,
+  AlertCircle,
+  RotateCcw,
+} from 'lucide-react'
+import { api, API_BASE, type Workspace } from '../lib/api'
 
 export default function WorkspacesPage() {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [viewFormat, setViewFormat] = useState<'grid' | 'table'>('grid')
   const [createError, setCreateError] = useState<string | null>(null)
   const [pendingDelete, setPendingDelete] = useState<{ id: string; runs: number } | null>(null)
 
   const refresh = () => {
-    api.listWorkspaces().then(({ workspaces }) => {
-      setWorkspaces(workspaces)
-      setLoading(false)
-    }).catch(() => {})
+    setLoading(true)
+    setFetchError(null)
+    api.listWorkspaces()
+      .then(({ workspaces }) => {
+        setWorkspaces(workspaces)
+        setLoading(false)
+      })
+      .catch((err) => {
+        setFetchError(err instanceof Error ? err.message : 'Failed to connect to backend service')
+        setLoading(false)
+      })
   }
 
   useEffect(refresh, [])
@@ -131,7 +151,26 @@ export default function WorkspacesPage() {
       </div>
 
       {/* Grid or Table of workspaces */}
-      {loading ? (
+      {fetchError ? (
+        <div className="rounded-2xl border border-[#A83232]/50 bg-[#A83232]/10 p-8 text-center space-y-3">
+          <AlertCircle className="mx-auto size-8 text-[#A83232]" />
+          <p className="text-sm font-bold text-[#A83232]">{fetchError}</p>
+          <p className="text-xs text-[#7C5339]">
+            Unable to connect to the backend service at{' '}
+            <code className="bg-[#EDE5CD] px-1.5 py-0.5 rounded border border-[#B0BA99] font-bold">
+              {API_BASE || 'localhost:8000'}
+            </code>
+            . Make sure the backend server is running.
+          </p>
+          <button
+            onClick={refresh}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#9D6638] px-4 py-2 text-xs font-bold text-[#FDFBF7] shadow-xs hover:bg-[#86542C] active:scale-95 transition-all"
+          >
+            <RotateCcw className="size-3.5" />
+            Retry Connection
+          </button>
+        </div>
+      ) : loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-36 rounded-2xl border border-[#B0BA99]/60 bg-[#EDE5CD]/40 animate-pulse" />
