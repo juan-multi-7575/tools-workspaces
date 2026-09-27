@@ -121,7 +121,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 text-[#4E220F]">
+    <div className="h-full overflow-y-auto p-4 sm:p-6">
+      <div className="mx-auto max-w-5xl space-y-6 text-[#4E220F]">
       {/* Header */}
       <div className="border-b border-[#B0BA99] pb-4">
         <div className="flex items-center gap-2.5">
@@ -410,6 +411,7 @@ export default function SettingsPage() {
           })}
         </div>
       </section>
+    </div>
     </div>
   )
 }
