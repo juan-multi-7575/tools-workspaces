@@ -208,15 +208,15 @@ export default function DownloadOptionsForm({
   }
 
   return (
-    <div className="border-t border-[#B0BA99]/60 px-4 py-3 bg-[#F7F1DE]/80 text-[#4E220F]">
+    <div className="border-t border-brand-sage/60 px-4 py-3 bg-brand-cream/80 text-brand-espresso">
       {/* Download Mode Selector Pill Bar */}
       <div className="mb-3 space-y-1.5">
         <div className="flex items-center justify-between">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7C5339] flex items-center gap-1">
-            <Sparkles className="size-3 text-[#9D6638]" />
+          <span className="font-mono text-xs font-bold uppercase tracking-wider text-brand-caramel-text flex items-center gap-1">
+            <Sparkles className="size-3 text-brand-caramel" />
             Download Mode
           </span>
-          <span className="font-mono text-[10px] text-[#4E220F] font-semibold">
+          <span className="font-mono text-xs text-brand-espresso font-semibold">
             {mode === 'audio_only' ? 'Audio Extraction' : mode === 'video_only' ? 'Video Only' : 'Video + Audio'}
           </span>
         </div>
@@ -226,8 +226,8 @@ export default function DownloadOptionsForm({
             onClick={() => handleMode('video_audio')}
             className={`flex items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-bold transition-all ${
               mode === 'video_audio'
-                ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                : 'bg-[#EDE5CD]/70 border border-[#B0BA99] text-[#4E220F] hover:bg-[#EDE5CD]'
+                ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                : 'bg-brand-cream-dark/70 border border-brand-sage text-brand-espresso hover:bg-brand-cream-dark'
             }`}
           >
             <Video className="size-3" />
@@ -239,8 +239,8 @@ export default function DownloadOptionsForm({
             onClick={() => handleMode('audio_only')}
             className={`flex items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-bold transition-all ${
               mode === 'audio_only'
-                ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                : 'bg-[#EDE5CD]/70 border border-[#B0BA99] text-[#4E220F] hover:bg-[#EDE5CD]'
+                ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                : 'bg-brand-cream-dark/70 border border-brand-sage text-brand-espresso hover:bg-brand-cream-dark'
             }`}
           >
             <Music className="size-3" />
@@ -252,8 +252,8 @@ export default function DownloadOptionsForm({
             onClick={() => handleMode('video_only')}
             className={`flex items-center justify-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-bold transition-all ${
               mode === 'video_only'
-                ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                : 'bg-[#EDE5CD]/70 border border-[#B0BA99] text-[#4E220F] hover:bg-[#EDE5CD]'
+                ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                : 'bg-brand-cream-dark/70 border border-brand-sage text-brand-espresso hover:bg-brand-cream-dark'
             }`}
           >
             <Film className="size-3" />
@@ -264,12 +264,12 @@ export default function DownloadOptionsForm({
 
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between text-xs font-bold uppercase tracking-wider text-[#7C5339] hover:text-[#4E220F] transition-colors py-1"
+        className="flex w-full items-center justify-between text-xs font-bold uppercase tracking-wider text-brand-caramel-text hover:text-brand-espresso transition-colors py-1"
       >
-        <span className="flex items-center gap-1.5 font-mono text-[10px]">
+        <span className="flex items-center gap-1.5 font-mono text-xs">
           Additional Parameters & Config
         </span>
-        <span className="flex items-center gap-1 text-[11px] font-mono text-[#9D6638]">
+        <span className="flex items-center gap-1 text-xs font-mono text-brand-caramel">
           {open ? 'COLLAPSE' : 'EXPAND'}
           {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
         </span>
@@ -279,7 +279,7 @@ export default function DownloadOptionsForm({
         <div className="mt-3 space-y-3.5 pt-2">
           {/* Quick Presets based on mode */}
           <div className="space-y-1.5">
-            <span className="font-mono text-[10px] text-[#7C5339] font-bold uppercase tracking-wider">Quick Presets</span>
+            <span className="font-mono text-xs text-brand-caramel-text font-bold uppercase tracking-wider">Quick Presets</span>
             <div className="flex flex-wrap gap-1.5">
               {(mode === 'audio_only'
                 ? ['best', 'mp3', 'm4a', 'flac', 'wav']
@@ -299,10 +299,10 @@ export default function DownloadOptionsForm({
                       }
                     }}
                     className={
-                      'rounded-lg px-2.5 py-1 font-mono text-[11px] font-bold transition-all duration-150 active:scale-[0.99] ' +
+                      'rounded-lg px-2.5 py-1 font-mono text-xs font-bold transition-all duration-150 active:scale-[0.99] ' +
                       (isActive
-                        ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                        : 'bg-[#EDE5CD] border border-[#B0BA99] text-[#4E220F] hover:bg-[#B0BA99]/40')
+                        ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                        : 'bg-brand-cream-dark border border-brand-sage text-brand-espresso hover:bg-brand-sage/40')
                     }
                   >
                     {p}
@@ -314,17 +314,17 @@ export default function DownloadOptionsForm({
 
           {/* Search bar inside options */}
           <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 size-3.5 text-[#7C5339]" />
+            <Search className="absolute left-2.5 top-2.5 size-3.5 text-brand-caramel-text" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Filter options…"
-              className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] pl-8 pr-3 py-1.5 text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:outline-none"
+              className="w-full rounded-xl border border-brand-sage bg-surface-white pl-8 pr-3 py-1.5 text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none"
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className="absolute right-2 top-2 text-[#7C5339] hover:text-[#4E220F]"
+                className="absolute right-2 top-2 text-brand-caramel-text hover:text-brand-espresso"
               >
                 <X className="size-3.5" />
               </button>
@@ -333,17 +333,17 @@ export default function DownloadOptionsForm({
 
           {/* Grouped Fields */}
           {Object.entries(groups).map(([group, fields]) => (
-            <div key={group} className="space-y-2 pt-1 border-t border-[#B0BA99]/50">
-              <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7C5339]">{group}</p>
+            <div key={group} className="space-y-2 pt-1 border-t border-brand-sage/50">
+              <p className="font-mono text-xs font-bold uppercase tracking-wider text-brand-caramel-text">{group}</p>
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 {fields.map((f) => (
                   <div key={f.key} className={`space-y-1 ${f.kind === 'textarea' ? 'sm:col-span-2' : ''}`}>
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-[#4E220F] text-[11px]">{f.label}</span>
+                      <span className="font-semibold text-brand-espresso text-xs">{f.label}</span>
                       {value[f.key] !== undefined && value[f.key] !== '' && (
                         <button
                           onClick={() => clearField(f.key)}
-                          className="font-mono text-[10px] text-[#7C5339] hover:text-[#A83232] transition-colors"
+                          className="font-mono text-xs text-brand-caramel-text hover:text-accent-contrast transition-colors"
                         >
                           clear
                         </button>
@@ -353,7 +353,7 @@ export default function DownloadOptionsForm({
                       <select
                         value={String(value[f.key] ?? '')}
                         onChange={(e) => set(f.key, e.target.value || undefined)}
-                        className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1.5 text-xs text-[#4E220F] font-mono focus:border-[#9D6638] focus:outline-none"
+                        className="w-full rounded-xl border border-brand-sage bg-surface-white px-2.5 py-1.5 text-xs text-brand-espresso font-mono focus:border-brand-caramel focus:outline-none"
                       >
                         <option value="">default</option>
                         {f.options!.map((o) => (
@@ -369,9 +369,9 @@ export default function DownloadOptionsForm({
                           id={`opt-${f.key}`}
                           checked={Boolean(value[f.key])}
                           onChange={(e) => set(f.key, e.target.checked || undefined)}
-                          className="size-3.5 rounded border-[#B0BA99] bg-[#F7F1DE] accent-[#9D6638] cursor-pointer"
+                          className="size-3.5 rounded border-brand-sage bg-brand-cream accent-brand-caramel cursor-pointer"
                         />
-                        <label htmlFor={`opt-${f.key}`} className="text-xs text-[#4E220F] cursor-pointer select-none font-medium">
+                        <label htmlFor={`opt-${f.key}`} className="text-xs text-brand-espresso cursor-pointer select-none font-medium">
                           Enable
                         </label>
                       </div>
@@ -381,7 +381,7 @@ export default function DownloadOptionsForm({
                         onChange={(e) => set(f.key, e.target.value || undefined)}
                         rows={2}
                         placeholder={f.placeholder || '--no-mtime --embed-thumbnail'}
-                        className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1.5 font-mono text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:outline-none"
+                        className="w-full rounded-xl border border-brand-sage bg-surface-white px-2.5 py-1.5 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none"
                       />
                     ) : (
                       <input
@@ -389,7 +389,7 @@ export default function DownloadOptionsForm({
                         value={String(value[f.key] ?? '')}
                         onChange={(e) => set(f.key, e.target.value || undefined)}
                         placeholder={f.placeholder || 'Value…'}
-                        className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1.5 text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:outline-none font-mono"
+                        className="w-full rounded-xl border border-brand-sage bg-surface-white px-2.5 py-1.5 text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none font-mono"
                       />
                     )}
                   </div>

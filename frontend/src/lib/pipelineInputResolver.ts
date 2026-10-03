@@ -1,3 +1,4 @@
+import { canonicalId } from './toolIds'
 import type { Edge, Node } from '@xyflow/react'
 import type { ToolManifest } from './api'
 
@@ -74,19 +75,20 @@ export function resolvePipelineFlow(
 
   for (const node of nodes) {
     const isRoot = (inDegrees[node.id] || 0) === 0
-    const tool = tools.find((t) => t.id === node.data.toolId)
+    const toolId=canonicalId(node.data.toolId)
+    const tool = tools.find((t) => canonicalId(t.id) === toolId)
     const schema = (tool?.parameters_schema || {}) as Record<string, any>
     const currentParams = node.data.params || {}
     const nodeParams: PipelineEntryInput[] = []
 
     // Detect translation nodes
-    if (node.data.toolId === 'transcriber' || node.data.toolId === 'subtitle_translator') {
+    if (node.data.toolId === 'transcriber' || toolId === 'subtitle.translate.srt') {
       hasTranslationNode = true
       translationNodeId = node.id
       translationToolId = node.data.toolId
       if (node.data.toolId === 'transcriber') {
         isTranslationEnabled = currentParams['task'] === 'translate'
-      } else if (node.data.toolId === 'subtitle_translator') {
+      } else if (toolId === 'subtitle.translate.srt') {
         isTranslationEnabled = currentParams['target_lang'] === 'English' || !currentParams['target_lang']
       }
     }

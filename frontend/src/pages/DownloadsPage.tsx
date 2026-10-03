@@ -131,26 +131,26 @@ export default function DownloadsPage({
   })
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 text-[#4E220F]">
+    <div className="mx-auto max-w-6xl space-y-6 text-brand-espresso">
       {/* Header Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-[#B0BA99] pb-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-brand-sage pb-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-bold tracking-tight text-[#4E220F]">
+            <h1 className="text-xl font-bold tracking-tight text-brand-espresso">
               Downloads & Media Library
             </h1>
-            <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-[#B0BA99]/40 border border-[#B0BA99] text-[#4E220F] font-semibold">
+            <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-brand-sage/40 border border-brand-sage text-brand-espresso font-semibold">
               {tasks.length} total
             </span>
           </div>
-          <p className="mt-1 text-xs text-[#7C5339]">
+          <p className="mt-1 text-xs text-brand-caramel-text">
             Universal yt-dlp media downloader. Download videos, extract pristine audio tracks, and launch the audio player.
           </p>
         </div>
 
         <button
           onClick={refresh}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-[#B0BA99] bg-[#EDE5CD]/70 px-3 py-1.5 text-xs font-semibold text-[#4E220F] hover:bg-[#B0BA99]/30 transition-all shadow-xs"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-brand-cream-dark/70 px-3 py-1.5 text-xs font-semibold text-brand-espresso hover:bg-brand-sage/30 transition-all shadow-xs"
         >
           <RefreshCw className="size-3.5" />
           <span>Refresh</span>
@@ -158,35 +158,35 @@ export default function DownloadsPage({
       </div>
 
       {/* Main Download Input Card */}
-      <section className="rounded-2xl border-2 border-[#B0BA99] bg-[#FFFFFF] p-5 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-[#B0BA99]/50 pb-3">
+      <section className="rounded-2xl border-2 border-brand-sage bg-surface-white p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-brand-sage/50 pb-3">
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-[#9D6638] text-[#FDFBF7]">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-brand-caramel text-brand-cream-light">
               <ArrowDownToLine className="size-4" />
             </div>
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#4E220F]">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-brand-espresso">
                 Enqueue Media Download
               </h2>
-              <p className="font-mono text-[10px] text-[#7C5339]">YT-DLP UNIVERSAL PROCESSOR</p>
+              <p className="font-mono text-xs text-brand-caramel-text">YT-DLP UNIVERSAL PROCESSOR</p>
             </div>
           </div>
         </div>
 
         {/* Highlighted Hero URL Bar */}
-        <div className="rounded-xl border-2 border-[#9D6638]/50 bg-[#F7F1DE]/90 p-3.5 shadow-inner focus-within:border-[#9D6638] focus-within:ring-2 focus-within:ring-[#9D6638]/25 transition-all">
+        <div className="rounded-xl border-2 border-brand-caramel/50 bg-brand-cream/90 p-3.5 shadow-inner focus-within:border-brand-caramel focus-within:ring-2 focus-within:ring-brand-caramel/25 transition-all">
           <div className="flex items-center justify-between mb-1.5">
-            <label className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#4E220F]">
-              <Link2 className="size-3.5 text-[#9D6638]" />
+            <label className="flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider text-brand-espresso">
+              <Link2 className="size-3.5 text-brand-caramel" />
               <span>Target URL</span>
-              <span className="text-[9px] text-[#4E220F] bg-[#B0BA99]/40 border border-[#B0BA99] px-1.5 py-0.2 rounded font-semibold">
+              <span className="text-xs text-brand-espresso bg-brand-sage/40 border border-brand-sage px-1.5 py-0.2 rounded font-semibold">
                 REQUIRED
               </span>
             </label>
             {url && (
               <button
                 onClick={() => setUrl('')}
-                className="text-[10px] font-mono text-[#7C5339] hover:text-[#A83232]"
+                className="text-xs font-mono text-brand-caramel-text hover:text-accent-contrast"
               >
                 clear
               </button>
@@ -199,7 +199,7 @@ export default function DownloadsPage({
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && add()}
               placeholder="https://www.youtube.com/watch?v=... or Soundcloud / Vimeo link"
-              className="flex-1 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-2 font-mono text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:outline-none shadow-xs"
+              className="flex-1 rounded-lg border border-brand-sage bg-surface-white px-3.5 py-2 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none shadow-xs"
             />
             <button
               type="button"
@@ -211,16 +211,16 @@ export default function DownloadsPage({
                   /* ignore */
                 }
               }}
-              className="inline-flex items-center gap-1 rounded-lg bg-[#EDE5CD] px-3 py-2 text-xs font-semibold text-[#4E220F] hover:bg-[#B0BA99]/40 border border-[#B0BA99] transition-all"
+              className="inline-flex items-center gap-1 rounded-lg bg-brand-cream-dark px-3 py-2 text-xs font-semibold text-brand-espresso hover:bg-brand-sage/40 border border-brand-sage transition-all"
               title="Paste from Clipboard"
             >
-              <Clipboard className="size-3.5 text-[#9D6638]" />
+              <Clipboard className="size-3.5 text-brand-caramel" />
               <span>Paste</span>
             </button>
             <button
               onClick={add}
               disabled={!url.trim() || adding}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#9D6638] px-4 py-2 text-xs font-semibold text-[#FDFBF7] shadow-md transition-all hover:bg-[#86542C] active:scale-95 disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-caramel px-4 py-2 text-xs font-semibold text-brand-cream-light shadow-md transition-all hover:bg-brand-caramel-hover active:scale-95 disabled:opacity-40"
             >
               <Plus className="size-4" />
               {adding ? 'Queuing…' : 'Start Download'}
@@ -236,8 +236,8 @@ export default function DownloadsPage({
       {activeTasks.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center justify-between px-1">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#4E220F] flex items-center gap-1.5">
-              <span className="flex size-2 rounded-full bg-[#9D6638] animate-pulse" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-brand-espresso flex items-center gap-1.5">
+              <span className="flex size-2 rounded-full bg-brand-caramel animate-pulse" />
               Active Transfers ({activeTasks.length})
             </h2>
           </div>
@@ -249,20 +249,20 @@ export default function DownloadsPage({
               return (
                 <div
                   key={t.id}
-                  className="rounded-xl border border-[#B0BA99] bg-[#FFFFFF] p-4 shadow-sm space-y-3"
+                  className="rounded-xl border border-brand-sage bg-surface-white p-4 shadow-sm space-y-3"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-[#4E220F]">
+                    <span className="font-mono text-xs font-bold text-brand-espresso">
                       Task: {t.id}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#9D6638]/20 text-[#9D6638] border border-[#9D6638]/30 flex items-center gap-1">
+                      <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full bg-brand-caramel/20 text-brand-caramel border border-brand-caramel/30 flex items-center gap-1">
                         <Loader2 className="size-2.5 animate-spin" />
                         {t.status.toUpperCase()}
                       </span>
                       <button
                         onClick={() => cancel(t.id)}
-                        className="rounded p-1 text-[#7C5339] hover:bg-[#A83232]/15 hover:text-[#A83232] transition-colors"
+                        className="rounded p-1 text-brand-caramel-text hover:bg-accent-contrast/15 hover:text-accent-contrast transition-colors"
                         title="Cancel Download"
                       >
                         <Ban className="size-3.5" />
@@ -271,16 +271,16 @@ export default function DownloadsPage({
                   </div>
 
                   <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] font-mono text-[#7C5339]">
-                      <span className="font-bold text-[#4E220F]">{pct}% Complete</span>
+                    <div className="flex items-center justify-between text-xs font-mono text-brand-caramel-text">
+                      <span className="font-bold text-brand-espresso">{pct}% Complete</span>
                       <span>
                         {progress.speed || 'Downloading…'}{' '}
                         {progress.eta ? `• ETA ${progress.eta}` : ''}
                       </span>
                     </div>
-                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#EDE5CD]">
+                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-brand-cream-dark">
                       <div
-                        className="h-full bg-gradient-to-r from-[#B0BA99] to-[#9D6638] transition-all duration-300"
+                        className="h-full bg-gradient-to-r from-brand-sage to-brand-caramel transition-all duration-300"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -293,30 +293,30 @@ export default function DownloadsPage({
       )}
 
       {/* Completed Downloads Library */}
-      <section className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-5 shadow-sm space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#B0BA99]/50 pb-3">
+      <section className="rounded-2xl border border-brand-sage bg-surface-white p-5 shadow-sm space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-brand-sage/50 pb-3">
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-[#B0BA99]/40 text-[#4E220F]">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-brand-sage/40 text-brand-espresso">
               <FolderOpen className="size-4" />
             </div>
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-[#4E220F]">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-brand-espresso">
                 Completed Media Files
               </h2>
-              <p className="font-mono text-[10px] text-[#7C5339]">
+              <p className="font-mono text-xs text-brand-caramel-text">
                 STORED IN DOWNLOADS/DOWNLOADER/
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <div className="inline-flex rounded-xl border border-[#B0BA99] bg-[#EDE5CD]/80 p-1 shadow-2xs">
+            <div className="inline-flex rounded-xl border border-brand-sage bg-brand-cream-dark/80 p-1 shadow-2xs">
               <button
                 onClick={() => setViewFormat('grid')}
                 className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
                   viewFormat === 'grid'
-                    ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                    : 'text-[#4E220F] hover:bg-[#EDE5CD]'
+                    ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                    : 'text-brand-espresso hover:bg-brand-cream-dark'
                 }`}
                 title="Grid View Format"
               >
@@ -327,8 +327,8 @@ export default function DownloadsPage({
                 onClick={() => setViewFormat('table')}
                 className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
                   viewFormat === 'table'
-                    ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                    : 'text-[#4E220F] hover:bg-[#EDE5CD]'
+                    ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                    : 'text-brand-espresso hover:bg-brand-cream-dark'
                 }`}
                 title="Table View Format"
               >
@@ -338,21 +338,21 @@ export default function DownloadsPage({
             </div>
 
             <div className="relative w-full sm:w-56">
-              <Search className="absolute left-2.5 top-2.5 size-3.5 text-[#7C5339]" />
+              <Search className="absolute left-2.5 top-2.5 size-3.5 text-brand-caramel-text" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search downloaded tasks..."
-                className="w-full rounded-lg border border-[#B0BA99] bg-[#F7F1DE]/60 pl-8 pr-3 py-1.5 text-xs text-[#4E220F] placeholder-[#7C5339]/60 font-mono focus:border-[#9D6638] focus:bg-[#FFFFFF] focus:outline-none"
+                className="w-full rounded-lg border border-brand-sage bg-brand-cream/60 pl-8 pr-3 py-1.5 text-xs text-brand-espresso placeholder-brand-caramel-text/60 font-mono focus:border-brand-caramel focus:bg-surface-white focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {filteredCompleted.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/30 p-8 text-center text-[#7C5339] text-xs font-mono">
-            <Clock className="mx-auto size-6 text-[#9D6638] mb-1.5 opacity-60" />
+          <div className="rounded-xl border border-dashed border-brand-sage bg-brand-cream-dark/30 p-8 text-center text-brand-caramel-text text-xs font-mono">
+            <Clock className="mx-auto size-6 text-brand-caramel mb-1.5 opacity-60" />
             No completed downloads found.
           </div>
         ) : viewFormat === 'grid' ? (
@@ -360,29 +360,29 @@ export default function DownloadsPage({
             {filteredCompleted.map((t) => (
               <div
                 key={t.id}
-                className="flex flex-col justify-between rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/60 p-4 shadow-xs transition-all hover:border-[#9D6638] hover:bg-[#FFFFFF]"
+                className="flex flex-col justify-between rounded-xl border border-brand-sage bg-brand-cream/60 p-4 shadow-xs transition-all hover:border-brand-caramel hover:bg-surface-white"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="flex size-7 items-center justify-center rounded-lg bg-[#EDE5CD] text-[#9D6638]">
+                      <div className="flex size-7 items-center justify-center rounded-lg bg-brand-cream-dark text-brand-caramel">
                         <FileAudio className="size-4" />
                       </div>
-                      <span className="font-mono text-xs font-bold text-[#4E220F] truncate max-w-[140px]">
+                      <span className="font-mono text-xs font-bold text-brand-espresso truncate max-w-[140px]">
                         Task-{t.id}
                       </span>
                     </div>
-                    <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#B0BA99]/40 border border-[#B0BA99] text-[#4E220F]">
+                    <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-brand-sage/40 border border-brand-sage text-brand-espresso">
                       READY
                     </span>
                   </div>
 
-                  <p className="font-mono text-[11px] text-[#7C5339] truncate">
+                  <p className="font-mono text-xs text-brand-caramel-text truncate">
                     downloads/downloader/
                   </p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-[#B0BA99]/50 flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-brand-sage/50 flex items-center justify-between">
                   <button
                     onClick={() =>
                       setActiveMedia({
@@ -391,7 +391,7 @@ export default function DownloadsPage({
                         kind: 'audio',
                       })
                     }
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#9D6638] px-3 py-1.5 text-xs font-semibold text-[#FDFBF7] hover:bg-[#86542C] transition-all shadow-xs"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-brand-caramel px-3 py-1.5 text-xs font-semibold text-brand-cream-light hover:bg-brand-caramel-hover transition-all shadow-xs"
                   >
                     <Play className="size-3 fill-current" />
                     <span>Open Player</span>
@@ -401,7 +401,7 @@ export default function DownloadsPage({
                     {onSendToTool && (
                       <button
                         onClick={() => onSendToTool('trimmer', `downloads/downloader/`)}
-                        className="rounded-md p-1.5 text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F] transition-colors"
+                        className="rounded-md p-1.5 text-brand-caramel-text hover:bg-brand-cream-dark hover:text-brand-espresso transition-colors"
                         title="Send to Trimmer"
                       >
                         <Scissors className="size-3.5" />
@@ -410,7 +410,7 @@ export default function DownloadsPage({
                     {onSendToTool && (
                       <button
                         onClick={() => onSendToTool('transcriber', `downloads/downloader/`)}
-                        className="rounded-md p-1.5 text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F] transition-colors"
+                        className="rounded-md p-1.5 text-brand-caramel-text hover:bg-brand-cream-dark hover:text-brand-espresso transition-colors"
                         title="Send to Transcriber"
                       >
                         <FileText className="size-3.5" />
@@ -423,10 +423,10 @@ export default function DownloadsPage({
           </div>
         ) : (
           /* FORMAT 2: TABLE VIEW FOR DOWNLOADS */
-          <div className="overflow-hidden rounded-xl border border-[#B0BA99] bg-[#FFFFFF] shadow-xs">
+          <div className="overflow-hidden rounded-xl border border-brand-sage bg-surface-white shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-[#4E220F]">
-                <thead className="border-b border-[#B0BA99] bg-[#EDE5CD]/70 font-mono text-[10px] uppercase text-[#7C5339]">
+              <table className="w-full text-left text-xs text-brand-espresso">
+                <thead className="border-b border-brand-sage bg-brand-cream-dark/70 font-mono text-xs uppercase text-brand-caramel-text">
                   <tr>
                     <th className="px-4 py-3 font-bold">Transfer Identifier</th>
                     <th className="px-4 py-3 font-bold">Storage Path</th>
@@ -434,17 +434,17 @@ export default function DownloadsPage({
                     <th className="px-4 py-3 font-bold text-right">Quick Pipeline Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#B0BA99]/40 font-medium">
+                <tbody className="divide-y divide-brand-sage/40 font-medium">
                   {filteredCompleted.map((t) => (
-                    <tr key={t.id} className="hover:bg-[#EDE5CD]/40 transition-colors">
-                      <td className="px-4 py-3 font-mono text-xs font-bold text-[#4E220F]">
+                    <tr key={t.id} className="hover:bg-brand-cream-dark/40 transition-colors">
+                      <td className="px-4 py-3 font-mono text-xs font-bold text-brand-espresso">
                         Task-{t.id}
                       </td>
-                      <td className="px-4 py-3 font-mono text-[11px] text-[#7C5339]">
+                      <td className="px-4 py-3 font-mono text-xs text-brand-caramel-text">
                         downloads/downloader/
                       </td>
-                      <td className="px-4 py-3 font-mono text-[10px]">
-                        <span className="rounded bg-[#B0BA99]/40 px-2 py-0.5 font-bold border border-[#B0BA99]">
+                      <td className="px-4 py-3 font-mono text-xs">
+                        <span className="rounded bg-brand-sage/40 px-2 py-0.5 font-bold border border-brand-sage">
                           COMPLETED
                         </span>
                       </td>
@@ -458,7 +458,7 @@ export default function DownloadsPage({
                                 kind: 'audio',
                               })
                             }
-                            className="inline-flex items-center gap-1 rounded-lg bg-[#9D6638] px-2.5 py-1 text-xs font-bold text-[#FDFBF7] hover:bg-[#86542C] transition-all"
+                            className="inline-flex items-center gap-1 rounded-lg bg-brand-caramel px-2.5 py-1 text-xs font-bold text-brand-cream-light hover:bg-brand-caramel-hover transition-all"
                           >
                             <Play className="size-3 fill-current" />
                             <span>Play</span>
@@ -466,7 +466,7 @@ export default function DownloadsPage({
                           {onSendToTool && (
                             <button
                               onClick={() => onSendToTool('trimmer', `downloads/downloader/`)}
-                              className="rounded-md border border-[#B0BA99] bg-[#EDE5CD] px-2 py-1 text-[11px] font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-colors"
+                              className="rounded-md border border-brand-sage bg-brand-cream-dark px-2 py-1 text-xs font-bold text-brand-espresso hover:bg-brand-sage/40 transition-colors"
                             >
                               Trim
                             </button>
@@ -474,7 +474,7 @@ export default function DownloadsPage({
                           {onSendToTool && (
                             <button
                               onClick={() => onSendToTool('transcriber', `downloads/downloader/`)}
-                              className="rounded-md border border-[#B0BA99] bg-[#EDE5CD] px-2 py-1 text-[11px] font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-colors"
+                              className="rounded-md border border-brand-sage bg-brand-cream-dark px-2 py-1 text-xs font-bold text-brand-espresso hover:bg-brand-sage/40 transition-colors"
                             >
                               Transcribe
                             </button>

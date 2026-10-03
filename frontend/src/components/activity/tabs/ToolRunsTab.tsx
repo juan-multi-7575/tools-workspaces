@@ -55,18 +55,18 @@ export const ToolRunsTab: React.FC<ToolRunsTabProps> = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between px-1">
-        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7C5339] flex items-center gap-1">
-          <Wrench className="size-3 text-[#9D6638]" />
+        <span className="font-mono text-xs font-bold uppercase tracking-wider text-brand-caramel-text flex items-center gap-1">
+          <Wrench className="size-3 text-brand-caramel" />
           Tool Execution History
         </span>
-        <span className="font-mono text-[10px] text-[#7C5339]">
+        <span className="font-mono text-xs text-brand-caramel-text">
           {filtered.length} runs recorded
         </span>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/40 p-8 text-center text-[#7C5339] text-xs font-mono">
-          <Clock className="mx-auto size-6 text-[#9D6638] mb-2 opacity-60" />
+        <div className="rounded-xl border border-dashed border-brand-sage bg-brand-cream-dark/40 p-8 text-center text-brand-caramel-text text-xs font-mono">
+          <Clock className="mx-auto size-6 text-brand-caramel mb-2 opacity-60" />
           {filterQuery ? 'No matching tool runs found.' : 'No tool executions recorded yet.'}
         </div>
       ) : (
@@ -75,11 +75,11 @@ export const ToolRunsTab: React.FC<ToolRunsTabProps> = ({
           return (
             <div
               key={exec.id}
-              className="relative rounded-xl border border-[#B0BA99] bg-[#FFFFFF] p-3 shadow-xs space-y-2 transition-all hover:border-[#9D6638]/70 group"
+              className="relative rounded-xl border border-brand-sage bg-surface-white p-3 shadow-xs space-y-2 transition-all hover:border-brand-caramel/70 group"
             >
               <button
                 onClick={() => onRemove(exec.id)}
-                className="absolute right-2 top-2 p-1 text-[#7C5339]/50 hover:text-[#A83232] hover:bg-[#EDE5CD] rounded transition-colors"
+                className="absolute right-2 top-2 p-1 text-brand-caramel-text/50 hover:text-accent-contrast hover:bg-brand-cream-dark rounded transition-colors"
                 title="Dismiss record"
               >
                 <X className="size-3" />
@@ -87,14 +87,14 @@ export const ToolRunsTab: React.FC<ToolRunsTabProps> = ({
 
               <div className="flex items-start justify-between gap-2 pr-6">
                 <div className="flex items-center gap-2">
-                  <div className="flex size-7 items-center justify-center rounded-lg bg-[#EDE5CD] text-[#9D6638] border border-[#B0BA99]/60 shrink-0">
+                  <div className="flex size-7 items-center justify-center rounded-lg bg-brand-cream-dark text-brand-caramel border border-brand-sage/60 shrink-0">
                     <Wrench className="size-3.5" />
                   </div>
                   <div>
-                    <span className="font-bold text-xs text-[#4E220F] block">
+                    <span className="font-bold text-xs text-brand-espresso block">
                       {exec.toolName}
                     </span>
-                    <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#7C5339]">
+                    <div className="flex items-center gap-1.5 font-mono text-xs text-brand-caramel-text">
                       <span>ID: {exec.toolId}</span>
                       <span>•</span>
                       <span>{formatTimeAgo(exec.startTime)}</span>
@@ -104,14 +104,14 @@ export const ToolRunsTab: React.FC<ToolRunsTabProps> = ({
 
                 <div className="flex items-center gap-2">
                   <span
-                    className={`font-mono text-[9px] font-extrabold px-1.5 py-0.5 rounded border uppercase flex items-center gap-1 ${
+                    className={`font-mono text-xs font-extrabold px-1.5 py-0.5 rounded border uppercase flex items-center gap-1 ${
                       exec.status === 'completed'
                         ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
                         : exec.status === 'running'
                         ? 'bg-amber-100 text-amber-900 border-amber-300'
                         : exec.status === 'failed'
                         ? 'bg-rose-100 text-rose-900 border-rose-300'
-                        : 'bg-[#EDE5CD] text-[#7C5339] border-[#B0BA99]'
+                        : 'bg-brand-cream-dark text-brand-caramel-text border-brand-sage'
                     }`}
                   >
                     {exec.status === 'completed' && <CheckCircle2 className="size-2.5 text-emerald-700" />}
@@ -122,10 +122,10 @@ export const ToolRunsTab: React.FC<ToolRunsTabProps> = ({
               </div>
 
               {/* Execution Duration & Toggle */}
-              <div className="flex items-center justify-between border-t border-[#B0BA99]/40 pt-1.5 font-mono text-[10px] text-[#7C5339]">
+              <div className="flex items-center justify-between border-t border-brand-sage/40 pt-1.5 font-mono text-xs text-brand-caramel-text">
                 <div className="flex items-center gap-2">
                   <span>Duration:</span>
-                  <span className="font-bold text-[#4E220F]">
+                  <span className="font-bold text-brand-espresso">
                     {formatDuration(exec.durationSeconds)}
                   </span>
                 </div>
@@ -133,7 +133,7 @@ export const ToolRunsTab: React.FC<ToolRunsTabProps> = ({
                 <button
                   type="button"
                   onClick={() => toggleExpand(exec.id)}
-                  className="inline-flex items-center gap-1 text-[10px] text-[#9D6638] hover:underline"
+                  className="inline-flex items-center gap-1 text-xs text-brand-caramel hover:underline"
                 >
                   <span>{isExpanded ? 'Hide Details' : 'Details'}</span>
                   {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
@@ -142,23 +142,23 @@ export const ToolRunsTab: React.FC<ToolRunsTabProps> = ({
 
               {/* Expanded Details / Parameters / Error */}
               {isExpanded && (
-                <div className="space-y-2 border-t border-[#B0BA99]/40 pt-2 text-xs">
+                <div className="space-y-2 border-t border-brand-sage/40 pt-2 text-xs">
                   {exec.error && (
-                    <div className="rounded-lg border border-[#A83232]/30 bg-[#A83232]/10 p-2 font-mono text-[10px] text-[#A83232] leading-tight flex items-start gap-1.5">
+                    <div className="rounded-lg border border-accent-contrast/30 bg-accent-contrast/10 p-2 font-mono text-xs text-accent-contrast leading-tight flex items-start gap-1.5">
                       <AlertCircle className="size-3 shrink-0 mt-0.5" />
                       <p className="break-all">{exec.error}</p>
                     </div>
                   )}
 
                   {exec.params && Object.keys(exec.params).length > 0 && (
-                    <div className="rounded-lg bg-[#EDE5CD]/50 p-2 border border-[#B0BA99]/40 font-mono text-[10px] text-[#4E220F]">
-                      <div className="font-bold text-[#7C5339] mb-1 uppercase tracking-wider text-[9px]">
+                    <div className="rounded-lg bg-brand-cream-dark/50 p-2 border border-brand-sage/40 font-mono text-xs text-brand-espresso">
+                      <div className="font-bold text-brand-caramel-text mb-1 uppercase tracking-wider text-xs">
                         Parameters
                       </div>
                       <div className="space-y-0.5 overflow-x-auto">
                         {Object.entries(exec.params).map(([k, v]) => (
                           <div key={k} className="flex gap-2">
-                            <span className="text-[#9D6638]">{k}:</span>
+                            <span className="text-brand-caramel">{k}:</span>
                             <span className="truncate">{String(v)}</span>
                           </div>
                         ))}

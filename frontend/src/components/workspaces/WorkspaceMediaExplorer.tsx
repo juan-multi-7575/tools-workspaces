@@ -109,9 +109,9 @@ export default function WorkspaceMediaExplorer({
   })
 
   return (
-    <div className="space-y-4 text-[#4E220F]">
+    <div className="space-y-4 text-brand-espresso">
       {/* Top Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#FFFFFF] p-3.5 rounded-2xl border border-[#B0BA99] shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-surface-white p-3.5 rounded-2xl border border-brand-sage shadow-xs">
         {/* Category Tabs */}
         <div className="flex flex-wrap items-center gap-1.5">
           <button
@@ -119,13 +119,13 @@ export default function WorkspaceMediaExplorer({
             className={
               'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ' +
               (activeTab === 'packages'
-                ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                : 'bg-[#EDE5CD]/60 text-[#4E220F] hover:bg-[#EDE5CD]')
+                ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                : 'bg-brand-cream-dark/60 text-brand-espresso hover:bg-brand-cream-dark')
             }
           >
             <Package className="size-3.5" />
             Media Packages
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#B0BA99]/30 font-mono">
+            <span className="text-xs px-1.5 py-0.2 rounded-full bg-brand-sage/30 font-mono">
               {packages.length}
             </span>
           </button>
@@ -135,13 +135,13 @@ export default function WorkspaceMediaExplorer({
             className={
               'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ' +
               (activeTab === 'video'
-                ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                : 'bg-[#EDE5CD]/60 text-[#4E220F] hover:bg-[#EDE5CD]')
+                ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                : 'bg-brand-cream-dark/60 text-brand-espresso hover:bg-brand-cream-dark')
             }
           >
             <Video className="size-3.5" />
             Videos
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#B0BA99]/30 font-mono">
+            <span className="text-xs px-1.5 py-0.2 rounded-full bg-brand-sage/30 font-mono">
               {categories.video.length}
             </span>
           </button>
@@ -151,13 +151,13 @@ export default function WorkspaceMediaExplorer({
             className={
               'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ' +
               (activeTab === 'subtitle'
-                ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                : 'bg-[#EDE5CD]/60 text-[#4E220F] hover:bg-[#EDE5CD]')
+                ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                : 'bg-brand-cream-dark/60 text-brand-espresso hover:bg-brand-cream-dark')
             }
           >
             <Captions className="size-3.5" />
             Subtitles
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#B0BA99]/30 font-mono">
+            <span className="text-xs px-1.5 py-0.2 rounded-full bg-brand-sage/30 font-mono">
               {categories.subtitle.length}
             </span>
           </button>
@@ -167,13 +167,13 @@ export default function WorkspaceMediaExplorer({
             className={
               'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ' +
               (activeTab === 'document'
-                ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                : 'bg-[#EDE5CD]/60 text-[#4E220F] hover:bg-[#EDE5CD]')
+                ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                : 'bg-brand-cream-dark/60 text-brand-espresso hover:bg-brand-cream-dark')
             }
           >
             <FileText className="size-3.5" />
             Transcripts
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#B0BA99]/30 font-mono">
+            <span className="text-xs px-1.5 py-0.2 rounded-full bg-brand-sage/30 font-mono">
               {categories.document.length}
             </span>
           </button>
@@ -183,13 +183,13 @@ export default function WorkspaceMediaExplorer({
             className={
               'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ' +
               (activeTab === 'all'
-                ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                : 'bg-[#EDE5CD]/60 text-[#4E220F] hover:bg-[#EDE5CD]')
+                ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                : 'bg-brand-cream-dark/60 text-brand-espresso hover:bg-brand-cream-dark')
             }
           >
             <Layers className="size-3.5" />
             All Files
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#B0BA99]/30 font-mono">
+            <span className="text-xs px-1.5 py-0.2 rounded-full bg-brand-sage/30 font-mono">
               {allFiles.length}
             </span>
           </button>
@@ -198,23 +198,23 @@ export default function WorkspaceMediaExplorer({
         {/* Search Input and Refresh */}
         <div className="flex items-center gap-2">
           <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-[#7C5339]" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-brand-caramel-text" />
             <input
               type="text"
               placeholder="Search media & files..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/40 text-xs text-[#4E220F] placeholder-[#7C5339]/60 outline-none focus:border-[#9D6638] font-mono"
+              className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-brand-sage bg-brand-cream/40 text-xs text-brand-espresso placeholder-brand-caramel-text/60 outline-none focus:border-brand-caramel font-mono"
             />
           </div>
 
           <button
             onClick={loadMedia}
             disabled={loading}
-            className="p-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] text-[#4E220F] hover:bg-[#B0BA99]/40 disabled:opacity-50 transition-all shadow-2xs"
+            className="p-1.5 rounded-xl border border-brand-sage bg-brand-cream-dark text-brand-espresso hover:bg-brand-sage/40 disabled:opacity-50 transition-all shadow-2xs"
             title="Refresh media files"
           >
-            <RefreshCw className={`size-3.5 ${loading ? 'animate-spin text-[#9D6638]' : ''}`} />
+            <RefreshCw className={`size-3.5 ${loading ? 'animate-spin text-brand-caramel' : ''}`} />
           </button>
         </div>
       </div>
@@ -223,10 +223,10 @@ export default function WorkspaceMediaExplorer({
       {activeTab === 'packages' ? (
         /* Media Packages View (Cohesive Video + Subtitles Pairs) */
         filteredPackages.length === 0 ? (
-          <div className="p-12 text-center rounded-2xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/30 space-y-2">
-            <Package className="size-8 text-[#9D6638] mx-auto opacity-60" />
-            <p className="text-sm font-bold text-[#4E220F]">No Media Packages Found</p>
-            <p className="text-xs text-[#7C5339]">
+          <div className="p-12 text-center rounded-2xl border border-dashed border-brand-sage bg-brand-cream-dark/30 space-y-2">
+            <Package className="size-8 text-brand-caramel mx-auto opacity-60" />
+            <p className="text-sm font-bold text-brand-espresso">No Media Packages Found</p>
+            <p className="text-xs text-brand-caramel-text">
               Run a pipeline with video and subtitles to automatically generate paired media packages.
             </p>
           </div>
@@ -235,19 +235,19 @@ export default function WorkspaceMediaExplorer({
             {filteredPackages.map((pkg) => (
               <div
                 key={pkg.title}
-                className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-4 space-y-4 shadow-xs hover:border-[#9D6638] transition-all"
+                className="rounded-2xl border border-brand-sage bg-surface-white p-4 space-y-4 shadow-xs hover:border-brand-caramel transition-all"
               >
                 {/* Package Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#B0BA99]/40 pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-brand-sage/40 pb-3">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="flex size-9 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7] shrink-0 shadow-xs">
+                    <div className="flex size-9 items-center justify-center rounded-xl bg-brand-caramel text-brand-cream-light shrink-0 shadow-xs">
                       <Video className="size-4.5" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-mono text-xs font-bold text-[#4E220F] truncate" title={pkg.title}>
+                      <h3 className="font-mono text-xs font-bold text-brand-espresso truncate" title={pkg.title}>
                         {pkg.title}
                       </h3>
-                      <p className="font-mono text-[10px] text-[#7C5339] mt-0.5">
+                      <p className="font-mono text-xs text-brand-caramel-text mt-0.5">
                         {pkg.all_files.length} related files •{' '}
                         {pkg.video ? `${formatSize(pkg.video.size)} Video` : 'Audio/Media'} •{' '}
                         {pkg.subtitles.length} Subtitle track{pkg.subtitles.length === 1 ? '' : 's'}
@@ -261,7 +261,7 @@ export default function WorkspaceMediaExplorer({
                         onClick={() =>
                           onPreviewArtifact(pkg.video!.name, pkg.video!.size, pkg.video!.preview_url, pkg.video!.download_url)
                         }
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-3.5 py-1.5 text-xs font-bold text-[#FDFBF7] shadow-xs hover:bg-[#86542C] transition-all active:scale-95"
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-brand-caramel px-3.5 py-1.5 text-xs font-bold text-brand-cream-light shadow-xs hover:bg-brand-caramel-hover transition-all active:scale-95"
                       >
                         <Play className="size-3.5 fill-current" />
                         Preview Video
@@ -275,7 +275,7 @@ export default function WorkspaceMediaExplorer({
                           )
                         }
                       }}
-                      className="p-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] text-[#7C5339] hover:bg-[#A83232]/15 hover:text-[#A83232] transition-colors"
+                      className="p-1.5 rounded-xl border border-brand-sage bg-brand-cream-dark text-brand-caramel-text hover:bg-accent-contrast/15 hover:text-accent-contrast transition-colors"
                       title="Delete package"
                     >
                       <Trash2 className="size-3.5" />
@@ -288,10 +288,10 @@ export default function WorkspaceMediaExplorer({
                   {pkg.all_files.map((file) => (
                     <div
                       key={file.name}
-                      className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-[#B0BA99]/70 bg-[#F7F1DE]/50 hover:bg-[#EDE5CD]/50 transition-all text-xs"
+                      className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-brand-sage/70 bg-brand-cream/50 hover:bg-brand-cream-dark/50 transition-all text-xs"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <div className="flex size-7 items-center justify-center rounded-lg bg-[#EDE5CD] text-[#9D6638] shrink-0">
+                        <div className="flex size-7 items-center justify-center rounded-lg bg-brand-cream-dark text-brand-caramel shrink-0">
                           {file.category === 'video' ? (
                             <Video className="size-3.5" />
                           ) : file.category === 'subtitle' ? (
@@ -303,10 +303,10 @@ export default function WorkspaceMediaExplorer({
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-mono text-[11px] font-bold text-[#4E220F] truncate" title={file.name}>
+                          <p className="font-mono text-xs font-bold text-brand-espresso truncate" title={file.name}>
                             {file.name}
                           </p>
-                          <p className="font-mono text-[9px] text-[#7C5339]">
+                          <p className="font-mono text-xs text-brand-caramel-text">
                             {formatSize(file.size)} • {file.category.toUpperCase()}
                           </p>
                         </div>
@@ -316,10 +316,10 @@ export default function WorkspaceMediaExplorer({
                         <button
                           onClick={() => copyPath(file.path)}
                           title="Copy file path"
-                          className="p-1 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F] transition-all"
+                          className="p-1 rounded-lg border border-brand-sage bg-surface-white text-brand-caramel-text hover:bg-brand-cream-dark hover:text-brand-espresso transition-all"
                         >
                           {copiedPath === file.path ? (
-                            <Check className="size-3 text-[#2E6B47]" />
+                            <Check className="size-3 text-success" />
                           ) : (
                             <Copy className="size-3" />
                           )}
@@ -329,21 +329,21 @@ export default function WorkspaceMediaExplorer({
                             onPreviewArtifact(file.name, file.size, file.preview_url, file.download_url)
                           }
                           title="Preview"
-                          className="p-1 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F] transition-all"
+                          className="p-1 rounded-lg border border-brand-sage bg-surface-white text-brand-caramel-text hover:bg-brand-cream-dark hover:text-brand-espresso transition-all"
                         >
                           <Eye className="size-3" />
                         </button>
                         <a
                           href={file.download_url}
                           title="Download"
-                          className="p-1 rounded-lg bg-[#9D6638] text-[#FDFBF7] hover:bg-[#86542C] transition-all shadow-2xs"
+                          className="p-1 rounded-lg bg-brand-caramel text-brand-cream-light hover:bg-brand-caramel-hover transition-all shadow-2xs"
                         >
                           <Download className="size-3" />
                         </a>
                         <button
                           onClick={() => handleDeleteFile(file.name)}
                           title="Delete file"
-                          className="p-1 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] text-[#7C5339] hover:bg-[#A83232]/15 hover:text-[#A83232] transition-all"
+                          className="p-1 rounded-lg border border-brand-sage bg-surface-white text-brand-caramel-text hover:bg-accent-contrast/15 hover:text-accent-contrast transition-all"
                         >
                           <Trash2 className="size-3" />
                         </button>
@@ -358,17 +358,17 @@ export default function WorkspaceMediaExplorer({
       ) : (
         /* Categorized or Flat Files Table / Grid */
         filteredFiles.length === 0 ? (
-          <div className="p-12 text-center rounded-2xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/30 space-y-2">
-            <Layers className="size-8 text-[#9D6638] mx-auto opacity-60" />
-            <p className="text-sm font-bold text-[#4E220F]">No Files Found</p>
-            <p className="text-xs text-[#7C5339]">
+          <div className="p-12 text-center rounded-2xl border border-dashed border-brand-sage bg-brand-cream-dark/30 space-y-2">
+            <Layers className="size-8 text-brand-caramel mx-auto opacity-60" />
+            <p className="text-sm font-bold text-brand-espresso">No Files Found</p>
+            <p className="text-xs text-brand-caramel-text">
               No artifacts match the selected category or search query.
             </p>
           </div>
         ) : (
-          <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] overflow-hidden shadow-xs">
-            <table className="w-full text-left text-xs text-[#4E220F]">
-              <thead className="bg-[#EDE5CD]/70 border-b border-[#B0BA99]/60 font-mono text-[10px] uppercase text-[#7C5339]">
+          <div className="rounded-2xl border border-brand-sage bg-surface-white overflow-hidden shadow-xs">
+            <table className="w-full text-left text-xs text-brand-espresso">
+              <thead className="bg-brand-cream-dark/70 border-b border-brand-sage/60 font-mono text-xs uppercase text-brand-caramel-text">
                 <tr>
                   <th className="py-3 px-4">Filename</th>
                   <th className="py-3 px-4">Category</th>
@@ -377,39 +377,39 @@ export default function WorkspaceMediaExplorer({
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#B0BA99]/30">
+              <tbody className="divide-y divide-brand-sage/30">
                 {filteredFiles.map((file) => (
-                  <tr key={file.name} className="hover:bg-[#F7F1DE]/60 transition-colors">
+                  <tr key={file.name} className="hover:bg-brand-cream/60 transition-colors">
                     <td className="py-3 px-4 font-mono font-bold max-w-sm truncate">
                       <div className="flex items-center gap-2">
                         {file.category === 'video' ? (
-                          <Video className="size-4 text-[#9D6638] shrink-0" />
+                          <Video className="size-4 text-brand-caramel shrink-0" />
                         ) : file.category === 'subtitle' ? (
-                          <Captions className="size-4 text-[#9D6638] shrink-0" />
+                          <Captions className="size-4 text-brand-caramel shrink-0" />
                         ) : file.category === 'audio' ? (
-                          <Music className="size-4 text-[#9D6638] shrink-0" />
+                          <Music className="size-4 text-brand-caramel shrink-0" />
                         ) : (
-                          <FileCode className="size-4 text-[#7C5339] shrink-0" />
+                          <FileCode className="size-4 text-brand-caramel-text shrink-0" />
                         )}
                         <span className="truncate" title={file.name}>{file.name}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 font-mono text-[10px]">
-                      <span className="px-2 py-0.5 rounded-md bg-[#EDE5CD] border border-[#B0BA99] font-bold uppercase">
+                    <td className="py-3 px-4 font-mono text-xs">
+                      <span className="px-2 py-0.5 rounded-md bg-brand-cream-dark border border-brand-sage font-bold uppercase">
                         {file.category}
                       </span>
                     </td>
-                    <td className="py-3 px-4 font-mono text-[#7C5339]">{formatSize(file.size)}</td>
-                    <td className="py-3 px-4 font-mono text-[#7C5339]">{formatDate(file.mtime)}</td>
+                    <td className="py-3 px-4 font-mono text-brand-caramel-text">{formatSize(file.size)}</td>
+                    <td className="py-3 px-4 font-mono text-brand-caramel-text">{formatDate(file.mtime)}</td>
                     <td className="py-3 px-4 text-right">
                       <div className="inline-flex items-center gap-1.5">
                         <button
                           onClick={() => copyPath(file.path)}
                           title="Copy file path"
-                          className="p-1 rounded-lg border border-[#B0BA99] bg-[#EDE5CD] text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all"
+                          className="p-1 rounded-lg border border-brand-sage bg-brand-cream-dark text-brand-espresso hover:bg-brand-sage/40 transition-all"
                         >
                           {copiedPath === file.path ? (
-                            <Check className="size-3 text-[#2E6B47]" />
+                            <Check className="size-3 text-success" />
                           ) : (
                             <Copy className="size-3" />
                           )}
@@ -419,7 +419,7 @@ export default function WorkspaceMediaExplorer({
                             onPreviewArtifact(file.name, file.size, file.preview_url, file.download_url)
                           }
                           title="Preview"
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-[#B0BA99] bg-[#EDE5CD] text-[11px] font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-brand-sage bg-brand-cream-dark text-xs font-bold text-brand-espresso hover:bg-brand-sage/40 transition-all"
                         >
                           <Eye className="size-3" />
                           Preview
@@ -427,7 +427,7 @@ export default function WorkspaceMediaExplorer({
                         <a
                           href={file.download_url}
                           title="Download"
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#9D6638] text-[11px] font-bold text-[#FDFBF7] hover:bg-[#86542C] transition-all shadow-2xs"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-caramel text-xs font-bold text-brand-cream-light hover:bg-brand-caramel-hover transition-all shadow-2xs"
                         >
                           <Download className="size-3" />
                           Download
@@ -435,7 +435,7 @@ export default function WorkspaceMediaExplorer({
                         <button
                           onClick={() => handleDeleteFile(file.name)}
                           title="Delete file"
-                          className="p-1 rounded-lg border border-[#B0BA99] bg-[#EDE5CD] text-[#7C5339] hover:bg-[#A83232]/15 hover:text-[#A83232] transition-all"
+                          className="p-1 rounded-lg border border-brand-sage bg-brand-cream-dark text-brand-caramel-text hover:bg-accent-contrast/15 hover:text-accent-contrast transition-all"
                         >
                           <Trash2 className="size-3.5" />
                         </button>

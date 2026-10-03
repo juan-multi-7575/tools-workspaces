@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
+import { NavLink, Navigate, Route, Routes, useNavigate, useLocation } from 'react-router-dom'
 import { Wrench, FolderTree, Settings, Smartphone, Terminal, Menu, X } from 'lucide-react'
 import ToolsPage from './pages/ToolsPage'
 import WorkspacesPage from './pages/WorkspacesPage'
@@ -9,6 +9,8 @@ import RemoteControlPage from './pages/RemoteControlPage'
 import ActivitySidebar, { ActivityProvider } from './components/activity/ActivitySidebar'
 import AudioPlayerModal, { type AudioPlayerMedia } from './components/audio/AudioPlayerModal'
 import { cn } from './lib/utils'
+import ErrorBoundary from './components/common/ErrorBoundary'
+import { useHealth } from './hooks/useHealth'
 
 const nav = [
   { to: '/', label: 'Tools', icon: Wrench },
@@ -17,10 +19,12 @@ const nav = [
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
-export default function App() {
+function AppShell() {
   const [activeMedia, setActiveMedia] = useState<AudioPlayerMedia | null>(null)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const navigate = useNavigate()
+  const health = useHealth()
+  const location = useLocation()
 
   const handleSendToTool = (toolId: string, inputPath: string) => {
     navigate(`/?tool=${encodeURIComponent(toolId)}&input=${encodeURIComponent(inputPath)}`)
@@ -28,20 +32,20 @@ export default function App() {
 
   return (
     <ActivityProvider>
-      <div className="flex flex-col md:flex-row h-full w-full bg-[#F7F1DE] text-[#4E220F] antialiased select-none font-sans overflow-hidden">
+      <div className="flex flex-col md:flex-row h-full w-full bg-brand-cream text-brand-espresso antialiased select-none font-sans overflow-hidden">
         {/* Mobile Top Navigation Header */}
-        <header className="md:hidden flex h-14 shrink-0 items-center justify-between border-b border-[#B0BA99] bg-[#EDE5CD]/90 px-4 z-20 backdrop-blur-xs">
+        <header className="md:hidden flex h-14 shrink-0 items-center justify-between border-b border-brand-sage bg-brand-cream-dark/90 px-4 z-sticky backdrop-blur-xs">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7] shadow-sm">
+            <div className="flex size-8 items-center justify-center rounded-xl bg-brand-caramel text-brand-cream-light shadow-sm">
               <Terminal className="size-4" />
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-bold tracking-tight text-[#4E220F] flex items-center gap-1.5">
+              <span className="text-sm font-bold tracking-tight text-brand-espresso flex items-center gap-1.5">
                 Tools Garage
-                <span className="h-1.5 w-1.5 rounded-full bg-[#9D6638]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-caramel" />
               </span>
-              <span className="font-mono text-[9px] text-[#7C5339] font-medium tracking-wide uppercase">
-                v1.4.0 • Local
+              <span className="font-mono text-xs text-brand-caramel-text font-medium tracking-wide uppercase">
+                {health.version ? `v${health.version}` : 'Version unavailable'} • Local
               </span>
             </div>
           </div>
@@ -49,7 +53,7 @@ export default function App() {
             type="button"
             onClick={() => setMobileNavOpen((prev) => !prev)}
             aria-label={mobileNavOpen ? 'Close navigation menu' : 'Open navigation menu'}
-            className="flex size-9 items-center justify-center rounded-xl border border-[#B0BA99] bg-[#F7F1DE] text-[#4E220F] hover:bg-[#B0BA99]/30 transition-colors shadow-2xs"
+            className="flex size-9 items-center justify-center rounded-xl border border-brand-sage bg-brand-cream text-brand-espresso hover:bg-brand-sage/30 transition-colors shadow-2xs"
           >
             {mobileNavOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
@@ -58,7 +62,7 @@ export default function App() {
         {/* Mobile Sidebar Backdrop Overlay */}
         {mobileNavOpen && (
           <div
-            className="fixed inset-0 z-30 bg-black/40 md:hidden backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 z-overlay bg-black/40 md:hidden backdrop-blur-xs transition-opacity"
             onClick={() => setMobileNavOpen(false)}
             aria-hidden="true"
           />
@@ -67,34 +71,34 @@ export default function App() {
         {/* Left Navigation Sidebar */}
         <aside
           className={cn(
-            'border-r border-[#B0BA99] bg-[#EDE5CD]/95 md:bg-[#EDE5CD]/80 flex flex-col justify-between p-4 shadow-xs transition-all duration-200',
+            'border-r border-brand-sage bg-brand-cream-dark/95 md:bg-brand-cream-dark/80 flex flex-col justify-between p-4 shadow-xs transition-all duration-200',
             'md:relative md:w-60 md:shrink-0 md:flex',
             mobileNavOpen
-              ? 'fixed inset-y-0 left-0 z-40 w-64 shadow-2xl flex'
+              ? 'fixed inset-y-0 left-0 z-drawer w-64 shadow-2xl flex'
               : 'hidden md:flex',
           )}
         >
           <div className="flex flex-col gap-6">
             {/* Brand Header */}
-            <div className="flex items-center justify-between px-2 py-1 border-b border-[#B0BA99]/60 pb-4">
+            <div className="flex items-center justify-between px-2 py-1 border-b border-brand-sage/60 pb-4">
               <div className="flex items-center gap-3">
-                <div className="flex size-8 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7] shadow-sm">
+                <div className="flex size-8 items-center justify-center rounded-xl bg-brand-caramel text-brand-cream-light shadow-sm">
                   <Terminal className="size-4" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-sm font-bold tracking-tight text-[#4E220F] flex items-center gap-1.5">
+                  <span className="text-sm font-bold tracking-tight text-brand-espresso flex items-center gap-1.5">
                     Tools Garage
-                    <span className="h-2 w-2 rounded-full bg-[#9D6638]" />
+                    <span className="h-2 w-2 rounded-full bg-brand-caramel" />
                   </span>
-                  <span className="font-mono text-[10px] text-[#7C5339] font-medium tracking-wide uppercase">
-                    v1.4.0 • Local
+                  <span className="font-mono text-xs text-brand-caramel-text font-medium tracking-wide uppercase">
+                    {health.version ? `v${health.version}` : 'Version unavailable'} • Local
                   </span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(false)}
-                className="md:hidden flex size-8 items-center justify-center rounded-lg text-[#7C5339] hover:bg-[#B0BA99]/30 hover:text-[#4E220F] transition-colors"
+                className="md:hidden flex size-8 items-center justify-center rounded-lg text-brand-caramel-text hover:bg-brand-sage/30 hover:text-brand-espresso transition-colors"
                 aria-label="Close navigation"
               >
                 <X className="size-4" />
@@ -104,7 +108,7 @@ export default function App() {
             {/* Navigation Links */}
             <nav className="flex flex-col gap-1.5">
               <div className="px-2 pb-1">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-[#7C5339] font-bold">
+                <span className="font-mono text-xs uppercase tracking-wider text-brand-caramel-text font-bold">
                   Platform
                 </span>
               </div>
@@ -118,8 +122,8 @@ export default function App() {
                     cn(
                       'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-150 active:scale-[0.98]',
                       isActive
-                        ? 'bg-[#9D6638] text-[#FDFBF7] shadow-sm font-bold'
-                        : 'text-[#4E220F] hover:bg-[#B0BA99]/30 hover:text-[#4E220F] border border-transparent',
+                        ? 'bg-brand-caramel text-brand-cream-light shadow-sm font-bold'
+                        : 'text-brand-espresso hover:bg-brand-sage/30 hover:text-brand-espresso border border-transparent',
                     )
                   }
                 >
@@ -128,12 +132,12 @@ export default function App() {
                       <Icon
                         className={cn(
                           'size-4 transition-colors duration-150',
-                          isActive ? 'text-[#FDFBF7]' : 'text-[#7C5339] group-hover:text-[#4E220F]',
+                          isActive ? 'text-brand-cream-light' : 'text-brand-caramel-text group-hover:text-brand-espresso',
                         )}
                       />
                       <span className="tracking-tight">{label}</span>
                       {isActive && (
-                        <span className="absolute right-2.5 h-1.5 w-1.5 rounded-full bg-[#FDFBF7]" />
+                        <span className="absolute right-2.5 h-1.5 w-1.5 rounded-full bg-brand-cream-light" />
                       )}
                     </>
                   )}
@@ -143,22 +147,23 @@ export default function App() {
           </div>
 
           {/* System Telemetry Footer */}
-          <div className="rounded-xl border border-[#B0BA99] bg-[#F7F1DE] p-3 shadow-2xs">
-            <div className="flex items-center justify-between text-[10px] font-mono text-[#7C5339] mb-1 font-semibold">
+          <div className="rounded-xl border border-brand-sage bg-brand-cream p-3 shadow-2xs">
+            <div className="flex items-center justify-between text-xs font-mono text-brand-caramel-text mb-1 font-semibold">
               <span>ENGINE STATUS</span>
-              <span className="flex items-center gap-1 text-[#4E220F] font-bold">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#9D6638] animate-pulse" />
-                ONLINE
+              <span className="flex items-center gap-1 text-brand-espresso font-bold">
+                <span className={cn("h-1.5 w-1.5 rounded-full", health.state === 'online' ? 'bg-success' : health.state === 'offline' ? 'bg-accent-contrast' : 'bg-brand-caramel animate-pulse')} />
+                {health.state.toUpperCase()}
               </span>
             </div>
-            <p className="text-[11px] font-mono text-[#4E220F] truncate font-medium">
-              localhost:8000
+            <p className="text-xs font-mono text-brand-espresso truncate font-medium">
+              {health.host}
             </p>
           </div>
         </aside>
 
         {/* Main Application Content Area */}
-        <main className="flex-1 h-full min-h-0 overflow-hidden flex flex-col bg-[#F7F1DE] text-[#4E220F] min-w-0 w-full">
+        <main className="flex-1 h-full min-h-0 overflow-hidden flex flex-col bg-brand-cream text-brand-espresso min-w-0 w-full">
+          <ErrorBoundary name="Application view" resetKey={location.pathname}>
           <Routes>
             <Route path="/" element={<ToolsPage onOpenAudioPlayer={setActiveMedia} />} />
             <Route path="/workspaces" element={<WorkspacesPage />} />
@@ -167,18 +172,27 @@ export default function App() {
             <Route path="/remote" element={<RemoteControlPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </ErrorBoundary>
         </main>
 
         {/* Universal Right Activity / Progress Tracker Sidebar */}
-        <ActivitySidebar onOpenAudioPlayer={setActiveMedia} onSendToTool={handleSendToTool} />
+        <ErrorBoundary name="Activity">
+          <ActivitySidebar onOpenAudioPlayer={setActiveMedia} onSendToTool={handleSendToTool} />
+        </ErrorBoundary>
 
         {/* Standalone Audio Player Modal */}
+        <ErrorBoundary name="Audio player" resetKey={activeMedia?.name}>
         <AudioPlayerModal
           media={activeMedia}
           onClose={() => setActiveMedia(null)}
           onSendToTool={handleSendToTool}
         />
+        </ErrorBoundary>
       </div>
     </ActivityProvider>
   )
+}
+
+export default function App() {
+  return <ErrorBoundary name="Application"><AppShell /></ErrorBoundary>
 }

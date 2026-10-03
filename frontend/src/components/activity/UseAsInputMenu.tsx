@@ -47,21 +47,21 @@ export const UseAsInputMenu: React.FC<UseAsInputMenuProps> = ({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-1 rounded border border-[#B0BA99] bg-[#EDE5CD] px-2 py-1 text-[10px] font-semibold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-colors shadow-2xs"
+        className="inline-flex items-center gap-1 rounded border border-brand-sage bg-brand-cream-dark px-2 py-1 text-xs font-semibold text-brand-espresso hover:bg-brand-sage/40 transition-colors shadow-2xs"
         title="Use file as input in tools"
       >
-        <ExternalLink className="size-2.5 text-[#9D6638]" />
+        <ExternalLink className="size-2.5 text-brand-caramel" />
         <span>Use as Input</span>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1.5 z-50 w-72 rounded-xl border border-[#B0BA99] bg-[#FDFBF7] p-2 shadow-xl ring-1 ring-black/5">
-          <div className="px-2 py-1.5 border-b border-[#B0BA99]/40 mb-1">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#7C5339] flex items-center gap-1">
-              <Wrench className="size-3 text-[#9D6638]" />
+        <div className="absolute right-0 top-full mt-1.5 z-modal w-72 rounded-xl border border-brand-sage bg-brand-cream-light p-2 shadow-xl ring-1 ring-black/5">
+          <div className="px-2 py-1.5 border-b border-brand-sage/40 mb-1">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-brand-caramel-text flex items-center gap-1">
+              <Wrench className="size-3 text-brand-caramel" />
               Select Target Tool
             </span>
-            <p className="text-[10px] font-mono text-[#4E220F]/70 truncate" title={artifactName}>
+            <p className="text-xs font-mono text-brand-espresso/70 truncate" title={artifactName}>
               {artifactName}
             </p>
           </div>
@@ -74,17 +74,17 @@ export const UseAsInputMenu: React.FC<UseAsInputMenuProps> = ({
                 onClick={() => handleSelectTool(tool)}
                 className={`w-full text-left flex items-start gap-2.5 p-2 rounded-lg transition-all ${
                   tool.compatible
-                    ? 'hover:bg-[#EDE5CD] cursor-pointer text-[#4E220F]'
-                    : 'opacity-40 cursor-not-allowed bg-transparent text-[#7C5339]'
+                    ? 'hover:bg-brand-cream-dark cursor-pointer text-brand-espresso'
+                    : 'opacity-40 cursor-not-allowed bg-transparent text-brand-caramel-text'
                 }`}
               >
                 <div className="mt-0.5 shrink-0">
                   {tool.compatible ? (
-                    <span className="flex size-4 items-center justify-center rounded-full bg-[#9D6638] text-[#FDFBF7]">
+                    <span className="flex size-4 items-center justify-center rounded-full bg-brand-caramel text-brand-cream-light">
                       <Check className="size-2.5" />
                     </span>
                   ) : (
-                    <span className="flex size-4 items-center justify-center rounded-full bg-[#B0BA99]/40 text-[#7C5339]">
+                    <span className="flex size-4 items-center justify-center rounded-full bg-brand-sage/40 text-brand-caramel-text">
                       <HelpCircle className="size-2.5" />
                     </span>
                   )}
@@ -93,16 +93,16 @@ export const UseAsInputMenu: React.FC<UseAsInputMenuProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
                     <span className="text-xs font-bold truncate">{tool.toolName}</span>
-                    <span className="font-mono text-[9px] px-1.5 py-0.2 rounded border bg-[#EDE5CD] border-[#B0BA99] text-[#9D6638] font-bold shrink-0">
+                    <span className="font-mono text-xs px-1.5 py-0.2 rounded border bg-brand-cream-dark border-brand-sage text-brand-caramel font-bold shrink-0">
                       {tool.badge}
                     </span>
                   </div>
-                  <p className="text-[10px] text-[#7C5339] line-clamp-1 leading-snug">
+                  <p className="text-xs text-brand-caramel-text line-clamp-1 leading-snug">
                     {tool.compatible ? tool.description : tool.incompatibleReason}
                   </p>
                 </div>
 
-                {tool.compatible && <ChevronRight className="size-3.5 text-[#9D6638] shrink-0 mt-1" />}
+                {tool.compatible && <ChevronRight className="size-3.5 text-brand-caramel shrink-0 mt-1" />}
               </button>
             ))}
           </div>

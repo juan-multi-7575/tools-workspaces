@@ -88,18 +88,18 @@ export default function DownloadManager() {
       {/* Floating Minimalist Status Pill */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/90 px-3.5 py-2 text-xs font-medium text-zinc-200 shadow-2xl backdrop-blur-md transition-all duration-150 hover:bg-zinc-800 hover:border-zinc-700 active:scale-[0.99] group"
+        className="fixed bottom-5 right-5 z-drawer inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/90 px-3.5 py-2 text-xs font-medium text-zinc-200 shadow-2xl backdrop-blur-md transition-all duration-150 hover:bg-zinc-800 hover:border-zinc-700 active:scale-[0.99] group"
         title="Open Download Manager"
       >
-        <ArrowDownToLine className="size-3.5 text-[#3ef50b]" />
+        <ArrowDownToLine className="size-3.5 text-wave-accent" />
         <span className="tracking-tight">Downloads</span>
         {active > 0 ? (
-          <span className="flex items-center gap-1.5 font-mono text-[10px] text-[#3ef50b] bg-[#3ef50b]/10 border border-[#3ef50b]/20 px-2 py-0.5 rounded-full">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#3ef50b] animate-pulse" />
+          <span className="flex items-center gap-1.5 font-mono text-xs text-wave-accent bg-wave-accent/10 border border-wave-accent/20 px-2 py-0.5 rounded-full">
+            <span className="h-1.5 w-1.5 rounded-full bg-wave-accent animate-pulse" />
             {active} active
           </span>
         ) : (
-          <span className="font-mono text-[10px] text-zinc-500">
+          <span className="font-mono text-xs text-zinc-500">
             {tasks.length}
           </span>
         )}
@@ -107,20 +107,20 @@ export default function DownloadManager() {
 
       {/* Slide-over Drawer */}
       {open && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-modal flex justify-end bg-black/60 backdrop-blur-[2px]">
           <div className="absolute inset-0" onClick={() => setOpen(false)} />
           <aside className="relative flex h-full w-[440px] max-w-[95vw] flex-col border-l border-zinc-800 bg-zinc-950 shadow-2xl">
             {/* Drawer Header */}
             <header className="flex items-center justify-between border-b border-zinc-800 px-4 py-3.5 bg-zinc-900/40">
               <div className="flex items-center gap-2">
-                <div className="flex size-6 items-center justify-center rounded border border-zinc-800 bg-zinc-900 text-[#3ef50b]">
+                <div className="flex size-6 items-center justify-center rounded border border-zinc-800 bg-zinc-900 text-wave-accent">
                   <ArrowDownToLine className="size-3.5" />
                 </div>
                 <div>
                   <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-100">
                     Download Manager
                   </h2>
-                  <p className="font-mono text-[10px] text-zinc-500">{active} active processes</p>
+                  <p className="font-mono text-xs text-zinc-500">{active} active processes</p>
                 </div>
               </div>
               <button
@@ -133,19 +133,19 @@ export default function DownloadManager() {
 
             {/* Highlighted URL Input Bar */}
             <div className="border-b border-zinc-800 p-3.5 bg-zinc-950/90">
-              <div className="rounded-xl border-2 border-[#3ef50b]/60 bg-zinc-900/90 p-2.5 shadow-md shadow-[#3ef50b]/5 ring-1 ring-[#3ef50b]/20 focus-within:ring-2 focus-within:ring-[#3ef50b]/40">
+              <div className="rounded-xl border-2 border-wave-accent/60 bg-zinc-900/90 p-2.5 shadow-md shadow-wave-accent/5 ring-1 ring-wave-accent/20 focus-within:ring-2 focus-within:ring-wave-accent/40">
                 <div className="flex items-center justify-between mb-1.5 px-0.5">
-                  <label className="flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-zinc-300">
-                    <Link2 className="size-3 text-[#3ef50b]" />
+                  <label className="flex items-center gap-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-zinc-300">
+                    <Link2 className="size-3 text-wave-accent" />
                     <span>Target URL</span>
-                    <span className="text-[9px] text-[#3ef50b] bg-[#3ef50b]/10 border border-[#3ef50b]/20 px-1 rounded">
+                    <span className="text-xs text-wave-accent bg-wave-accent/10 border border-wave-accent/20 px-1 rounded">
                       REQUIRED
                     </span>
                   </label>
                   {url && (
                     <button
                       onClick={() => setUrl('')}
-                      className="text-[10px] font-mono text-zinc-500 hover:text-red-400"
+                      className="text-xs font-mono text-zinc-500 hover:text-red-400"
                     >
                       clear
                     </button>
@@ -159,7 +159,7 @@ export default function DownloadManager() {
                       onChange={(e) => setUrl(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && add()}
                       placeholder="Paste video / playlist URL…"
-                      className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-[#3ef50b] focus:outline-none font-mono"
+                      className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 focus:border-wave-accent focus:outline-none font-mono"
                     />
                   </div>
                   <button
@@ -172,16 +172,16 @@ export default function DownloadManager() {
                         /* ignore */
                       }
                     }}
-                    className="inline-flex items-center gap-1 rounded-md bg-zinc-800 px-2 py-1.5 text-[11px] font-medium text-zinc-300 hover:bg-zinc-700 hover:text-white border border-zinc-700"
+                    className="inline-flex items-center gap-1 rounded-md bg-zinc-800 px-2 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-700 hover:text-white border border-zinc-700"
                     title="Paste from Clipboard"
                   >
-                    <Clipboard className="size-3 text-[#3ef50b]" />
+                    <Clipboard className="size-3 text-wave-accent" />
                     <span>Paste</span>
                   </button>
                   <button
                     onClick={add}
                     disabled={!url.trim() || adding}
-                    className="inline-flex items-center gap-1 rounded-md bg-[#3ef50b] px-3 py-1.5 text-xs font-semibold text-zinc-950 transition-all duration-150 hover:bg-[#35d409] active:scale-[0.99] disabled:opacity-40"
+                    className="inline-flex items-center gap-1 rounded-md bg-wave-accent px-3 py-1.5 text-xs font-semibold text-zinc-950 transition-all duration-150 hover:bg-wave-accent-hover active:scale-[0.99] disabled:opacity-40"
                   >
                     <Plus className="size-3.5" />
                     {adding ? 'Queuing…' : 'Enqueue'}
@@ -217,25 +217,25 @@ export default function DownloadManager() {
                           <div className="flex items-center gap-1.5">
                             <span
                               className={
-                                'font-mono text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center gap-1 ' +
+                                'font-mono text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1 ' +
                                 (t.status === 'completed'
-                                  ? 'bg-[#3ef50b]/10 text-[#3ef50b] border border-[#3ef50b]/20'
+                                  ? 'bg-wave-accent/10 text-wave-accent border border-wave-accent/20'
                                   : t.status === 'failed'
-                                    ? 'bg-[#f5220b]/10 text-[#f5220b] border border-[#f5220b]/20'
+                                    ? 'bg-wave-error/10 text-wave-error border border-wave-error/20'
                                     : t.status === 'cancelled'
                                       ? 'bg-zinc-800 text-zinc-400'
-                                      : 'bg-[#3ef50b]/15 text-[#3ef50b] border border-[#3ef50b]/30')
+                                      : 'bg-wave-accent/15 text-wave-accent border border-wave-accent/30')
                               }
                             >
-                              {t.status === 'running' && <Loader2 className="size-2.5 animate-spin text-[#3ef50b]" />}
-                              {t.status === 'completed' && <CheckCircle2 className="size-2.5 text-[#3ef50b]" />}
-                              {t.status === 'failed' && <AlertCircle className="size-2.5 text-[#f5220b]" />}
+                              {t.status === 'running' && <Loader2 className="size-2.5 animate-spin text-wave-accent" />}
+                              {t.status === 'completed' && <CheckCircle2 className="size-2.5 text-wave-accent" />}
+                              {t.status === 'failed' && <AlertCircle className="size-2.5 text-wave-error" />}
                               {STATUS_LABEL[t.status] ?? t.status}
                             </span>
                             {live && (
                               <button
                                 onClick={() => cancel(t.id)}
-                                className="rounded p-1 text-zinc-500 transition-colors duration-150 hover:bg-[#f5220b]/10 hover:text-[#f5220b]"
+                                className="rounded p-1 text-zinc-500 transition-colors duration-150 hover:bg-wave-error/10 hover:text-wave-error"
                                 title="Cancel Task"
                               >
                                 <Ban className="size-3.5" />
@@ -250,20 +250,20 @@ export default function DownloadManager() {
                             className={
                               'h-full rounded-full transition-all duration-200 ' +
                               (t.status === 'failed'
-                                ? 'bg-[#f5220b]'
+                                ? 'bg-wave-error'
                                 : t.status === 'cancelled'
                                   ? 'bg-zinc-600'
-                                  : 'bg-[#3ef50b]')
+                                  : 'bg-wave-accent')
                             }
                             style={{ width: `${pct}%` }}
                           />
                         </div>
 
                         {t.error && (
-                          <p className="font-mono text-[11px] text-[#f5220b] leading-tight break-all">{t.error}</p>
+                          <p className="font-mono text-xs text-wave-error leading-tight break-all">{t.error}</p>
                         )}
                         {t.status === 'running' && (
-                          <div className="flex items-center justify-between font-mono text-[10px] text-zinc-500">
+                          <div className="flex items-center justify-between font-mono text-xs text-zinc-500">
                             <span>PROGRESS: {pct}%</span>
                             <span className="text-zinc-400">DOWNLOADING</span>
                           </div>

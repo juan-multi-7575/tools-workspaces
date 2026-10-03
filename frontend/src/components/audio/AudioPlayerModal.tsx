@@ -104,26 +104,26 @@ export default function AudioPlayerModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#4E220F]/30 backdrop-blur-[3px]">
-      <div className="relative w-full max-w-xl rounded-2xl border-2 border-[#B0BA99] bg-[#F7F1DE] shadow-2xl p-6 text-[#4E220F]">
+    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-brand-espresso/30 backdrop-blur-[3px]">
+      <div className="relative w-full max-w-xl rounded-2xl border-2 border-brand-sage bg-brand-cream shadow-2xl p-6 text-brand-espresso">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#B0BA99]/60 pb-3.5 mb-4">
+        <div className="flex items-center justify-between border-b border-brand-sage/60 pb-3.5 mb-4">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7] shadow-xs">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-brand-caramel text-brand-cream-light shadow-xs">
               <Music className="size-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-[#4E220F] truncate max-w-sm">
+              <h3 className="text-sm font-bold text-brand-espresso truncate max-w-sm">
                 {media.name}
               </h3>
-              <p className="font-mono text-[10px] text-[#7C5339]">
+              <p className="font-mono text-xs text-brand-caramel-text">
                 STANDALONE AUDIO PLAYER TOOL
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-[#7C5339] hover:bg-[#B0BA99]/30 hover:text-[#4E220F] transition-colors"
+            className="rounded-lg p-1.5 text-brand-caramel-text hover:bg-brand-sage/30 hover:text-brand-espresso transition-colors"
           >
             <X className="size-4" />
           </button>
@@ -143,7 +143,7 @@ export default function AudioPlayerModal({
         />
 
         {/* Waveform Visualization Canvas Simulation */}
-        <div className="relative rounded-xl border border-[#B0BA99] bg-[#EDE5CD]/70 p-4 mb-4 flex flex-col items-center justify-center min-h-[110px] shadow-inner">
+        <div className="relative rounded-xl border border-brand-sage bg-brand-cream-dark/70 p-4 mb-4 flex flex-col items-center justify-center min-h-[110px] shadow-inner">
           <div className="flex items-center gap-1 w-full justify-center h-16 px-4">
             {Array.from({ length: 48 }).map((_, i) => {
               const progressRatio = duration > 0 ? currentTime / duration : 0
@@ -154,7 +154,7 @@ export default function AudioPlayerModal({
                 <div
                   key={i}
                   className={`w-1.5 rounded-full transition-all duration-150 ${
-                    isPlayed ? 'bg-[#9D6638]' : 'bg-[#B0BA99]'
+                    isPlayed ? 'bg-brand-caramel' : 'bg-brand-sage'
                   }`}
                   style={{ height: `${heightPx}px` }}
                 />
@@ -162,7 +162,7 @@ export default function AudioPlayerModal({
             })}
           </div>
 
-          <div className="flex items-center justify-between w-full mt-2 px-1 font-mono text-[11px] font-semibold text-[#7C5339]">
+          <div className="flex items-center justify-between w-full mt-2 px-1 font-mono text-xs font-semibold text-brand-caramel-text">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
@@ -176,22 +176,22 @@ export default function AudioPlayerModal({
             max={duration || 100}
             value={currentTime}
             onChange={handleSeek}
-            className="w-full h-1.5 bg-[#EDE5CD] rounded-lg appearance-none cursor-pointer accent-[#9D6638]"
+            className="w-full h-1.5 bg-brand-cream-dark rounded-lg appearance-none cursor-pointer accent-brand-caramel"
           />
         </div>
 
         {/* Playback Controls */}
-        <div className="flex items-center justify-between gap-4 mb-5 bg-[#FFFFFF] p-3 rounded-xl border border-[#B0BA99]/80 shadow-xs">
+        <div className="flex items-center justify-between gap-4 mb-5 bg-surface-white p-3 rounded-xl border border-brand-sage/80 shadow-xs">
           {/* Speed selector */}
           <div className="flex items-center gap-1">
             {[0.75, 1.0, 1.25, 1.5, 2.0].map((rate) => (
               <button
                 key={rate}
                 onClick={() => changeSpeed(rate)}
-                className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold transition-all ${
+                className={`px-1.5 py-0.5 rounded text-xs font-mono font-bold transition-all ${
                   playbackRate === rate
-                    ? 'bg-[#9D6638] text-[#FDFBF7]'
-                    : 'bg-[#EDE5CD] text-[#7C5339] hover:bg-[#B0BA99]/40'
+                    ? 'bg-brand-caramel text-brand-cream-light'
+                    : 'bg-brand-cream-dark text-brand-caramel-text hover:bg-brand-sage/40'
                 }`}
               >
                 {rate}x
@@ -208,7 +208,7 @@ export default function AudioPlayerModal({
                   setCurrentTime(0)
                 }
               }}
-              className="p-2 rounded-full text-[#7C5339] hover:bg-[#EDE5CD] transition-colors"
+              className="p-2 rounded-full text-brand-caramel-text hover:bg-brand-cream-dark transition-colors"
               title="Restart"
             >
               <RotateCcw className="size-4" />
@@ -216,7 +216,7 @@ export default function AudioPlayerModal({
 
             <button
               onClick={togglePlay}
-              className="flex size-11 items-center justify-center rounded-full bg-[#9D6638] text-[#FDFBF7] shadow-md hover:bg-[#86542C] active:scale-95 transition-all"
+              className="flex size-11 items-center justify-center rounded-full bg-brand-caramel text-brand-cream-light shadow-md hover:bg-brand-caramel-hover active:scale-95 transition-all"
             >
               {playing ? (
                 <Pause className="size-5 fill-current" />
@@ -230,10 +230,10 @@ export default function AudioPlayerModal({
           <div className="flex items-center gap-2">
             <button
               onClick={toggleMute}
-              className="text-[#7C5339] hover:text-[#4E220F]"
+              className="text-brand-caramel-text hover:text-brand-espresso"
             >
               {muted || volume === 0 ? (
-                <VolumeX className="size-4 text-[#A83232]" />
+                <VolumeX className="size-4 text-accent-contrast" />
               ) : (
                 <Volume2 className="size-4" />
               )}
@@ -245,15 +245,15 @@ export default function AudioPlayerModal({
               step={0.05}
               value={muted ? 0 : volume}
               onChange={handleVolumeChange}
-              className="w-16 h-1.5 bg-[#EDE5CD] rounded-lg appearance-none cursor-pointer accent-[#9D6638]"
+              className="w-16 h-1.5 bg-brand-cream-dark rounded-lg appearance-none cursor-pointer accent-brand-caramel"
             />
           </div>
         </div>
 
         {/* Quick Action Bridges to Other Tools */}
-        <div className="border-t border-[#B0BA99]/60 pt-3.5 space-y-2">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7C5339] flex items-center gap-1">
-            <Sparkles className="size-3 text-[#9D6638]" />
+        <div className="border-t border-brand-sage/60 pt-3.5 space-y-2">
+          <span className="font-mono text-xs font-bold uppercase tracking-wider text-brand-caramel-text flex items-center gap-1">
+            <Sparkles className="size-3 text-brand-caramel" />
             Send Audio to Platform Tools
           </span>
           <div className="grid grid-cols-3 gap-2">
@@ -262,7 +262,7 @@ export default function AudioPlayerModal({
                 onClose()
                 if (onSendToTool) onSendToTool('trimmer', media.path)
               }}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-[#B0BA99] bg-[#EDE5CD]/60 py-2 px-2.5 text-xs font-semibold text-[#4E220F] hover:bg-[#9D6638] hover:text-[#FDFBF7] hover:border-[#9D6638] transition-all shadow-xs"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-brand-sage bg-brand-cream-dark/60 py-2 px-2.5 text-xs font-semibold text-brand-espresso hover:bg-brand-caramel hover:text-brand-cream-light hover:border-brand-caramel transition-all shadow-xs"
             >
               <Scissors className="size-3.5" />
               <span>Trim / Split</span>
@@ -273,7 +273,7 @@ export default function AudioPlayerModal({
                 onClose()
                 if (onSendToTool) onSendToTool('transcriber', media.path)
               }}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-[#B0BA99] bg-[#EDE5CD]/60 py-2 px-2.5 text-xs font-semibold text-[#4E220F] hover:bg-[#9D6638] hover:text-[#FDFBF7] hover:border-[#9D6638] transition-all shadow-xs"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-brand-sage bg-brand-cream-dark/60 py-2 px-2.5 text-xs font-semibold text-brand-espresso hover:bg-brand-caramel hover:text-brand-cream-light hover:border-brand-caramel transition-all shadow-xs"
             >
               <FileText className="size-3.5" />
               <span>Transcribe</span>
@@ -284,7 +284,7 @@ export default function AudioPlayerModal({
                 onClose()
                 if (onSendToTool) onSendToTool('audio_processor', media.path)
               }}
-              className="flex items-center justify-center gap-1.5 rounded-lg border border-[#B0BA99] bg-[#EDE5CD]/60 py-2 px-2.5 text-xs font-semibold text-[#4E220F] hover:bg-[#9D6638] hover:text-[#FDFBF7] hover:border-[#9D6638] transition-all shadow-xs"
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-brand-sage bg-brand-cream-dark/60 py-2 px-2.5 text-xs font-semibold text-brand-espresso hover:bg-brand-caramel hover:text-brand-cream-light hover:border-brand-caramel transition-all shadow-xs"
             >
               <Sliders className="size-3.5" />
               <span>Convert/Resample</span>

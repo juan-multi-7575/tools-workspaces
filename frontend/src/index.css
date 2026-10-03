@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@theme {
+@theme static {
   --color-brand-cream: #F7F1DE;
   --color-brand-cream-light: #FDFBF7;
   --color-brand-cream-dark: #EDE5CD;
@@ -20,10 +20,46 @@
   --color-accent-contrast: #A83232;
   --color-accent-contrast-hover: #8F2727;
   --color-accent-contrast-muted: rgba(168, 50, 50, 0.15);
+  --color-surface-white: #FFFFFF;
+  --color-surface-black: #000000;
+  --color-success: #2E6B47;
+  --color-success-hover: #245437;
+  --color-success-soft: #DFF0D8;
+  --color-error-hover: #862727;
+  --color-error-soft: #FDF2F2;
+  --color-error-tint: #F2DEDE;
+  --color-error-light: #FF9999;
+  --color-warning: #F5C86B;
+  --color-surface-warm-white: #FFF9F5;
+  --color-surface-dark: #2E2824;
+  --color-surface-dark-red: #231212;
+  --color-wave-accent: #3EF50B;
+  --color-wave-accent-hover: #35D409;
+  --color-wave-error: #F5220B;
+  --color-wave-baseline: #3F3F46;
+  --color-wave-cursor: #F4F4F5;
 }
 
 :root {
   color-scheme: light;
+  --color-focus-ring: var(--color-brand-caramel);
+  --z-panel: 10;
+  --z-sticky: 20;
+  --z-overlay: 30;
+  --z-drawer: 40;
+  --z-modal: 50;
+}
+
+@utility z-panel { z-index: var(--z-panel); }
+@utility z-sticky { z-index: var(--z-sticky); }
+@utility z-overlay { z-index: var(--z-overlay); }
+@utility z-drawer { z-index: var(--z-drawer); }
+@utility z-modal { z-index: var(--z-modal); }
+
+/* Keep keyboard focus visible even on controls with outline-none utilities. */
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring) !important;
+  outline-offset: 3px;
 }
 
 html,
@@ -35,8 +71,8 @@ body,
 
 body {
   margin: 0;
-  background-color: #F7F1DE;
-  color: #4E220F;
+  background-color: var(--color-brand-cream);
+  color: var(--color-brand-espresso);
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -53,10 +89,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #B0BA99;
+  background: var(--color-brand-sage);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9D6638;
+  background: var(--color-brand-caramel);
 }

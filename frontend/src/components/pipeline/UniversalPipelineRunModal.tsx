@@ -18,8 +18,9 @@ import {
   ChevronUp,
 } from 'lucide-react'
 import type { PipelineEntryInput, ResolvedPipelineFlow } from '../../lib/pipelineInputResolver'
-import { api, type DAGNode } from '../../lib/api'
+import { api, errorMessage, type DAGNode } from '../../lib/api'
 import UniversalFileInput from '../common/UniversalFileInput'
+import ErrorBoundary, { BoundaryContent } from '../common/ErrorBoundary'
 
 interface UniversalPipelineRunModalProps {
   isOpen: boolean
@@ -126,19 +127,17 @@ export default function UniversalPipelineRunModal({
             [key]: { state: 'ready', title: res.title || 'Untitled', duration: res.duration_seconds ?? null, uploader: res.uploader ?? null },
           }))
         } else {
-          const rawErr = res.error || ''
-          const isEnvOrTraceback = /ModuleNotFoundError|No module named|ImportError|Traceback/i.test(rawErr)
-          const errorMsg = isEnvOrTraceback
+          const code = typeof res.error === 'object' ? res.error?.code : undefined
+          const errorMsg = code === 'PREVIEW_UNAVAILABLE' || code === 'DEPENDENCY_UNAVAILABLE'
             ? 'Live preview unavailable (direct execution will be used)'
-            : (res.error || 'Could not resolve URL.')
+            : errorMessage(res.error) || 'Could not resolve URL.'
           setUrlPreviews((prev) => ({ ...prev, [key]: { state: 'error', error: errorMsg } }))
         }
       })
       .catch((err) => {
         if (previewReqRef.current !== reqId) return
-        const rawErr = err instanceof Error ? err.message : String(err || '')
-        const isEnvOrTraceback = /ModuleNotFoundError|No module named|ImportError|Traceback/i.test(rawErr)
-        const errorMsg = isEnvOrTraceback
+        const code = err && typeof err === 'object' && 'code' in err ? err.code : undefined
+        const errorMsg = code === 'PREVIEW_UNAVAILABLE' || code === 'DEPENDENCY_UNAVAILABLE'
           ? 'Live preview unavailable (direct execution will be used)'
           : 'Metadata lookup failed.'
         setUrlPreviews((prev) => ({ ...prev, [key]: { state: 'error', error: errorMsg } }))
@@ -536,26 +535,28 @@ export default function UniversalPipelineRunModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+    <ErrorBoundary name="Pipeline run dialog" resetKey={isOpen}>
+      <BoundaryContent render={() => (
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
       <div
         ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="run-pipeline-title"
         tabIndex={-1}
-        className="w-full max-w-2xl rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] outline-none"
+        className="w-full max-w-2xl rounded-2xl border border-brand-sage bg-surface-white shadow-2xl overflow-hidden flex flex-col max-h-[90vh] outline-none"
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#B0BA99]/40 bg-[#EDE5CD]/50 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-brand-sage/40 bg-brand-cream-dark/50 px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-[#9D6638] text-[#FFFFFF] shadow-2xs">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-brand-caramel text-surface-white shadow-2xs">
               <Play className="size-4.5 fill-current translate-x-0.5" />
             </div>
             <div>
-              <h3 id="run-pipeline-title" className="text-base font-bold text-[#4E220F] flex items-center gap-2">
+              <h3 id="run-pipeline-title" className="text-base font-bold text-brand-espresso flex items-center gap-2">
                 {pipelineTitle}
               </h3>
-              <p className="text-xs text-[#7C5339]">
+              <p className="text-xs text-brand-caramel-text">
                 {stepCount} step{stepCount === 1 ? '' : 's'}
                 {totalOverrides > 0 && ` · ${totalOverrides} override${totalOverrides === 1 ? '' : 's'}`}
                 {resolvedFlow?.hasTranslationNode && ` · translation ${translateToEnglish ? 'on' : 'original language'}`}
@@ -564,7 +565,8 @@ export default function UniversalPipelineRunModal({
           </div>
           <button
             onClick={onClose}
-            className="flex size-8 items-center justify-center rounded-xl text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F] transition-colors"
+            aria-label="Close"
+            className="flex size-8 items-center justify-center rounded-xl text-brand-caramel-text hover:bg-brand-cream-dark hover:text-brand-espresso transition-colors"
           >
             <X className="size-5" />
           </button>
@@ -572,24 +574,24 @@ export default function UniversalPipelineRunModal({
 
         {/* Pipeline Execution Flow Breadcrumbs */}
         {toolSteps && toolSteps.length > 0 && (
-          <div className="border-b border-[#B0BA99]/30 bg-[#F7F1DE]/60 px-6 py-2.5">
-            <div className="flex items-center gap-2 overflow-x-auto text-xs font-semibold text-[#7C5339] no-scrollbar">
-              <span className="text-[11px] uppercase tracking-wider font-bold text-[#4E220F]/60">Flow:</span>
+          <div className="border-b border-brand-sage/30 bg-brand-cream/60 px-6 py-2.5">
+            <div className="flex items-center gap-2 overflow-x-auto text-xs font-semibold text-brand-caramel-text no-scrollbar">
+              <span className="text-xs uppercase tracking-wider font-bold text-brand-espresso/60">Flow:</span>
               {toolSteps.map((step, idx) => {
                 const isTransStep = translationStepName !== undefined && step === translationStepName
                 const transOff = isTransStep && !translateToEnglish
                 return (
                   <React.Fragment key={idx}>
-                    {idx > 0 && <ArrowRight className="size-3.5 text-[#9D6638] shrink-0" />}
+                    {idx > 0 && <ArrowRight className="size-3.5 text-brand-caramel shrink-0" />}
                     <span
-                      className={`px-2 py-0.5 rounded-md shrink-0 font-mono text-[11px] ${
+                      className={`px-2 py-0.5 rounded-md shrink-0 font-mono text-xs ${
                         isTransStep
                           ? transOff
-                            ? 'bg-[#EDE5CD] text-[#7C5339] border border-[#B0BA99]'
-                            : 'bg-[#9D6638]/15 text-[#9D6638] font-bold border border-[#9D6638]/30'
+                            ? 'bg-brand-cream-dark text-brand-caramel-text border border-brand-sage'
+                            : 'bg-brand-caramel/15 text-brand-caramel font-bold border border-brand-caramel/30'
                           : idx === 0
-                          ? 'bg-[#9D6638]/15 text-[#9D6638] font-bold border border-[#9D6638]/30'
-                          : 'bg-[#EDE5CD]/70 text-[#4E220F]'
+                          ? 'bg-brand-caramel/15 text-brand-caramel font-bold border border-brand-caramel/30'
+                          : 'bg-brand-cream-dark/70 text-brand-espresso'
                       }`}
                       title={transOff ? 'Runs in original-language transcription mode' : undefined}
                     >
@@ -606,23 +608,23 @@ export default function UniversalPipelineRunModal({
         {/* Dynamic Duplicate Confirmation View */}
         {duplicateMatches ? (
           <div className="p-6 space-y-4 overflow-y-auto flex-1">
-            <div className="rounded-2xl border-2 border-[#9D6638]/40 bg-[#F7F1DE]/60 p-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm font-bold text-[#4E220F]">
-                <Sparkles className="size-5 text-[#9D6638]" />
+            <div className="rounded-2xl border-2 border-brand-caramel/40 bg-brand-cream/60 p-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-bold text-brand-espresso">
+                <Sparkles className="size-5 text-brand-caramel" />
                 <span>Existing Media & Outputs Detected!</span>
               </div>
-              <p className="text-xs text-[#7C5339] leading-relaxed">
+              <p className="text-xs text-brand-caramel-text leading-relaxed">
                 We found existing completed outputs in this workspace matching your exact inputs & settings (verified on disk). Reuse skips only matching steps; if you deleted files manually or changed translation settings (e.g. Korean → English), choose <b>Force Fresh Re-Run</b> to regenerate. Deleted files are auto-detected — phantom reuse is now blocked.
               </p>
 
               <div className="space-y-2 mt-2">
                 {duplicateMatches.map((m) => (
-                  <div key={m.node_id} className="rounded-xl border border-[#B0BA99]/70 bg-[#FFFFFF] p-3 text-xs space-y-1">
-                    <div className="flex items-center justify-between font-bold text-[#4E220F]">
-                      <span className="uppercase text-[10px] font-mono text-[#9D6638] bg-[#EDE5CD] px-1.5 py-0.5 rounded">
+                  <div key={m.node_id} className="rounded-xl border border-brand-sage/70 bg-surface-white p-3 text-xs space-y-1">
+                    <div className="flex items-center justify-between font-bold text-brand-espresso">
+                      <span className="uppercase text-xs font-mono text-brand-caramel bg-brand-cream-dark px-1.5 py-0.5 rounded">
                         {m.tool_id}
                       </span>
-                      <span className="text-[10px] text-[#2E6B47] font-semibold flex items-center gap-1">
+                      <span className="text-xs text-success font-semibold flex items-center gap-1">
                         <FileCheck className="size-3" /> Ready on disk
                       </span>
                     </div>
@@ -631,11 +633,11 @@ export default function UniversalPipelineRunModal({
                         const ext = a.name.split('.').pop()?.toLowerCase() || 'file'
                         const typeLabel = ext.length > 5 ? 'file' : ext
                         return (
-                          <div key={a.name} className="flex items-start gap-2 rounded-lg border border-[#B0BA99]/40 bg-[#F7F1DE]/50 p-2">
-                            <span className="shrink-0 rounded-md bg-[#9D6638] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#FDFBF7]">{typeLabel}</span>
+                          <div key={a.name} className="flex items-start gap-2 rounded-lg border border-brand-sage/40 bg-brand-cream/50 p-2">
+                            <span className="shrink-0 rounded-md bg-brand-caramel px-1.5 py-0.5 text-xs font-bold uppercase tracking-wider text-brand-cream-light">{typeLabel}</span>
                             <div className="min-w-0 flex-1">
-                              <p className="break-all text-[11px] font-mono font-medium leading-tight text-[#4E220F]" title={a.name}>{a.name}</p>
-                              <p className="text-[10px] font-mono text-[#7C5339]">{(a.size / 1024).toFixed(1)} KB • {a.path}</p>
+                              <p className="break-all text-xs font-mono font-medium leading-tight text-brand-espresso" title={a.name}>{a.name}</p>
+                              <p className="text-xs font-mono text-brand-caramel-text">{(a.size / 1024).toFixed(1)} KB • {a.path}</p>
                             </div>
                           </div>
                         )
@@ -650,7 +652,7 @@ export default function UniversalPipelineRunModal({
               <button
                 type="button"
                 onClick={() => setDuplicateMatches(null)}
-                className="rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-4 py-2.5 text-xs font-bold text-[#7C5339] hover:bg-[#EDE5CD] transition-colors w-full sm:w-auto"
+                className="rounded-xl border border-brand-sage bg-surface-white px-4 py-2.5 text-xs font-bold text-brand-caramel-text hover:bg-brand-cream-dark transition-colors w-full sm:w-auto"
               >
                 Back to Edit
               </button>
@@ -658,7 +660,7 @@ export default function UniversalPipelineRunModal({
                 <button
                   type="button"
                   onClick={() => handleChoice('recompute')}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-4 py-2.5 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-all shadow-2xs w-full sm:w-auto"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-brand-sage bg-brand-cream-dark px-4 py-2.5 text-xs font-bold text-brand-espresso hover:bg-brand-sage/40 transition-all shadow-2xs w-full sm:w-auto"
                 >
                   <RefreshCw className="size-3.5" />
                   Force Fresh Re-Run
@@ -666,7 +668,7 @@ export default function UniversalPipelineRunModal({
                 <button
                   type="button"
                   onClick={() => handleChoice('reuse')}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#2E6B47] px-4 py-2.5 text-xs font-bold text-[#FDFBF7] hover:bg-[#245437] transition-all shadow-sm active:scale-95 w-full sm:w-auto"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-success px-4 py-2.5 text-xs font-bold text-brand-cream-light hover:bg-success-hover transition-all shadow-sm active:scale-95 w-full sm:w-auto"
                 >
                   <FastForward className="size-3.5 fill-current" />
                   ⚡ Reuse & Skip Completed
@@ -681,19 +683,19 @@ export default function UniversalPipelineRunModal({
               {missingKeyWarnings.map(({ toolName, provider }) => (
                 <div
                   key={provider}
-                  className="flex flex-wrap items-center gap-x-2 rounded-xl border border-[#9D6638]/50 bg-[#F5C86B]/20 p-3 text-[11px] font-semibold text-[#4E220F]"
+                  className="flex flex-wrap items-center gap-x-2 rounded-xl border border-brand-caramel/50 bg-warning/20 p-3 text-xs font-semibold text-brand-espresso"
                 >
-                  <AlertCircle className="size-4 shrink-0 text-[#9D6638]" />
+                  <AlertCircle className="size-4 shrink-0 text-brand-caramel" />
                   <span>
                     {toolName} needs {provider === 'openai' ? 'an' : 'a'} {provider} key — add it in{' '}
-                    <a href="/settings" className="font-bold text-[#9D6638] underline underline-offset-2 hover:text-[#86542C]">
+                    <a href="/settings" className="font-bold text-brand-caramel underline underline-offset-2 hover:text-brand-caramel-hover">
                       Settings
                     </a>
                   </span>
                 </div>
               ))}
               {validationError && (
-                <div className="flex items-center gap-2 rounded-xl border border-[#A83232]/40 bg-[#A83232]/10 p-3 text-xs font-semibold text-[#A83232]">
+                <div className="flex items-center gap-2 rounded-xl border border-accent-contrast/40 bg-accent-contrast/10 p-3 text-xs font-semibold text-accent-contrast">
                   <AlertCircle className="size-4 shrink-0" />
                   <span>{validationError}</span>
                 </div>
@@ -701,15 +703,15 @@ export default function UniversalPipelineRunModal({
 
               {/* SECTION 1: Required Entry Inputs (URLs, Files) */}
               <div className="space-y-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#7C5339] flex items-center gap-1.5">
-                  <Link className="size-3.5 text-[#9D6638]" /> Pipeline Input{activeEntryInputs.length === 1 ? '' : 's'}
+                <span className="text-xs font-bold uppercase tracking-wider text-brand-caramel-text flex items-center gap-1.5">
+                  <Link className="size-3.5 text-brand-caramel" /> Pipeline Input{activeEntryInputs.length === 1 ? '' : 's'}
                 </span>
 
                 {activeEntryInputs.length === 0 ? (
-                  <div className="rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/50 p-4 text-center">
-                    <CheckCircle2 className="mx-auto size-6 text-[#9D6638] mb-1" />
-                    <p className="text-xs font-bold text-[#4E220F]">Ready to Execute</p>
-                    <p className="text-[11px] text-[#7C5339]">
+                  <div className="rounded-xl border border-brand-sage bg-brand-cream/50 p-4 text-center">
+                    <CheckCircle2 className="mx-auto size-6 text-brand-caramel mb-1" />
+                    <p className="text-xs font-bold text-brand-espresso">Ready to Execute</p>
+                    <p className="text-xs text-brand-caramel-text">
                       Pipeline inputs are satisfied or pre-configured.
                     </p>
                   </div>
@@ -720,14 +722,14 @@ export default function UniversalPipelineRunModal({
                     return (
                       <div
                         key={`${inp.nodeId}-${inp.paramKey}`}
-                        className="rounded-xl border border-[#B0BA99]/60 bg-[#F7F1DE]/40 p-4 space-y-2.5 transition-all focus-within:border-[#9D6638] focus-within:bg-[#FFFFFF]"
+                        className="rounded-xl border border-brand-sage/60 bg-brand-cream/40 p-4 space-y-2.5 transition-all focus-within:border-brand-caramel focus-within:bg-surface-white"
                       >
                         <div className="flex items-center justify-between">
-                          <label className="text-xs font-bold text-[#4E220F] flex items-center gap-1.5">
-                            {inp.isUrl && <Link className="size-3.5 text-[#9D6638]" />}
-                            {inp.isFilePath && <FolderOpen className="size-3.5 text-[#9D6638]" />}
+                          <label className="text-xs font-bold text-brand-espresso flex items-center gap-1.5">
+                            {inp.isUrl && <Link className="size-3.5 text-brand-caramel" />}
+                            {inp.isFilePath && <FolderOpen className="size-3.5 text-brand-caramel" />}
                             <span>{inp.title}</span>
-                            <span className="text-[10px] font-mono text-[#7C5339] font-normal">
+                            <span className="text-xs font-mono text-brand-caramel-text font-normal">
                               ({inp.toolName})
                             </span>
                           </label>
@@ -735,7 +737,7 @@ export default function UniversalPipelineRunModal({
                             <button
                               type="button"
                               onClick={() => handlePasteClipboard(inp.nodeId, inp.paramKey)}
-                              className="inline-flex items-center gap-1 text-[11px] font-bold text-[#9D6638] hover:text-[#86542C] transition-colors"
+                              className="inline-flex items-center gap-1 text-xs font-bold text-brand-caramel hover:text-brand-caramel-hover transition-colors"
                             >
                               <Clipboard className="size-3" /> Paste URL
                             </button>
@@ -743,7 +745,7 @@ export default function UniversalPipelineRunModal({
                         </div>
 
                         {inp.description && (
-                          <p className="text-[11px] text-[#7C5339] leading-tight">
+                          <p className="text-xs text-brand-caramel-text leading-tight">
                             {inp.description}
                           </p>
                         )}
@@ -755,23 +757,23 @@ export default function UniversalPipelineRunModal({
                             placeholder={`Select or upload file for ${inp.title}...`}
                           />
                         ) : inp.type === 'boolean' ? (
-                          <label className="flex items-center gap-3 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-2.5 cursor-pointer hover:border-[#9D6638] transition-colors">
+                          <label className="flex items-center gap-3 rounded-xl border border-brand-sage bg-surface-white px-3.5 py-2.5 cursor-pointer hover:border-brand-caramel transition-colors">
                             <input
                               type="checkbox"
                               checked={Boolean(val)}
                               onChange={(e) => handleFieldChange(inp.nodeId, inp.paramKey, e.target.checked)}
-                              className="size-4 rounded border-[#B0BA99] text-[#9D6638] focus:ring-[#9D6638]"
+                              className="size-4 rounded border-brand-sage text-brand-caramel focus:ring-brand-caramel"
                             />
-                            <span className="text-xs font-bold text-[#4E220F]">
+                            <span className="text-xs font-bold text-brand-espresso">
                               {val ? 'Enabled' : 'Disabled'}
                             </span>
-                            <span className="text-[11px] text-[#7C5339]">— {val ? 'Yes' : 'No'}</span>
+                            <span className="text-xs text-brand-caramel-text">— {val ? 'Yes' : 'No'}</span>
                           </label>
                         ) : inp.enumOptions && inp.enumOptions.length > 0 ? (
                           <select
                             value={String(val)}
                             onChange={(e) => handleFieldChange(inp.nodeId, inp.paramKey, e.target.value)}
-                            className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-2 text-xs text-[#4E220F] font-bold focus:border-[#9D6638] focus:outline-none"
+                            className="w-full rounded-xl border border-brand-sage bg-surface-white px-3.5 py-2 text-xs text-brand-espresso font-bold focus:border-brand-caramel focus:outline-none"
                           >
                             {inp.enumOptions.map((opt) => (
                               <option key={String(opt)} value={String(opt)}>
@@ -794,7 +796,7 @@ export default function UniversalPipelineRunModal({
                                   : undefined
                               }
                               placeholder={inp.isUrl ? 'https://www.youtube.com/watch?v=...' : `Enter ${inp.title}...`}
-                              className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-2 text-xs text-[#4E220F] font-medium placeholder-[#7C5339]/50 focus:border-[#9D6638] focus:outline-none"
+                              className="w-full rounded-xl border border-brand-sage bg-surface-white px-3.5 py-2 text-xs text-brand-espresso font-medium placeholder-brand-caramel-text/50 focus:border-brand-caramel focus:outline-none"
                             />
                             {/* Reserved inline status slot: always mounted so the
                                 input block never shifts height when an error or
@@ -806,7 +808,7 @@ export default function UniversalPipelineRunModal({
                                 const val = String(formValues[inp.nodeId]?.[inp.paramKey] ?? '').trim()
                                 if ((!preview || preview.state === 'idle') && touchedUrls.has(key) && !val) {
                                   return (
-                                    <p className="text-[11px] font-semibold text-[#A83232]">
+                                    <p className="text-xs font-semibold text-accent-contrast">
                                       A URL is required to run this pipeline.
                                     </p>
                                   )
@@ -814,7 +816,7 @@ export default function UniversalPipelineRunModal({
                                 if (!preview || preview.state === 'idle') return null
                                 if (preview.state === 'checking') {
                                   return (
-                                    <p className="text-[11px] font-mono text-[#7C5339] animate-pulse">
+                                    <p className="text-xs font-mono text-brand-caramel-text animate-pulse">
                                       Verifying media URL…
                                     </p>
                                   )
@@ -822,7 +824,7 @@ export default function UniversalPipelineRunModal({
                                 if (preview.state === 'ready') {
                                   const dur = formatDuration(preview.duration)
                                   return (
-                                    <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2E6B47]">
+                                    <p className="flex items-center gap-1.5 text-xs font-semibold text-success">
                                       <CheckCircle2 className="size-3.5 shrink-0" />
                                       <span className="truncate">
                                         {preview.title}
@@ -834,14 +836,14 @@ export default function UniversalPipelineRunModal({
                                 }
                                 if (preview.state === 'overridden') {
                                   return (
-                                    <p className="text-[11px] font-mono text-[#7C5339]">
+                                    <p className="text-xs font-mono text-brand-caramel-text">
                                       Unverified URL — running anyway.
                                     </p>
                                   )
                                 }
                                 return (
-                                  <p className="flex items-center gap-1.5 text-[11px] font-medium text-[#7C5339]">
-                                    <AlertCircle className="size-3.5 shrink-0 text-[#9D6638]" />
+                                  <p className="flex items-center gap-1.5 text-xs font-medium text-brand-caramel-text">
+                                    <AlertCircle className="size-3.5 shrink-0 text-brand-caramel" />
                                     <span>{preview.error || 'Live preview unavailable (direct execution will be used)'}</span>
                                   </p>
                                 )
@@ -857,39 +859,39 @@ export default function UniversalPipelineRunModal({
 
               {/* SECTION 3: Step-by-Step Node Configuration Accordion */}
               {nodeConfigs.length > 0 && (
-                <div className="space-y-2.5 pt-2 border-t border-[#B0BA99]/40">
+                <div className="space-y-2.5 pt-2 border-t border-brand-sage/40">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#7C5339] flex items-center gap-1.5">
-                      <Sliders className="size-3.5 text-[#9D6638]" /> Step Options & Parameters (Optional)
+                    <span className="text-xs font-bold uppercase tracking-wider text-brand-caramel-text flex items-center gap-1.5">
+                      <Sliders className="size-3.5 text-brand-caramel" /> Step Options & Parameters (Optional)
                     </span>
-                    <span className="text-[10px] text-[#7C5339] font-mono">
+                    <span className="text-xs text-brand-caramel-text font-mono">
                       {nodeConfigs.length} customizable step{nodeConfigs.length === 1 ? '' : 's'}
                     </span>
                   </div>
-                  <p className="text-[10px] text-[#7C5339] font-mono">
+                  <p className="text-xs text-brand-caramel-text font-mono">
                     Overrides here apply to this run only; other values use the canvas node defaults.
                   </p>
 
                   <div className="space-y-2">
                     {/* Translation as a normal step row — same affordances, toggle inline */}
                     {resolvedFlow?.hasTranslationNode && (
-                      <div className="rounded-xl border border-[#B0BA99]/70 bg-[#FFFFFF] overflow-hidden shadow-2xs">
-                        <div className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[#F7F1DE]/50 text-left">
+                      <div className="rounded-xl border border-brand-sage/70 bg-surface-white overflow-hidden shadow-2xs">
+                        <div className="w-full flex items-center justify-between px-3.5 py-2.5 bg-brand-cream/50 text-left">
                           <div className="flex items-center gap-2">
-                            <Languages className="size-3.5 text-[#9D6638]" />
-                            <span className="font-mono text-xs font-bold text-[#4E220F]">
+                            <Languages className="size-3.5 text-brand-caramel" />
+                            <span className="font-mono text-xs font-bold text-brand-espresso">
                               {translationStepName || 'English Subtitles & Translation'}
                             </span>
                             <span
-                              className={`font-mono text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase ${
+                              className={`font-mono text-xs px-1.5 py-0.5 rounded-full font-bold uppercase ${
                                 translateToEnglish
-                                  ? 'bg-[#9D6638] text-[#FDFBF7]'
-                                  : 'bg-[#EDE5CD] text-[#7C5339] border border-[#B0BA99]'
+                                  ? 'bg-brand-caramel text-brand-cream-light'
+                                  : 'bg-brand-cream-dark text-brand-caramel-text border border-brand-sage'
                               }`}
                             >
                               {translateToEnglish ? 'on' : 'off'}
                             </span>
-                            <span className="font-mono text-[10px] text-[#7C5339] font-normal ml-1">
+                            <span className="font-mono text-xs text-brand-caramel-text font-normal ml-1">
                               {translateToEnglish
                                 ? 'Translates to English subtitles'
                                 : 'Original-language transcript & subtitles'}
@@ -902,7 +904,7 @@ export default function UniversalPipelineRunModal({
                               onChange={(e) => handleToggleTranslation(e.target.checked)}
                               className="sr-only peer"
                             />
-                            <div className="w-9 h-5 bg-[#B0BA99] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[#B0BA99] after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#9D6638]"></div>
+                            <div className="w-9 h-5 bg-brand-sage peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-brand-sage after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-caramel"></div>
                           </label>
                         </div>
                       </div>
@@ -913,44 +915,44 @@ export default function UniversalPipelineRunModal({
                       return (
                         <div
                           key={nodeCfg.nodeId}
-                          className="rounded-xl border border-[#B0BA99]/70 bg-[#FFFFFF] overflow-hidden shadow-2xs"
+                          className="rounded-xl border border-brand-sage/70 bg-surface-white overflow-hidden shadow-2xs"
                         >
                           <button
                             type="button"
                             onClick={() => toggleNodeExpanded(nodeCfg.nodeId)}
-                            className="w-full flex items-center justify-between px-3.5 py-2.5 bg-[#F7F1DE]/50 hover:bg-[#EDE5CD]/50 text-left transition-colors"
+                            className="w-full flex items-center justify-between px-3.5 py-2.5 bg-brand-cream/50 hover:bg-brand-cream-dark/50 text-left transition-colors"
                           >
                             <div className="flex items-center gap-2">
-                              {changed > 0 && <span className="h-2 w-2 rounded-full bg-[#9D6638]" title={`${changed} override${changed === 1 ? '' : 's'}`} />}
-                              <span className="font-mono text-xs font-bold text-[#4E220F]">
+                              {changed > 0 && <span className="h-2 w-2 rounded-full bg-brand-caramel" title={`${changed} override${changed === 1 ? '' : 's'}`} />}
+                              <span className="font-mono text-xs font-bold text-brand-espresso">
                                 {nodeCfg.toolName}
                               </span>
-                              <span className="font-mono text-[9px] px-1.5 py-0.2 rounded bg-[#EDE5CD] text-[#7C5339]">
+                              <span className="font-mono text-xs px-1.5 py-0.2 rounded bg-brand-cream-dark text-brand-caramel-text">
                                 {nodeCfg.toolId}
                               </span>
                               {changed > 0 && (
-                                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-[#9D6638]/15 text-[#9D6638] font-bold border border-[#9D6638]/30">
+                                <span className="font-mono text-xs px-1.5 py-0.5 rounded-full bg-brand-caramel/15 text-brand-caramel font-bold border border-brand-caramel/30">
                                   {changed} of {total} changed
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[#7C5339] text-xs">
-                              <span className="text-[10px] font-mono">{nodeCfg.parameters.length} settings</span>
+                            <div className="flex items-center gap-1.5 text-brand-caramel-text text-xs">
+                              <span className="text-xs font-mono">{nodeCfg.parameters.length} settings</span>
                               {isExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                             </div>
                           </button>
 
                           {isExpanded && (
-                            <div className="p-3.5 space-y-3 bg-[#FFFFFF] border-t border-[#B0BA99]/30">
+                            <div className="p-3.5 space-y-3 bg-surface-white border-t border-brand-sage/30">
                               {changed > 0 && (
-                                <div className="flex items-center justify-between rounded-lg bg-[#F7F1DE]/60 px-2.5 py-1.5">
-                                  <span className="text-[11px] font-mono text-[#7C5339]">
+                                <div className="flex items-center justify-between rounded-lg bg-brand-cream/60 px-2.5 py-1.5">
+                                  <span className="text-xs font-mono text-brand-caramel-text">
                                     {changed} override{changed === 1 ? '' : 's'} for this run
                                   </span>
                                   <button
                                     type="button"
                                     onClick={() => resetNodeToDefaults(nodeCfg.nodeId)}
-                                    className="text-[11px] font-bold text-[#9D6638] hover:text-[#86542C] transition-colors"
+                                    className="text-xs font-bold text-brand-caramel hover:text-brand-caramel-hover transition-colors"
                                   >
                                     Reset to defaults
                                   </button>
@@ -961,29 +963,29 @@ export default function UniversalPipelineRunModal({
                                 const paramChanged = isParamChanged(nodeCfg.nodeId, param.paramKey)
                                 return (
                                   <div key={param.paramKey} className="space-y-1">
-                                    <div className="flex items-center justify-between text-xs font-bold text-[#4E220F]">
+                                    <div className="flex items-center justify-between text-xs font-bold text-brand-espresso">
                                       <span className="flex items-center gap-1.5">
-                                        {paramChanged && <span className="h-1.5 w-1.5 rounded-full bg-[#9D6638]" />}
+                                        {paramChanged && <span className="h-1.5 w-1.5 rounded-full bg-brand-caramel" />}
                                         {param.title}
                                       </span>
                                       {param.defaultVal !== undefined && (
-                                        <span className="font-mono text-[10px] text-[#7C5339] font-normal">
+                                        <span className="font-mono text-xs text-brand-caramel-text font-normal">
                                           Default: {String(param.defaultVal)}
                                         </span>
                                       )}
                                     </div>
                                     {param.description && (
-                                      <p className="text-[11px] text-[#7C5339]">{param.description}</p>
+                                      <p className="text-xs text-brand-caramel-text">{param.description}</p>
                                     )}
                                     {param.type === 'boolean' ? (
-                                      <label className="flex items-center gap-2 rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/60 px-3 py-2 cursor-pointer hover:border-[#9D6638] transition-colors">
+                                      <label className="flex items-center gap-2 rounded-xl border border-brand-sage bg-brand-cream/60 px-3 py-2 cursor-pointer hover:border-brand-caramel transition-colors">
                                         <input
                                           type="checkbox"
                                           checked={Boolean(val)}
                                           onChange={(e) => handleFieldChange(nodeCfg.nodeId, param.paramKey, e.target.checked)}
-                                          className="size-4 rounded border-[#B0BA99] text-[#9D6638] focus:ring-[#9D6638]"
+                                          className="size-4 rounded border-brand-sage text-brand-caramel focus:ring-brand-caramel"
                                         />
-                                        <span className="text-xs font-bold text-[#4E220F]">
+                                        <span className="text-xs font-bold text-brand-espresso">
                                           {val ? 'Enabled' : 'Disabled'}
                                         </span>
                                       </label>
@@ -993,7 +995,7 @@ export default function UniversalPipelineRunModal({
                                         onChange={(e) =>
                                           handleFieldChange(nodeCfg.nodeId, param.paramKey, e.target.value)
                                         }
-                                        className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/60 px-3 py-1.5 text-xs text-[#4E220F] font-bold focus:border-[#9D6638] focus:outline-none"
+                                        className="w-full rounded-xl border border-brand-sage bg-brand-cream/60 px-3 py-1.5 text-xs text-brand-espresso font-bold focus:border-brand-caramel focus:outline-none"
                                       >
                                         {param.enumOptions.map((opt) => (
                                           <option key={String(opt)} value={String(opt)}>
@@ -1014,7 +1016,7 @@ export default function UniversalPipelineRunModal({
                                               : e.target.value,
                                         )
                                       }
-                                      className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/60 px-3 py-1.5 text-xs text-[#4E220F] font-medium focus:border-[#9D6638] focus:outline-none"
+                                      className="w-full rounded-xl border border-brand-sage bg-brand-cream/60 px-3 py-1.5 text-xs text-brand-espresso font-medium focus:border-brand-caramel focus:outline-none"
                                     />
                                   )}
                                 </div>
@@ -1031,12 +1033,12 @@ export default function UniversalPipelineRunModal({
           </div>
 
           {/* Footer Actions */}
-          <div className="border-t border-[#B0BA99]/40 bg-[#EDE5CD]/50 px-6 py-4 space-y-2">
+          <div className="border-t border-brand-sage/40 bg-brand-cream-dark/50 px-6 py-4 space-y-2">
             <div className="flex items-center justify-between">
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl px-4 py-2 text-xs font-semibold text-[#7C5339]/70 hover:bg-[#EDE5CD] hover:text-[#7C5339] transition-colors"
+                className="rounded-xl px-4 py-2 text-xs font-semibold text-brand-caramel-text/70 hover:bg-brand-cream-dark hover:text-brand-caramel-text transition-colors"
               >
                 Cancel
               </button>
@@ -1044,13 +1046,13 @@ export default function UniversalPipelineRunModal({
                 type="submit"
                 disabled={!canSubmit}
                 title={startBlockedReason || `Start ${stepCount} step${stepCount === 1 ? '' : 's'} — runs in background`}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#9D6638] px-5 py-2.5 text-xs font-bold text-[#FDFBF7] shadow-sm hover:bg-[#86542C] transition-all active:scale-95 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-brand-caramel px-5 py-2.5 text-xs font-bold text-brand-cream-light shadow-sm hover:bg-brand-caramel-hover transition-all active:scale-95 disabled:opacity-50"
               >
                 <Play className="size-3.5 fill-current" />
                 {checkingExisting ? 'Verifying...' : `Start · ${stepCount} step${stepCount === 1 ? '' : 's'}`}
               </button>
             </div>
-            <p className="text-[11px] text-[#7C5339] text-right">
+            <p className="text-xs text-brand-caramel-text text-right">
               {startBlockedReason || 'Runs in background — progress in Activity & Records.'}
             </p>
           </div>
@@ -1058,5 +1060,7 @@ export default function UniversalPipelineRunModal({
       )}
     </div>
   </div>
+      )} />
+    </ErrorBoundary>
 )
 }

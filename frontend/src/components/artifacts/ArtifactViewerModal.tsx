@@ -62,12 +62,12 @@ export default function ArtifactViewerModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#4E220F]/30 backdrop-blur-[3px]">
-      <div className="relative flex flex-col w-full max-w-4xl max-h-[88vh] rounded-2xl border-2 border-[#B0BA99] bg-[#F7F1DE] shadow-2xl overflow-hidden text-[#4E220F]">
+    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-brand-espresso/30 backdrop-blur-[3px]">
+      <div className="relative flex flex-col w-full max-w-4xl max-h-[88vh] rounded-2xl border-2 border-brand-sage bg-brand-cream shadow-2xl overflow-hidden text-brand-espresso">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-[#B0BA99]/60 px-5 py-3.5 bg-[#EDE5CD]/80">
+        <div className="flex items-center justify-between border-b border-brand-sage/60 px-5 py-3.5 bg-brand-cream-dark/80">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex size-8 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7] shrink-0 shadow-xs">
+            <div className="flex size-8 items-center justify-center rounded-xl bg-brand-caramel text-brand-cream-light shrink-0 shadow-xs">
               {isImage ? (
                 <ImageIcon className="size-4" />
               ) : isAudio ? (
@@ -79,9 +79,9 @@ export default function ArtifactViewerModal({
               )}
             </div>
             <div className="min-w-0">
-              <h3 className="text-xs font-bold text-[#4E220F] font-mono truncate">{name}</h3>
+              <h3 className="text-xs font-bold text-brand-espresso font-mono truncate">{name}</h3>
               {size ? (
-                <p className="text-[10px] text-[#7C5339] font-mono">{formatSize(size)}</p>
+                <p className="text-xs text-brand-caramel-text font-mono">{formatSize(size)}</p>
               ) : null}
             </div>
           </div>
@@ -90,21 +90,21 @@ export default function ArtifactViewerModal({
             {textContent && (
               <button
                 onClick={copyText}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#EDE5CD] transition-all shadow-xs"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-brand-sage bg-surface-white px-3 py-1.5 text-xs font-bold text-brand-espresso hover:bg-brand-cream-dark transition-all shadow-xs"
               >
-                {copied ? <Check className="size-3.5 text-[#9D6638]" /> : <Copy className="size-3.5" />}
+                {copied ? <Check className="size-3.5 text-brand-caramel" /> : <Copy className="size-3.5" />}
                 {copied ? 'Copied' : 'Copy'}
               </button>
             )}
             <a
               href={downloadUrl}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-3 py-1.5 text-xs font-bold text-[#FDFBF7] shadow-xs hover:bg-[#86542C] transition-all"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-brand-caramel px-3 py-1.5 text-xs font-bold text-brand-cream-light shadow-xs hover:bg-brand-caramel-hover transition-all"
             >
               <Download className="size-3.5" /> Download
             </a>
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-[#7C5339] hover:bg-[#B0BA99]/30 hover:text-[#4E220F] transition-colors"
+              className="rounded-lg p-1.5 text-brand-caramel-text hover:bg-brand-sage/30 hover:text-brand-espresso transition-colors"
             >
               <X className="size-4" />
             </button>
@@ -112,9 +112,9 @@ export default function ArtifactViewerModal({
         </div>
 
         {/* Modal Content Body */}
-        <div className="flex-1 overflow-auto p-5 bg-[#F7F1DE]">
+        <div className="flex-1 overflow-auto p-5 bg-brand-cream">
           {isImage ? (
-            <div className="flex items-center justify-center min-h-[300px] rounded-xl border border-[#B0BA99] bg-[#FFFFFF] p-4 shadow-sm">
+            <div className="flex items-center justify-center min-h-[300px] rounded-xl border border-brand-sage bg-surface-white p-4 shadow-sm">
               <img
                 src={previewUrl}
                 alt={name}
@@ -122,42 +122,42 @@ export default function ArtifactViewerModal({
               />
             </div>
           ) : isAudio ? (
-            <div className="flex flex-col items-center justify-center p-8 space-y-4 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] shadow-sm">
-              <div className="flex size-14 items-center justify-center rounded-full bg-[#EDE5CD] text-[#9D6638]">
+            <div className="flex flex-col items-center justify-center p-8 space-y-4 rounded-xl border border-brand-sage bg-surface-white shadow-sm">
+              <div className="flex size-14 items-center justify-center rounded-full bg-brand-cream-dark text-brand-caramel">
                 <Music className="size-7" />
               </div>
-              <p className="font-mono text-xs font-bold text-[#4E220F]">{name}</p>
+              <p className="font-mono text-xs font-bold text-brand-espresso">{name}</p>
               <audio controls className="w-full max-w-md" src={previewUrl}>
                 Your browser does not support audio playback.
               </audio>
             </div>
           ) : isVideo ? (
-            <div className="flex items-center justify-center rounded-xl border border-[#B0BA99] bg-[#FFFFFF] p-3 shadow-sm">
+            <div className="flex items-center justify-center rounded-xl border border-brand-sage bg-surface-white p-3 shadow-sm">
               <video controls className="max-h-[60vh] max-w-full rounded-lg" src={previewUrl}>
                 Your browser does not support video playback.
               </video>
             </div>
           ) : isPdf ? (
-            <div className="h-[65vh] w-full rounded-xl border border-[#B0BA99] overflow-hidden shadow-sm">
+            <div className="h-[65vh] w-full rounded-xl border border-brand-sage overflow-hidden shadow-sm">
               <iframe src={previewUrl} className="w-full h-full" title={name} />
             </div>
           ) : isTextual ? (
             loading ? (
-              <div className="flex items-center justify-center py-16 text-[#7C5339] font-mono text-xs animate-pulse">
+              <div className="flex items-center justify-center py-16 text-brand-caramel-text font-mono text-xs animate-pulse">
                 Loading content...
               </div>
             ) : (
-              <pre className="p-4 font-mono text-xs text-[#4E220F] bg-[#FFFFFF] border border-[#B0BA99] rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[60vh] shadow-inner font-medium">
+              <pre className="p-4 font-mono text-xs text-brand-espresso bg-surface-white border border-brand-sage rounded-xl overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-[60vh] shadow-inner font-medium">
                 {textContent}
               </pre>
             )
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center space-y-3">
-              <FileText className="size-10 text-[#7C5339]" />
-              <p className="text-xs text-[#7C5339]">Binary or unsupported preview format.</p>
+              <FileText className="size-10 text-brand-caramel-text" />
+              <p className="text-xs text-brand-caramel-text">Binary or unsupported preview format.</p>
               <a
                 href={downloadUrl}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-4 py-2 text-xs font-bold text-[#FDFBF7] hover:bg-[#86542C] transition-all shadow-md"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-brand-caramel px-4 py-2 text-xs font-bold text-brand-cream-light hover:bg-brand-caramel-hover transition-all shadow-md"
               >
                 <Download className="size-3.5" /> Download to view locally
               </a>
