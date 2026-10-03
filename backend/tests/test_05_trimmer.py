@@ -56,4 +56,4 @@ def test_trimmer_missing_input_fails(client):
     )
     body = resp.json()
     assert body["status"] == "failed"
-    assert "input_path is required" in body["error"]
+    assert "input_path is required" in body["error"]["message"]

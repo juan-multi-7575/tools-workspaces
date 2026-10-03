@@ -40,7 +40,7 @@ def test_ocrmypdf_standalone(client):
     body = _run(client, "ocrmypdf", {"input_pdf": "/tmp/doc.pdf"})
     # No fabricated PDF: a missing input must fail before running.
     assert body["status"] == "failed"
-    assert "input file not found" in body["error"]
+    assert "input file not found" in body["error"]["message"]
 
 
 def test_gallery_dl_standalone(client):
@@ -54,7 +54,7 @@ def test_demucs_standalone(client):
     body = _run(client, "demucs", {"input_path": "/tmp/source.wav"})
     # No fabricated stems: a missing input must fail before running.
     assert body["status"] == "failed"
-    assert "input file not found" in body["error"]
+    assert "input file not found" in body["error"]["message"]
 
 
 @pytest.mark.skipif(shutil.which("sox") is None, reason="sox binary not installed")

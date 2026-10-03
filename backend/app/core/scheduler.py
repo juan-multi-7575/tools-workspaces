@@ -12,6 +12,7 @@ from app.paths import run_dir
 from app.registry import get
 from app.tools.base import Artifact, ToolResult, ToolRunContext
 from app.workspaces import save_run_meta
+from app.errors import unexpected_error
 
 
 # Global registry of active pipeline execution events per workspace
@@ -139,7 +140,7 @@ async def execute_dag_pipeline(
                 try:
                     res = await tool.execute(ctx)
                 except Exception as e:
-                    res = ToolResult(artifacts=[], status="failed", error=str(e))
+                    res = ToolResult(artifacts=[], status="failed", error=unexpected_error(e)["message"])
 
         # Auto-group related outputs into clean project/video folder on disk
         if res.artifacts:

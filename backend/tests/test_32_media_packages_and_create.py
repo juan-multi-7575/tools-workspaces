@@ -39,7 +39,8 @@ def test_duplicate_workspace_name_returns_409(client):
     assert r1.status_code == 200
     r2 = client.post("/api/workspaces", json={"name": "dup"})
     assert r2.status_code == 409
-    assert "already exists" in r2.json()["detail"]
+    assert r2.json()["error"]["code"] == "CONFLICT"
+    assert "already exists" in r2.json()["error"]["message"]
 
 
 def test_empty_workspace_name_rejected(client):

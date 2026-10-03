@@ -1,6 +1,9 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
+from app.errors import public_error, unexpected_error, stream_public_data
 
 import asyncio
 import json
@@ -9,7 +12,7 @@ from typing import Any
 
 import app.tools  # noqa: F401 - registers tool drivers
 from app.core.dag import DAGPipelineSpec, validate_dag
-from app.core.scheduler import execute_dag_pipeline, stop_dag_pipeline
+from app.core.scheduler import execute_dag_pipeline, stop_dag_pipeline, ACTIVE_PIPELINE_EVENTS
 from app.core.cache import detect_existing_artifacts
 from app.core.canvas import get_workspace_canvas, save_workspace_canvas, reset_workspace_canvas
 from app.deps import check_dependencies, upgrade_package
@@ -72,7 +75,26 @@ async def lifespan(app: FastAPI):
 
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="Multi-Tool Platform", lifespan=lifespan)
+app = FastAPI(title="Multi-Tool Platform", version="0.1.0", lifespan=lifespan)
+STREAM_HEARTBEAT_SECONDS = 15.0
+ACTIVE_ROUTE_PIPELINES: set[str] = set()
+
+
+def reserve_pipeline(workspace_id: str):
+    # Check and reserve before yielding to another request.
+    if workspace_id in ACTIVE_ROUTE_PIPELINES or workspace_id in ACTIVE_PIPELINE_EVENTS:
+        raise HTTPException(status_code=409, detail=public_error("PIPELINE_ALREADY_RUNNING", "A pipeline is already running in this workspace. Reconnect to check its status or stop it."))
+    ACTIVE_ROUTE_PIPELINES.add(workspace_id)
+
+
+@app.get("/api/workspaces/{workspace_id}/pipeline/status")
+async def pipeline_status(workspace_id: str):
+    return {"active": workspace_id in ACTIVE_ROUTE_PIPELINES or workspace_id in ACTIVE_PIPELINE_EVENTS}
+
+
+@app.get("/api/health")
+async def health():
+    return {"status": "ok", "version": app.version}
 
 app.add_middleware(
     CORSMiddleware,
@@ -211,7 +233,7 @@ async def execute_tool(tool_id: str, payload: dict):
                         break
                     except Exception:
                         pass
-    return res_dict
+    return stream_public_data(res_dict)
 
 
 @app.get("/api/artifacts/content")
@@ -318,7 +340,8 @@ async def validate_pipeline(workspace_id: str, payload: dict):
             val = validate_dag(spec)
             return {"valid": val.valid, "error": val.error, "topological_order": val.topological_order}
         except Exception as e:
-            return {"valid": False, "error": str(e)}
+            unexpected_error(e)
+            return {"valid": False, "error": "Invalid pipeline specification."}
 
     tool_ids = payload.get("chain", [])
     valid, error = validate_chain(tool_ids)
@@ -327,17 +350,21 @@ async def validate_pipeline(workspace_id: str, payload: dict):
 
 @app.post("/api/workspaces/{workspace_id}/pipeline/run")
 async def run_workspace_pipeline(workspace_id: str, payload: dict):
-    if "nodes" in payload:
-        spec = DAGPipelineSpec(**payload)
-        results = await execute_dag_pipeline(workspace_id, spec)
-        return {"results": results}
+    reserve_pipeline(workspace_id)
+    try:
+        if "nodes" in payload:
+            spec = DAGPipelineSpec(**payload)
+            results = await execute_dag_pipeline(workspace_id, spec)
+            return {"results": stream_public_data(results)}
 
-    steps = payload.get("steps", [])
-    pipeline_name = payload.get("pipeline_name")
-    visibility = payload.get("visibility", "success")
-    preset_id = payload.get("preset_id")
-    results = await run_pipeline(workspace_id, steps, pipeline_name=pipeline_name, visibility=visibility, preset_id=preset_id)
-    return {"results": results}
+        steps = payload.get("steps", [])
+        pipeline_name = payload.get("pipeline_name")
+        visibility = payload.get("visibility", "success")
+        preset_id = payload.get("preset_id")
+        results = await run_pipeline(workspace_id, steps, pipeline_name=pipeline_name, visibility=visibility, preset_id=preset_id)
+        return {"results": stream_public_data(results)}
+    finally:
+        ACTIVE_ROUTE_PIPELINES.discard(workspace_id)
 
 
 @app.post("/api/workspaces/{workspace_id}/pipeline/run-stream")
@@ -346,40 +373,67 @@ async def run_workspace_pipeline_stream(workspace_id: str, payload: dict):
     if "nodes" not in payload:
         raise HTTPException(status_code=400, detail="'nodes' specification required for streaming pipeline")
 
-    spec = DAGPipelineSpec(**payload)
-    event_queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+    try:
+        spec = DAGPipelineSpec(**payload)
+    except ValidationError:
+        raise HTTPException(status_code=422, detail=public_error("INVALID_PIPELINE", "Invalid pipeline specification."))
+    reserve_pipeline(workspace_id)
+    event_queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=256)
+    connected = True
+
+    async def enqueue(evt: dict[str, Any]):
+        if not connected:
+            return
+        if event_queue.full():
+            event_queue.get_nowait()
+        event_queue.put_nowait(evt)
 
     async def _progress_cb(evt: dict[str, Any]):
-        await event_queue.put(evt)
+        await enqueue(stream_public_data(evt))
 
     async def run_task():
         try:
             results = await execute_dag_pipeline(workspace_id, spec, progress_callback=_progress_cb)
             # Check if any step failed to determine overall status
             any_failed = any(r.get("status") == "failed" for r in results)
-            await event_queue.put({
+            await enqueue({
                 "type": "pipeline_finished",
                 "status": "failed" if any_failed else "completed",
-                "results": results,
+                "results": stream_public_data(results),
             })
         except Exception as e:
-            await event_queue.put({
+            await enqueue({
                 "type": "pipeline_error",
                 "status": "failed",
-                "error": str(e),
+                "error": unexpected_error(e),
             })
+        finally:
+            ACTIVE_ROUTE_PIPELINES.discard(workspace_id)
 
     # Start background execution
-    asyncio.create_task(run_task())
+    execution_task = asyncio.create_task(run_task())
+    # Keep execution alive on transport loss, so reconnect/Stop can inspect it.
+    tasks = getattr(app.state, "pipeline_stream_tasks", set())
+    app.state.pipeline_stream_tasks = tasks
+    tasks.add(execution_task)
+    execution_task.add_done_callback(tasks.discard)
 
     async def event_generator():
-        while True:
-            msg = await event_queue.get()
-            yield f"data: {json.dumps(msg)}\n\n"
-            if msg.get("type") in ("pipeline_finished", "pipeline_error"):
-                break
+        nonlocal connected
+        try:
+            while True:
+                try:
+                    msg = await asyncio.wait_for(event_queue.get(), timeout=STREAM_HEARTBEAT_SECONDS)
+                except asyncio.TimeoutError:
+                    yield ": heartbeat\n\n"
+                    continue
+                yield f"data: {json.dumps(msg)}\n\n"
+                if msg.get("type") in ("pipeline_finished", "pipeline_error"):
+                    break
+        finally:
+            connected = False
 
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.post("/api/workspaces/{workspace_id}/pipeline/check-existing")
@@ -404,7 +458,10 @@ async def resolve_pipeline_url(workspace_id: str, payload: dict):
 
     url = (payload or {}).get("url", "")
     loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, resolve_media_url, url)
+    result = await loop.run_in_executor(None, resolve_media_url, url)
+    if result.get("error"):
+        result["error"] = public_error(result.pop("error_code", "URL_RESOLUTION_FAILED"), result["error"])
+    return result
 
 
 @app.get("/api/workspaces/{workspace_id}/canvas")
@@ -469,7 +526,7 @@ async def mux_subtitles_route(workspace_id: str, payload: dict):
         res = mux_subtitles_to_video(workspace_id, video_path, subtitle_path, output_name, burn_in)
         return res
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=unexpected_error(e))
 
 
 @app.get("/api/workspaces/{workspace_id}/runs/{run_id}/manifest")
@@ -487,6 +544,8 @@ async def get_run_logs_route(workspace_id: str, run_id: str):
 
 @app.post("/api/workspaces/{workspace_id}/runs/{run_id}/branch")
 async def branch_run_route(workspace_id: str, run_id: str):
+    if get_run_manifest(workspace_id, run_id) is None:
+        raise HTTPException(status_code=404, detail=public_error("RUN_NOT_FOUND", "Run not found."))
     return branch_from_run(workspace_id, run_id)
 
 
@@ -494,7 +553,7 @@ async def branch_run_route(workspace_id: str, run_id: str):
 async def preview_artifact(workspace_id: str, run_id: str, artifact_name: str):
     target = artifact_path(workspace_id, run_id, artifact_name)
     if target is None:
-        return {"error": "not found"}
+        raise HTTPException(status_code=404, detail=public_error("ARTIFACT_NOT_FOUND", "Requested resource not found."))
     return FileResponse(target)
 
 
@@ -502,7 +561,7 @@ async def preview_artifact(workspace_id: str, run_id: str, artifact_name: str):
 async def download_artifact(workspace_id: str, run_id: str, artifact_name: str):
     target = artifact_path(workspace_id, run_id, artifact_name)
     if target is None:
-        return {"error": "not found"}
+        raise HTTPException(status_code=404, detail=public_error("ARTIFACT_NOT_FOUND", "Requested resource not found."))
     return FileResponse(target, filename=target.name, media_type="application/octet-stream")
 
 
@@ -522,7 +581,7 @@ async def trim_artifact_route(workspace_id: str, run_id: str, artifact_name: str
     regions = payload.get("regions", [])
     produced = trim_artifact(workspace_id, run_id, artifact_name, regions)
     if produced is None:
-        return {"error": "not found"}
+        raise HTTPException(status_code=404, detail=public_error("ARTIFACT_NOT_FOUND", "Requested resource not found."))
     return {"artifacts": produced}
 
 
@@ -569,7 +628,7 @@ async def stream_download(task_id: str):
     mgr = get_manager()
     task = mgr.get(task_id)
     if task is None:
-        return {"error": "not found"}
+        raise HTTPException(status_code=404, detail=public_error("ARTIFACT_NOT_FOUND", "Requested resource not found."))
 
     async def event_stream():
         queue = task.progress_queue
@@ -704,7 +763,7 @@ async def get_provider(provider_id: str):
 
     info = gp(provider_id)
     if info is None:
-        return {"error": "not found"}
+        raise HTTPException(status_code=404, detail=public_error("ARTIFACT_NOT_FOUND", "Requested resource not found."))
     return info
 
 
@@ -738,7 +797,21 @@ async def spa_exception_handler(request: Request, exc: StarletteHTTPException):
         index_file = frontend_dist / "index.html"
         if index_file.exists():
             return FileResponse(index_file)
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    detail = exc.detail
+    if not isinstance(detail, dict) or "code" not in detail:
+        code = {400: "INVALID_REQUEST", 403: "FORBIDDEN", 404: "NOT_FOUND", 409: "CONFLICT", 422: "VALIDATION_ERROR"}.get(exc.status_code, "HTTP_ERROR")
+        detail = public_error(code, str(detail) if exc.status_code < 500 else "An unexpected server error occurred.")
+    return JSONResponse(status_code=exc.status_code, content={"error": detail})
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(status_code=422, content={"error": public_error("VALIDATION_ERROR", "The request contains invalid parameters.")})
+
+
+@app.exception_handler(Exception)
+async def unexpected_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(status_code=500, content={"error": unexpected_error(exc)})
+
 
 if frontend_dist.exists():
     app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="frontend")

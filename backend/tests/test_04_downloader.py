@@ -139,7 +139,7 @@ def test_downloader_tool_failed_url(client):
     )
     body = resp.json()
     assert body["status"] == "failed"
-    assert "url is required" in body["error"]
+    assert "url is required" in body["error"]["message"]
 
 
 def test_enqueue_list_and_cancel_download(client, tmp_path, monkeypatch):

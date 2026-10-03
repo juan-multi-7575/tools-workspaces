@@ -271,11 +271,13 @@ def resolve_media_url(url: str, timeout: float = 30.0) -> dict[str, Any]:
     try:
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout)
     except FileNotFoundError:
-        return {"ok": False, "error": "yt-dlp is not installed on the server."}
+        return {"ok": False, "error": "yt-dlp is not installed on the server.", "error_code": "DEPENDENCY_UNAVAILABLE"}
     except subprocess.TimeoutExpired:
-        return {"ok": False, "error": f"Timed out after {timeout:.0f}s waiting for metadata."}
+        return {"ok": False, "error": f"Timed out after {timeout:.0f}s waiting for metadata.", "error_code": "PREVIEW_UNAVAILABLE"}
     except Exception as exc:
-        return {"ok": False, "error": f"Metadata lookup failed: {exc}"}
+        from app.errors import unexpected_error
+        unexpected_error(exc)
+        return {"ok": False, "error": "Metadata lookup is currently unavailable.", "error_code": "PREVIEW_UNAVAILABLE"}
     if proc.returncode != 0:
         err = (proc.stderr or '').strip().splitlines()
         msg = err[-1].strip() if err else f"yt-dlp exited with code {proc.returncode}."

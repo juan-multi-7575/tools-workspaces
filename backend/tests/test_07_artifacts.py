@@ -126,7 +126,9 @@ def test_delete_workspace_cascades_runs(client, workspace_with_run, tiny_wav):
 
 def test_missing_artifact_returns_not_found(client, workspace_with_run):
     ws_id, run_id = workspace_with_run
-    assert client.get(f"/api/workspaces/{ws_id}/runs/{run_id}/artifacts/nope.mp3/preview").json() == {"error": "not found"}
+    response = client.get(f"/api/workspaces/{ws_id}/runs/{run_id}/artifacts/nope.mp3/preview")
+    assert response.status_code == 404
+    assert response.json()["error"]["code"] == "ARTIFACT_NOT_FOUND"
     assert client.delete(f"/api/workspaces/{ws_id}/runs/{run_id}/artifacts/nope.mp3").json() == {"deleted": False}
 
 

@@ -71,8 +71,8 @@ def test_transcriber_single_and_batch(client, tmp_path):
     body = resp.json()
     assert body["status"] == "failed"
     assert body["artifacts"] == []
-    assert "unsupported provider" in body["error"]
-    assert "unsupported_provider" in body["error"]
+    assert "unsupported provider" in body["error"]["message"]
+    assert "unsupported_provider" in body["error"]["message"]
 
     resp = client.post(
         "/api/tools/transcriber/execute",
@@ -85,7 +85,7 @@ def test_transcriber_single_and_batch(client, tmp_path):
     body = resp.json()
     assert body["status"] == "failed"
     assert body["artifacts"] == []
-    assert "openai" in body["error"]
+    assert "openai" in body["error"]["message"]
 
 
 def test_transcriber_faster_whisper_success(client, tmp_path, monkeypatch):
