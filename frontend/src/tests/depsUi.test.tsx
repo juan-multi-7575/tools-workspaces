@@ -361,9 +361,13 @@ test('every tool page pins the gate in the shell instead of burying it in a rail
     // The install control is the reason the gate exists, so a page that renders it
     // inline puts it wherever the page happens to be tall. It belongs in a pinned
     // region: the shell's `gate` slot, or the downloader's own dark one.
-    if (!/gate=\{<DependencyGate\b/.test(source) && !/data-tool-gate-region/.test(source)) unpinned.push(file)
+    const pinned = /gate=\{<DependencyGate\b/.test(source) || /data-tool-gate-region/.test(source)
+    // One gate per page: two means a second `useToolDeps` subscription and a
+    // second copy of the same consent panel on screen.
+    const copies = (source.match(/<DependencyGate\b/g) ?? []).length
+    if (!pinned || copies !== 1) unpinned.push(`${file} (pinned:${pinned} gates:${copies})`)
   }
-  assert.deepEqual(unpinned, [], `tool pages that do not hand the gate to the shell:\n${unpinned.join('\n')}`)
+  assert.deepEqual(unpinned, [], `tool pages whose gate is not pinned exactly once:\n${unpinned.join('\n')}`)
 })
 
 test('the shell hosts the gate in a sticky region, not in the trailing aside', () => {
