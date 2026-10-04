@@ -739,7 +739,9 @@ async def run_dep_update(payload: dict):
 
 # ---------------------------------------------------------------------------
 # Managed dependency manager (app/depmgr): app-owned, root-free installs.
-# Distinct from /api/settings/deps above, which is the legacy apt/pip updater.
+# The only install path. /api/settings/deps above still reports versions, and
+# /api/settings/deps/update now refuses the packages below rather than
+# installing a second copy of them outside the deps root.
 # ---------------------------------------------------------------------------
 
 #: job_id -> asyncio.Event, so a client can cancel an in-flight install.
