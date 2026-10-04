@@ -53,9 +53,13 @@ test('initialParamsFromManifest leaves keys without a declared default out of th
   assert.deepEqual(initialParamsFromManifest(sparse), {})
 })
 
-test('registry starts empty so every tool falls back to the schema-driven page', () => {
-  assert.deepEqual(TOOL_PAGE_IDS, [])
-  assert.equal(getToolPage('demo.tool'), undefined)
+test('the registry resolves only real ids and falls back for everything else', () => {
+  for (const id of TOOL_PAGE_IDS) {
+    assert.ok(getToolPage(id), `registry id "${id}" must resolve to a component`)
+  }
+  assert.equal(getToolPage('demo.tool'), undefined, 'an unregistered id must fall back to the generic page')
+  assert.equal(getToolPage('constructor'), undefined, 'prototype keys must not leak through the registry')
+  assert.equal(new Set(TOOL_PAGE_IDS).size, TOOL_PAGE_IDS.length, 'registry ids must be unique')
 })
 
 test('tool page shell renders identity, ports and tags without executing anything', () => {
