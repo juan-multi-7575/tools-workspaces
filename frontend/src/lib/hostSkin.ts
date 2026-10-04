@@ -10,12 +10,21 @@ export interface HostSkin {
    * the host's ink does not hold up on that board.
    */
   ink: string
+  /**
+   * What to write on a fill of the accent. There is no single answer: an amber
+   * accent wants near-black on it, an emerald one wants near-white, and a host
+   * is free to pass either. Measured against the accent rather than assumed, so
+   * an override cannot make a selected chip unreadable.
+   */
+  onAccent: string
 }
 
 /* The ink to fall back on when the host's own colour cannot be read against the
  * board it is sitting on: the shell's espresso on a light board, a warm
  * off-white on a dark one. Both clear 4.5:1 against their own tone. */
 const FALLBACK_INK: Record<Tone, string> = { light: '#4E220F', dark: '#EDE7DE' }
+const DARK_ON_ACCENT = '#140E08'
+const LIGHT_ON_ACCENT = '#FDFBF7'
 
 /* The WCAG relative-luminance curve, so the decisions below are the same ones a
  * contrast check makes rather than an eyeballed brightness. */
@@ -52,13 +61,21 @@ const contrast = (fg: Rgba, bg: Rgba) => {
  * board underneath a form can change under it.
  */
 export function useHostSkin(ref: RefObject<HTMLElement | null>): HostSkin {
-  const [skin, setSkin] = useState<HostSkin>({ tone: 'light', ink: FALLBACK_INK.light })
+  const [skin, setSkin] = useState<HostSkin>({
+    tone: 'light',
+    ink: FALLBACK_INK.light,
+    onAccent: LIGHT_ON_ACCENT,
+  })
 
   /* This runs after every render, so it must be a no-op when nothing moved.
    * A fresh object here would be a new state value every time and spin the
    * form in a render loop. */
   const apply = (next: HostSkin) =>
-    setSkin((prev) => (prev.tone === next.tone && prev.ink === next.ink ? prev : next))
+    setSkin((prev) =>
+      prev.tone === next.tone && prev.ink === next.ink && prev.onAccent === next.onAccent
+        ? prev
+        : next,
+    )
 
   useEffect(() => {
     // A 1x1 canvas parses any CSS colour the engine understands -- rgb(),
@@ -82,6 +99,16 @@ export function useHostSkin(ref: RefObject<HTMLElement | null>): HostSkin {
     const element = ref.current
     if (!element) return
 
+    /* Whichever of the two inks reads better on the accent actually in force --
+       the host's if it set `--tool-accent`, the shell's caramel if it did not. */
+    const onAccentOf = (el: HTMLElement) => {
+      const fill = parse(getComputedStyle(el).getPropertyValue('--tool-accent'))
+      if (!fill) return undefined
+      return contrast(parse(DARK_ON_ACCENT)!, fill) >= contrast(parse(LIGHT_ON_ACCENT)!, fill)
+        ? DARK_ON_ACCENT
+        : LIGHT_ON_ACCENT
+    }
+
     // Walk up for the nearest backdrop that actually paints. Anything
     // translucent is skipped: what shows through it is further up, and reading
     // a half-transparent layer is how a form ends up unreadable on a stack.
@@ -94,7 +121,7 @@ export function useHostSkin(ref: RefObject<HTMLElement | null>): HostSkin {
       }
     }
     if (!board) {
-      apply({ tone: 'light', ink: FALLBACK_INK.light })
+      apply({ tone: 'light', ink: FALLBACK_INK.light, onAccent: onAccentOf(element) ?? LIGHT_ON_ACCENT })
       return
     }
 
@@ -107,7 +134,11 @@ export function useHostSkin(ref: RefObject<HTMLElement | null>): HostSkin {
     const inherited = parse(carrierStyle.color)
     const hostInk = inherited && contrast(inherited, board) >= 4.5 ? carrierStyle.color : undefined
 
-    apply({ tone, ink: hostInk ?? FALLBACK_INK[tone] })
+    apply({
+      tone,
+      ink: hostInk ?? FALLBACK_INK[tone],
+      onAccent: onAccentOf(element) ?? LIGHT_ON_ACCENT,
+    })
   })
 
   return skin

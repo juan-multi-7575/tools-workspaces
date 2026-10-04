@@ -176,7 +176,7 @@ export default function DynamicForm({
 
   if (Object.keys(schema).length === 0) {
     return (
-      <div ref={rootRef} className="tool-form" data-tone={skin.tone} style={{ '--tool-ink': skin.ink } as CSSProperties}>
+      <div ref={rootRef} className="tool-form" data-tone={skin.tone} style={{ '--tool-ink': skin.ink, '--tool-on-accent': skin.onAccent } as CSSProperties}>
         <div className="tool-panel-quiet rounded-xl border p-5 text-center text-xs font-mono tool-muted">
           No configurable parameters for this tool.
         </div>
@@ -189,7 +189,7 @@ export default function DynamicForm({
       ref={rootRef}
       className="tool-form @container space-y-4 font-sans text-xs"
       data-tone={skin.tone}
-      style={{ '--tool-ink': skin.ink } as CSSProperties}
+      style={{ '--tool-ink': skin.ink, '--tool-on-accent': skin.onAccent } as CSSProperties}
     >
       {/* ========================================================================= */}
       {/* 1. HERO URL INSERTION BAR (High-Priority Primary Control)                */}

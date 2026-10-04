@@ -258,7 +258,11 @@ body {
 
    `--tool-accent-ink` is the accent pulled halfway back toward `currentColor`
    for use as text: the raw caramel only reaches 3.2:1 on cream and 3.9:1 on
-   near-black, while the mix clears 4.5:1 against either.
+   near-black, while the mix clears 4.5:1 against either. What sits *on* a solid
+   accent fill is measured by `useHostSkin` and cannot be assumed: near-white
+   is right on the shell's caramel (4.6:1) and hopeless on a host's emerald
+   (1.9:1), and near-black is the reverse. CSS cannot branch on a colour's
+   lightness, so the hook picks whichever of the two reads better.
    --------------------------------------------------------------------------- */
 .tool-form {
   color-scheme: light;
@@ -276,6 +280,7 @@ body {
   --tool-ink-muted: var(--color-brand-caramel-text);
   --tool-ink-faint: #96795F;
   --tool-accent-ink: var(--tool-accent);
+  /* Before the hook measures, this is the answer for the default accent. */
   --tool-on-accent: var(--color-brand-cream-light);
   --tool-danger-ink: var(--tool-danger);
   --tool-danger-wash: color-mix(in oklab, var(--tool-danger) 10%, transparent);
@@ -294,7 +299,6 @@ body {
   --tool-ink-muted: color-mix(in oklab, currentColor 74%, transparent);
   --tool-ink-faint: color-mix(in oklab, currentColor 58%, transparent);
   --tool-accent-ink: color-mix(in oklab, var(--tool-accent) 55%, currentColor);
-  --tool-on-accent: #17110C;
   --tool-danger-ink: color-mix(in oklab, var(--tool-danger) 55%, currentColor);
   --tool-danger-wash: color-mix(in oklab, var(--tool-danger) 14%, transparent);
   --tool-danger-edge: color-mix(in oklab, var(--tool-danger) 45%, transparent);

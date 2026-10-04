@@ -126,7 +126,7 @@ export default function ModelHealthCheckForm({
   })
 
   return (
-    <div ref={rootRef} className="tool-form space-y-4 font-sans text-xs w-full min-w-0 overflow-x-hidden" data-tone={skin.tone} style={{ '--tool-ink': skin.ink } as CSSProperties}>
+    <div ref={rootRef} className="tool-form space-y-4 font-sans text-xs w-full min-w-0 overflow-x-hidden" data-tone={skin.tone} style={{ '--tool-ink': skin.ink, '--tool-on-accent': skin.onAccent } as CSSProperties}>
       {/* 1. BASHRC & ENV SCANNER HEADER */}
       <div className="tool-panel-quiet rounded-2xl border-2 p-3.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">

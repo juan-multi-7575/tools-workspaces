@@ -128,7 +128,7 @@ export default function UniversalFileInput({
   const fileNameOnly = value ? value.split('/').pop() : ''
 
   return (
-    <div ref={rootRef} className="tool-form space-y-2.5" data-tone={skin.tone} style={{ '--tool-ink': skin.ink } as CSSProperties}>
+    <div ref={rootRef} className="tool-form space-y-2.5" data-tone={skin.tone} style={{ '--tool-ink': skin.ink, '--tool-on-accent': skin.onAccent } as CSSProperties}>
       {/* 1. Quick Select Dropdown from Recent Artifacts */}
       {(recentFiles.length > 0 || availableArtifacts.length > 0) && (
         <div className="space-y-1">

@@ -72,7 +72,7 @@ export default function TranslatorForm({
   }
 
   return (
-    <div ref={rootRef} className="tool-form space-y-4" data-tone={skin.tone} style={{ '--tool-ink': skin.ink } as CSSProperties}>
+    <div ref={rootRef} className="tool-form space-y-4" data-tone={skin.tone} style={{ '--tool-ink': skin.ink, '--tool-on-accent': skin.onAccent } as CSSProperties}>
       {/* ========================================================================= */}
       {/* 1. INPUT SUBTITLE / DOCUMENT FILE (MAIN FOCUS)                            */}
       {/* ========================================================================= */}

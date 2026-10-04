@@ -160,7 +160,7 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
   }
 
   return (
-    <div ref={rootRef} className="tool-form space-y-4" data-tone={skin.tone} style={{ '--tool-ink': skin.ink } as CSSProperties}>
+    <div ref={rootRef} className="tool-form space-y-4" data-tone={skin.tone} style={{ '--tool-ink': skin.ink, '--tool-on-accent': skin.onAccent } as CSSProperties}>
       {/* 1. Primary URL Input Box */}
       <div className="tool-panel rounded-2xl border-2 p-4 space-y-3">
         <label className="block text-xs font-bold uppercase tracking-wider flex items-center justify-between">
