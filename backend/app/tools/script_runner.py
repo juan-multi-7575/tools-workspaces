@@ -31,7 +31,7 @@ class ScriptRunnerTool(Tool):
         # forward (the runner appends) and iterdir() below reported run 1's files
         # as this run's artifacts. The directory is a sibling of the tool
         # directory rather than a child of it because the recent-artifacts
-        # listing globs exactly downloads/<dir>/<file> (main.py:275).
+        # listing globs exactly downloads/<dir>/<file> (main.py:273).
         # Workspace and pipeline runs already get a per-run directory from
         # run_dir(), and several steps of one run share it, so they keep both the
         # shared directory and the appended log.
