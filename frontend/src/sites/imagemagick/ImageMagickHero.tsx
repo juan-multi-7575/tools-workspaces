@@ -20,9 +20,18 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
   const [uploadError, setUploadError] = useState<string | null>(null)
 
   const schema = (manifest.parameters_schema ?? {}) as Record<string, FieldSpec>
-  const format = String(schema.format?.default ?? '')
-  const quality = String(schema.quality?.default ?? '')
+
+  /**
+   * The four manifest defaults, rendered exactly as the backend declares them.
+   * A default that is the empty string is shown as `(empty)` rather than being
+   * replaced with a plausible-looking value — the geometry really does start
+   * unset, and the site says so.
+   */
   const resize = String(schema.resize?.default ?? '')
+  const defaults: [string, string][] = (Object.keys(schema) as (keyof typeof schema)[]).map((key) => {
+    const value = schema[key]?.default
+    return [key, value === undefined || value === '' ? '(empty)' : String(value)]
+  })
 
   const chooseImage = async (file: File | undefined) => {
     if (!file) return
@@ -118,45 +127,46 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
           <div className="im-panel im-panel--back">
             <p className="im-panel__label">Manifest defaults</p>
             <div className="im-panel__rows">
-              <p className="im-panel__row">
-                <span>format</span>
-                <span>{format}</span>
-              </p>
-              <p className="im-panel__row">
-                <span>quality</span>
-                <span>{quality}</span>
-              </p>
-              <p className="im-panel__row">
-                <span>input_path</span>
-                <span>{schema.input_path?.title}</span>
-              </p>
+              {defaults.map(([key, value]) => (
+                <p className="im-panel__row" key={key}>
+                  <span>{key}</span>
+                  <span>{value}</span>
+                </p>
+              ))}
             </div>
           </div>
 
           <div className="im-panel im-panel--mid">
             <p className="im-panel__label">Before / after</p>
-            <div className="im-mini">
+            <div className="im-stack__pair">
+              <span className="im-mini__label">input</span>
               <span className="im-mini__frame" />
-              <span className="im-mini__span">→</span>
+              <span className="im-mini__label">output</span>
               <span className="im-mini__frame im-mini__frame--out" />
             </div>
           </div>
 
           <div className="im-panel im-panel--front">
             <p className="im-panel__label">Resize geometry</p>
-            <p className={`im-geo${resize ? '' : ' im-geo--empty'}`}>
-              {resize || schema.resize?.placeholder || '800x600'}
-            </p>
+            {resize ? (
+              <p className="im-geo">{resize}</p>
+            ) : (
+              <>
+                <p className="im-geo im-geo--empty">(empty)</p>
+                <p className="im-panel__foot">
+                  starts unset, so a run keeps the source dimensions — type one in the workspace
+                </p>
+              </>
+            )}
           </div>
         </div>
       </main>
 
-      <footer className="im-dock" style={{ borderTop: '1px solid var(--im-hair)' }}>
-        <div className="im-dock__row">
-          <p className="im-hero__note" style={{ margin: 0 }}>
-            {IMAGEMAGICK_ID} · {manifest.input_kinds.join(', ')} in → {manifest.output_kinds.join(', ')} out
-          </p>
-        </div>
+      <footer className="im-dock" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
+        <p className="im-hero__note" style={{ margin: 0 }}>
+          {IMAGEMAGICK_ID} — every parameter the manifest declares:{' '}
+          {Object.keys(schema).join(' · ')}
+        </p>
       </footer>
     </div>
   )

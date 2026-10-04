@@ -126,16 +126,22 @@ test('the empty canvas is a designed state that says what to do — never a text
   assert.doesNotMatch(html, /checkerboard/i)
 })
 
-test('the dependency gate is hosted in the trailing action bar, not in a scrolling rail', () => {
+test('the dependency gate is hosted in the trailing action bar, outside the scrolling canvas', () => {
   const html = renderWorkspace()
-  assert.match(html, /data-tool-gate-region="imagemagick"/, 'the dock must declare the gate region')
   const region = html.indexOf('data-tool-gate-region="imagemagick"')
   assert.ok(region > -1, 'the trailing action bar must be marked as the gate region')
-  // The gate comes before the run control inside that region, so a dock that has
-  // to shrink still shows Install rather than hiding it.
+  const canvas = html.indexOf('class="im-canvas"')
+  assert.ok(canvas > -1, 'the canvas must be its own element')
+  // The whole point of the trailing bar: the gate is not inside the region that
+  // scrolls, so a long canvas cannot push the install control off screen.
   assert.ok(
-    html.indexOf('dep-gate', region) < html.indexOf('im-run', region),
-    'the gate must sit above the run control in the pinned dock',
+    region > canvas,
+    'the gate must sit after the scrolling canvas, not inside it',
+  )
+  // And the bar is the last thing in the page, after the stage.
+  assert.ok(
+    html.indexOf('im-stage') < region,
+    'the gate region must be a sibling of the stage, not nested in it',
   )
 })
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Download, ImageDown, Loader2, Ruler, UploadCloud } from 'lucide-react'
+import { Download, ImageDown, Loader2, Ruler } from 'lucide-react'
 import { api, resolveUrl } from '../../lib/api'
 import type { ToolManifest } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
@@ -56,6 +56,11 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
   const [index, setIndex] = useState<Record<string, number>>({})
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
+  /*
+   * The rail collapses on a narrow viewport only: CSS ignores this on a wide
+   * one, where the rail is always open beside the canvas.
+   */
+  const [railOpen, setRailOpen] = useState(false)
 
   const setKey = useCallback(
     (key: string, value: unknown) => setParams((previous) => ({ ...previous, [key]: value })),
@@ -137,13 +142,24 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
       </header>
 
       <div className="im-stage">
-        <aside className="im-rail" aria-label="Conversion tools">
-          <p className="im-rail__title">
+        <aside className="im-rail" aria-label="Conversion tools" data-open={railOpen ? 'true' : 'false'}>
+          <button
+            type="button"
+            className="im-rail__title"
+            aria-expanded={railOpen}
+            aria-controls="im-rail-body"
+            onClick={() => setRailOpen((open) => !open)}
+          >
             <Ruler className="im-ico" width={13} height={13} aria-hidden="true" />
             Tool rail
-          </p>
+            <span className="im-rail__caret" aria-hidden="true">
+              <svg width="12" height="12" viewBox="0 0 12 12">
+                <path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          </button>
 
-          <div className="im-rail__body">
+          <div className="im-rail__body" id="im-rail-body">
             <div className="im-field" data-param-key="format">
               <span className="im-field__label" id="im-format-label">
                 <span>
@@ -218,10 +234,8 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                   void upload(event.dataTransfer.files?.[0])
                 }}
               >
-                <span>
-                  {uploading ? 'Uploading to this machine…' : 'Drop an image, or click to browse'}
-                </span>
-                <span className="im-field__key">uploaded for real — no stub files</span>
+                <span>{uploading ? 'Uploading…' : 'Drop an image, or click to browse'}</span>
+                <span className="im-field__key">a real upload, not a stub</span>
               </div>
               <input
                 ref={fileRef}
@@ -243,7 +257,7 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                 className="im-input"
                 type="text"
                 value={inputPath}
-                placeholder={schema.input_path?.description ?? '/absolute/path/photo.jpg'}
+                placeholder="/absolute/path/on/this/machine.jpg"
                 onChange={(event) => setKey('input_path', event.target.value)}
               />
 
@@ -258,7 +272,7 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                     value=""
                     onChange={(event) => event.target.value && setKey('input_path', event.target.value)}
                   >
-                    <option value="">— pick an image the backend already has —</option>
+                    <option value="">— an image the backend already has —</option>
                     {recent.map((entry) => (
                       <option key={entry.path} value={entry.path}>
                         {entry.name} · {formatBytes(entry.size)}
@@ -273,6 +287,20 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                   {uploadError}
                 </p>
               )}
+            </div>
+
+            <div className="im-field">
+              <span className="im-field__label">
+                <span>What the geometry string means</span>
+              </span>
+              <dl className="im-keylist">
+                {GEOMETRY_KEY.map(([token, meaning]) => (
+                  <div key={token} style={{ display: 'contents' }}>
+                    <dt>{token}</dt>
+                    <dd>{meaning}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </div>
         </aside>
@@ -401,96 +429,71 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
       </div>
 
       <footer className="im-dock" data-tool-gate-region={IMAGEMAGICK_ID}>
-        <div className="im-dock__gate">
-          <DependencyGate toolId={IMAGEMAGICK_ID} state={deps} accent="#0D99FF" />
-        </div>
+        <div className="im-dock__main">
+          <div className="im-dock__row">
+            <div className="im-field im-dock__geo" data-param-key="resize">
+              <label className="im-field__label" htmlFor="im-resize">
+                <span>
+                  {schema.resize?.title ?? 'resize'} <span className="im-field__key">resize</span>
+                </span>
+                <span className="im-value">{resize || 'source size kept'}</span>
+              </label>
+              <input
+                id="im-resize"
+                className="im-geo-input"
+                type="text"
+                inputMode="text"
+                value={resize}
+                placeholder={schema.resize?.placeholder ?? '800x600'}
+                onChange={(event) => setKey('resize', event.target.value)}
+              />
+            </div>
 
-        <div className="im-dock__row">
-          <div className="im-field im-dock__source">
-            <span className="im-field__label">
-              <span>
-                Source <span className="im-field__key">input_path</span>
-              </span>
-              <span className="im-value">
-                {inputPath && index[inputPath] !== undefined ? formatBytes(index[inputPath]) : '—'}
-              </span>
-            </span>
-            <p className="im-dock__path">{inputPath || 'No image chosen — set one on the tool rail.'}</p>
-          </div>
-
-          <div className="im-field im-dock__geo" data-param-key="resize">
-            <label className="im-field__label" htmlFor="im-resize">
-              <span>
-                {schema.resize?.title ?? 'resize'} <span className="im-field__key">resize</span>
-              </span>
-              <span className="im-value">{resize || 'source size kept'}</span>
-            </label>
-            <input
-              id="im-resize"
-              className="im-geo-input"
-              type="text"
-              inputMode="text"
-              value={resize}
-              placeholder={schema.resize?.placeholder ?? '800x600'}
-              onChange={(event) => setKey('resize', event.target.value)}
-            />
-            <div className="im-chips">
-              {GEOMETRY_PRESETS.map((preset) => (
-                <button
-                  key={preset.value}
-                  type="button"
-                  className="im-chip"
-                  aria-pressed={resize === preset.value}
-                  onClick={() => setKey('resize', resize === preset.value ? '' : preset.value)}
-                >
-                  {preset.label}
-                </button>
-              ))}
+            <div className="im-dock__run">
+              <button
+                type="button"
+                className="im-btn im-btn--accent im-run"
+                onClick={() => void run()}
+                disabled={execute.busy || !deps.ready}
+              >
+                {execute.busy ? (
+                  <Loader2 className="im-ico im-spin" width={16} height={16} aria-hidden="true" />
+                ) : (
+                  <ImageDown className="im-ico" width={16} height={16} aria-hidden="true" />
+                )}
+                {execute.busy ? 'Converting…' : 'Convert'}
+              </button>
+              <button type="button" className="im-btn im-btn--outline" onClick={clear} disabled={execute.busy}>
+                Clear
+              </button>
             </div>
           </div>
 
-          <div className="im-dock__run">
-            <button
-              type="button"
-              className="im-btn im-btn--accent im-run"
-              onClick={() => void run()}
-              disabled={execute.busy || !deps.ready}
-            >
-              {execute.busy ? (
-                <Loader2 className="im-ico im-spin" width={16} height={16} aria-hidden="true" />
-              ) : (
-                <ImageDown className="im-ico" width={16} height={16} aria-hidden="true" />
-              )}
-              {execute.busy ? 'Converting…' : 'Convert'}
-            </button>
-            <button type="button" className="im-btn im-btn--outline" onClick={clear} disabled={execute.busy}>
-              <UploadCloud className="im-ico" width={16} height={16} aria-hidden="true" />
-              Clear
-            </button>
-            {execute.state.phase !== 'idle' && (
-              <span className="im-timer">{execute.state.elapsedSeconds.toFixed(1)}s measured</span>
-            )}
+          <div className="im-chips">
+            {GEOMETRY_PRESETS.map((preset) => (
+              <button
+                key={preset.value}
+                type="button"
+                className="im-chip"
+                aria-pressed={resize === preset.value}
+                onClick={() => setKey('resize', resize === preset.value ? '' : preset.value)}
+              >
+                {preset.label}
+              </button>
+            ))}
           </div>
+
+          {execute.state.error && (
+            <div className="im-report__error" role="alert">
+              <h3>The backend reported</h3>
+              <pre>{execute.state.error}</pre>
+            </div>
+          )}
         </div>
 
-        {execute.state.error && (
-          <div className="im-report__error" role="alert" style={{ marginTop: 0 }}>
-            <h3>The backend reported</h3>
-            <pre>{execute.state.error}</pre>
-          </div>
-        )}
-
-        <details className="im-dock__key">
-          <summary>What the geometry string means</summary>
-          <dl className="im-pane__foot" style={{ borderTop: 0, paddingLeft: 0, paddingRight: 0 }}>
-            {GEOMETRY_KEY.map(([token, meaning]) => (
-              <div key={token} style={{ display: 'contents' }}>
-                <dt>{token}</dt>
-                <dd>{meaning}</dd>
-              </div>
-            ))}
-          </dl>
-        </details>
+        <div className="im-dock__gate">
+          <DependencyGate toolId={IMAGEMAGICK_ID} state={deps} />
+        </div>
       </footer>
     </div>
   )

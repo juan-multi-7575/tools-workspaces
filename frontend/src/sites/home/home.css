@@ -35,6 +35,26 @@
   box-sizing: border-box;
 }
 
+/* Same reason as the ImageMagick site: the app-level cream scrollbar belongs
+   to the Tools Garage shell, not to this index. */
+.hs-root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.hs-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hs-root ::-webkit-scrollbar-thumb {
+  background: rgba(23, 23, 23, 0.2);
+  border-radius: 9999px;
+}
+
+.hs-root ::-webkit-scrollbar-thumb:hover {
+  background: rgba(23, 23, 23, 0.4);
+}
+
 .hs-root :focus-visible {
   outline: 2px solid var(--hs-ink);
   outline-offset: 2px;

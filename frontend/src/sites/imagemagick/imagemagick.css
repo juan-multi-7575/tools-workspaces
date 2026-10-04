@@ -32,10 +32,11 @@
   --im-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo,
     Consolas, "Liberation Mono", monospace;
 
-  /* The reference sets its display at 56px/400/-1.25px. Scaled to the viewport
-   * rather than pinned, so the hero never wraps into a wall of text. */
-  --im-display: clamp(2.5rem, 5vw, 4.5rem);
-  --im-display-leading: 1.03;
+  /* The reference sets its display at 56px/400/-1.25px. Held at that size
+   * rather than scaling up, so the hero keeps the reference's three-line break
+   * in a narrow column instead of wrapping into a wall of text. */
+  --im-display: clamp(2.25rem, 3.6vw, 3.5rem);
+  --im-display-leading: 1.05;
   --im-display-track: -0.028em;
 
   display: flex;
@@ -93,6 +94,29 @@
   color: var(--im-on-accent);
 }
 
+/*
+ * `index.css` paints every scrollbar in the app with the cream shell's tokens.
+ * Those are the shell's colours, not this site's, so the rail and the canvas
+ * restate them here rather than inheriting a warm thumb on a grey board.
+ */
+.im-root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.im-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.im-root ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 9999px;
+}
+
+.im-root ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
 .im-root :focus-visible {
   outline: 2px solid var(--im-accent);
   outline-offset: 2px;
@@ -116,6 +140,7 @@
 
 .im-bar__home {
   display: inline-flex;
+  white-space: nowrap;
   align-items: center;
   gap: 6px;
   padding: 6px 12px 6px 8px;
@@ -273,11 +298,17 @@
  * Figma's landing canvas is a stack of translucent panels that overlap and
  * cast soft shadows. That is the signature of the reference, so it is built
  * rather than described: three panels, each carrying real content.
+ *
+ * The panels are placed so their content never lands under another panel. The
+ * reference overlaps artwork, which reads fine edge to edge; overlapped text
+ * does not. The 16px of padding absorbs the handful of pixels each rotation
+ * swings outside its own box, so the stack reports no overflow of its own.
  */
 .im-stack {
   position: relative;
-  min-height: min(58vh, 480px);
+  min-height: min(52vh, 430px);
   width: 100%;
+  padding: 16px;
 }
 
 .im-panel {
@@ -290,21 +321,30 @@
     0 28px 60px -30px rgba(0, 0, 0, 0.42);
 }
 
+/* Top left. Holds the four manifest defaults and nothing else. */
+/*
+ * Each inset leaves room for the rotation at that panel's own edge: a 2.6deg
+ * turn of a 370×260 card swings its corner about 5px outside its box, and a 2.4deg
+ * turn of the tall right-hand card about 24px. Without that headroom the stack
+ * would report horizontal overflow for decoration that is not scrollable.
+ */
 .im-panel--back {
-  inset: 0 14% 22% 0;
-  transform: rotate(-3.2deg);
-  padding: 22px;
+  inset: 1% 46% 42% 1.5%;
+  transform: rotate(-2.6deg);
+  padding: 16px 18px;
 }
 
+/* Right, narrow and tall: the before/after pair. */
 .im-panel--mid {
-  inset: 16% 0 6% 16%;
-  transform: rotate(2.1deg);
-  padding: 18px;
+  inset: 10% 3.5% 4% 58%;
+  transform: rotate(2.4deg);
+  padding: 16px 18px;
 }
 
 .im-panel--front {
-  inset: 34% 22% 0 4%;
-  padding: 20px 22px 22px;
+  inset: 54% 44% 1% 12%;
+  transform: rotate(-1.1deg);
+  padding: 16px 20px 18px;
   background-color: var(--im-accent);
   border-color: rgba(0, 0, 0, 0.14);
   color: var(--im-on-accent);
@@ -363,17 +403,16 @@
   color: rgba(0, 0, 0, 0.45);
 }
 
-/* Two miniature panes with the reference's dimension line between them. */
-.im-mini {
+/* Two miniature panes, stacked to fit the tall narrow panel. */
+.im-stack__pair {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 14px;
 }
 
 .im-mini__frame {
-  height: 74px;
+  height: 62px;
   border: 1px solid var(--im-hair-strong);
   border-radius: 8px;
   background-color: var(--im-sunk);
@@ -384,11 +423,21 @@
   background-color: var(--im-accent-wash);
 }
 
-.im-mini__span {
+.im-mini__label {
   font-family: var(--im-mono);
   font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--im-ink-40);
-  white-space: nowrap;
+  text-align: center;
+}
+
+.im-panel__foot {
+  margin: 10px 0 0;
+  font-family: var(--im-mono);
+  font-size: 10px;
+  line-height: 1.55;
+  color: rgba(0, 0, 0, 0.62);
 }
 
 /* ── workspace ─────────────────────────────────────────────────────────────
@@ -403,20 +452,26 @@
   position: relative;
 }
 
+/*
+ * The rail floats, but it must never float over the panes it exists to serve.
+ * On a wide viewport the canvas reserves a column for it, so the rail sits on
+ * open ground and the panes start beside it — the way a canvas app parks its
+ * toolbar and gives the artboard the rest of the screen.
+ */
 .im-canvas {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  padding: 20px;
+  padding: 20px 20px 20px 304px;
 }
 
 .im-canvas__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
   gap: 20px;
   min-height: 100%;
-  align-content: start;
 }
 
 .im-pane {
@@ -554,6 +609,32 @@
   overflow-wrap: anywhere;
 }
 
+/*
+ * A two-column definition list for the geometry key. It cannot reuse
+ * `.im-pane__foot`, which is a flex strip: flex would reflow dt/dd around each
+ * other and scramble the pairs.
+ */
+.im-keylist {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 12px;
+  margin: 0;
+  font-family: var(--im-mono);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.im-keylist dt {
+  color: var(--im-ink);
+  white-space: nowrap;
+}
+
+.im-keylist dd {
+  margin: 0;
+  color: var(--im-ink-52);
+  overflow-wrap: anywhere;
+}
+
 /* ── the floating tool rail ───────────────────────────────────────────────
  * Overlaid on the canvas rather than given a column of its own, so the canvas
  * keeps the full width. Translucent, because that is what the reference does
@@ -562,6 +643,7 @@
 .im-rail {
   position: absolute;
   top: 20px;
+  bottom: 20px;
   left: 20px;
   z-index: 2;
   width: 264px;
@@ -578,25 +660,58 @@
     0 24px 56px -28px rgba(0, 0, 0, 0.5);
 }
 
+/*
+ * One header serves as the rail's title on a wide viewport and as its
+ * disclosure control on a narrow one. The body is hidden by CSS on narrow when
+ * `data-open="false"`, so a phone is not asked to fit the rail, the canvas and
+ * the dock on one screen before the canvas has been seen.
+ */
 .im-rail__title {
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
   padding: 12px 14px;
+  border: 0;
   border-bottom: 1px solid var(--im-hair);
+  background: none;
   font-family: var(--im-mono);
   font-size: 10px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--im-ink-40);
+  text-align: left;
 }
 
+.im-rail__title--plain {
+  cursor: default;
+}
+
+.im-rail__caret {
+  margin-left: auto;
+  transition: transform 140ms ease;
+}
+
+.im-rail[data-open='false'] .im-rail__caret {
+  transform: rotate(-90deg);
+}
+
+/*
+ * Bounded by the stage (`top`/`bottom` on the rail) rather than by a viewport
+ * fraction, so a tall rail can never grow down over the pinned dock. The body
+ * takes the remaining height and scrolls, which is also why the rail is a flex
+ * column.
+ */
 .im-rail__body {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
+  align-content: start;
   gap: 18px;
   padding: 14px;
-  max-height: min(52vh, 460px);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  min-width: 0;
 }
 
 .im-field {
@@ -780,13 +895,27 @@ select.im-input {
  * install control is the topmost thing in the dock even if the dock ever has to
  * shrink, and the geometry field sits immediately under it as the signature.
  */
+/*
+ * Two columns on a wide viewport: the geometry signature and the run action on
+ * the left, the gate on the right. The gate is the reason this bar exists, and
+ * giving it its own column rather than stacking it is what keeps the whole dock
+ * short enough to leave the canvas the majority of the screen.
+ */
 .im-dock {
   flex: 0 0 auto;
   display: grid;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+  align-items: start;
+  gap: 16px;
   padding: 12px 20px 14px;
   border-top: 1px solid var(--im-hair);
   background-color: var(--im-panel);
+  min-width: 0;
+}
+
+.im-dock__main {
+  display: grid;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -823,7 +952,7 @@ select.im-input {
  * edited in place rather than tucked into a rail of small inputs.
  */
 .im-dock__geo {
-  flex: 1.4 1 320px;
+  flex: 1 1 320px;
   min-width: 0;
 }
 
@@ -843,7 +972,7 @@ select.im-input {
 }
 
 .im-geo-input::placeholder {
-  color: var(--im-ink-40);
+  color: rgba(0, 0, 0, 0.28);
 }
 
 .im-geo-input:focus-visible {
@@ -996,7 +1125,7 @@ select.im-input {
  * caller having to trust the page height.
  */
 .im-root .dep-gate__scroll {
-  max-height: 5.5rem;
+  max-height: 7.5rem;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -1034,29 +1163,86 @@ select.im-input {
     flex-direction: column;
   }
 
+  /*
+   * On a phone the rail floats over the canvas too, for the same reason it does
+   * on a desktop: in a band it would push the canvas down, and the canvas is
+   * the point of the page. Collapsed by default it costs one 41px strip; opened
+   * it is a sheet over the canvas with its own scroll, which is what a phone
+   * expects a control sheet to do.
+   */
   .im-rail {
-    position: static;
+    top: 8px;
+    bottom: auto;
+    left: 8px;
+    right: 8px;
     width: auto;
     max-width: none;
-    margin: 0;
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
+    border-radius: 12px;
+    flex: 0 0 auto;
+  }
+
+  .im-rail__title {
+    cursor: pointer;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .im-rail[data-open='true'] .im-rail__title {
+    border-radius: 12px 12px 0 0;
     border-bottom: 1px solid var(--im-hair);
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background-color: var(--im-panel);
-    flex: 0 1 auto;
+  }
+
+  .im-rail[data-open='false'] .im-rail__body {
+    display: none;
   }
 
   .im-rail__body {
-    max-height: 42dvh;
+    max-height: 58dvh;
+  }
+
+  /* The gate carries three paragraphs and a control; at phone sizes it is
+     compacted so the canvas still gets a usable share of the screen. */
+  .im-root .dep-gate {
+    font-size: 11px;
+  }
+
+  .im-root .dep-gate__scroll {
+    max-height: 6rem;
+  }
+
+  .im-pane__surface {
+    min-height: 170px;
+  }
+
+  .im-geo-input {
+    font-size: 1.25rem;
+  }
+
+  .im-chip {
+    padding: 4px 8px;
+  }
+
+  /* Seven presets wrap to two rows on a phone. One scrolling row costs 26px of
+     canvas, which is worth more than the second row. */
+  .im-dock__main .im-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
   }
 
   .im-bar {
     padding: 0 12px;
     gap: 10px;
+  }
+
+  .im-bar__home {
+    padding: 6px 10px 6px 8px;
+    font-size: 12px;
+  }
+
+  .im-bar__mark {
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .im-bar__id {
@@ -1067,6 +1253,17 @@ select.im-input {
   .im-dock {
     padding-left: 12px;
     padding-right: 12px;
+  }
+
+  /* Top padding clears the collapsed rail strip, which floats over the canvas
+     at this width rather than sitting in a band above it. */
+  .im-canvas {
+    padding: 57px 12px 12px;
+  }
+
+  .im-dock {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
   }
 
   .im-canvas {
