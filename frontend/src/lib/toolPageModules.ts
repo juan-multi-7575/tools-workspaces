@@ -9,6 +9,7 @@ import PandocPage from '../pages/tools/PandocPage'
 import PdfToolsPage from '../pages/tools/PdfToolsPage'
 import OcrMyPdfPage from '../pages/tools/OcrMyPdfPage'
 import PackagerPage from '../pages/tools/PackagerPage'
+import MediainfoPage from '../pages/tools/MediainfoPage'
 
 /**
  * Bespoke per-tool pages. Append-only: each batch adds its own keys.
@@ -28,4 +29,5 @@ export const BESPOKE_PAGES: Record<string, ToolPageComponent> = {
   pdf_tools: PdfToolsPage,
   ocrmypdf: OcrMyPdfPage,
   packager: PackagerPage,
+  mediainfo: MediainfoPage,
 }
