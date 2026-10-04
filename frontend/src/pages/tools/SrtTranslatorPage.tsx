@@ -109,7 +109,10 @@ export default function SrtTranslatorPage({
   onComplete,
   onSendToTool,
 }: ToolPageProps) {
-  const schema = (manifest.parameters_schema ?? {}) as Record<string, FieldSpec>
+  const schema = useMemo(
+    () => (manifest.parameters_schema ?? {}) as Record<string, FieldSpec>,
+    [manifest.parameters_schema],
+  )
   const execute = useToolExecute('subtitle.translate.srt')
   const [params, setParams] = useState<Record<string, unknown>>(() =>
     initialInputPath ? { ...initialParams, input_path: initialInputPath } : initialParams,

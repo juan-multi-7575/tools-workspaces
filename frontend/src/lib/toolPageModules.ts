@@ -16,6 +16,7 @@ import DemucsPage from '../pages/tools/DemucsPage'
 import GalleryDlPage from '../pages/tools/GalleryDlPage'
 import SummarizerPage from '../pages/tools/SummarizerPage'
 import SrtTranslatorPage from '../pages/tools/SrtTranslatorPage'
+import LlmTranslatorPage from '../pages/tools/LlmTranslatorPage'
 
 /**
  * Bespoke per-tool pages. Append-only: each batch adds its own keys.
@@ -42,4 +43,5 @@ export const BESPOKE_PAGES: Record<string, ToolPageComponent> = {
   'gallery-dl': GalleryDlPage,
   summarizer: SummarizerPage,
   'subtitle.translate.srt': SrtTranslatorPage,
+  'text.translate.llm': LlmTranslatorPage,
 }
