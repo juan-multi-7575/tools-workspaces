@@ -40,7 +40,8 @@ interface HealthRow {
   model?: string
   status?: string
   latency_ms?: number
-  error?: string | null
+  /** The backend sends a bare string or a `{ code, message }` object here. */
+  error?: unknown
   tests_passed?: string[]
   tests_failed?: string[]
   response_snippet?: string
@@ -164,7 +165,6 @@ export default function ModelHealthCheckPage({
   return (
     <ToolPageShell
       manifest={manifest}
-      gate={<DependencyGate toolId="sys.health.check" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
           <Radar className="size-3" /> fleet telemetry
@@ -195,7 +195,11 @@ export default function ModelHealthCheckPage({
           {/* TARGET SELECTION */}
           <div className="min-w-0 space-y-4">
             <section className="min-w-0 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
-              <h2 className="mb-2.5 mt-3 flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
+              {/* The gate owns the top of this panel: it is the preflight that
+                  authorises the run, and it gets its own flow position. */}
+              <DependencyGate toolId="sys.health.check" state={deps} />
+
+              <h2 className="mb-2.5 flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
                 <Activity className="size-3 shrink-0" /> probe target
               </h2>
               <div className="min-w-0">
@@ -219,6 +223,150 @@ export default function ModelHealthCheckPage({
                 </div>
               )}
             </section>
+          </div>
+
+          {/* TELEMETRY BOARD */}
+          <div className="min-w-0 space-y-4">
+            {summaryTiles.length > 0 && (
+              // Five across needs ~150px per tile before the longest label
+              // ("unconfigured") stops fitting, so the strip steps down to three.
+              <section className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-lg border border-neutral-800 bg-neutral-800 sm:grid-cols-3 2xl:grid-cols-5">
+                {summaryTiles.map((tile) => (
+                  <div key={tile.label} className="min-w-0 bg-neutral-950 px-3 py-2.5">
+                    <p
+                      title={tile.label}
+                      className="truncate font-mono text-[9px] uppercase tracking-[0.18em] text-neutral-600"
+                    >
+                      {tile.label}
+                    </p>
+                    <p className={`font-mono text-lg font-bold leading-tight ${tile.tone}`}>{String(tile.value ?? '—')}</p>
+                  </div>
+                ))}
+              </section>
+            )}
+
+            <section className="min-w-0 overflow-hidden rounded-lg border border-neutral-800 bg-neutral-950">
+              {/*
+                The run control sits in this header rather than across the page:
+                it is the action that fills the matrix directly underneath it.
+              */}
+              <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-neutral-800 bg-neutral-900 px-3 py-2">
+                <h2 className="flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
+                  <Gauge className="size-3 shrink-0" /> probe matrix
+                </h2>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="font-mono text-[10px] text-neutral-500">
+                    {completed ? `${rows.length} rows returned` : execute.state.phase === 'executing' ? 'sweeping…' : 'no run yet'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void run()}
+                    disabled={execute.busy || !deps.ready}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded bg-sky-500/20 px-2.5 py-1 font-mono text-[11px] font-bold text-sky-300 hover:bg-sky-500/30 disabled:opacity-40"
+                  >
+                    {execute.busy ? <Loader2 className="size-3 animate-spin" /> : <Play className="size-3" />}
+                    {execute.busy ? `sweeping · ${execute.state.elapsedSeconds.toFixed(1)}s` : 'run sweep'}
+                  </button>
+                </div>
+              </header>
+
+              {rows.length === 0 ? (
+                <p className="px-3 py-12 text-center font-mono text-xs text-neutral-600">
+                  {execute.state.phase === 'idle'
+                    ? 'Run a sweep. Rows appear only after the backend returns data.results.'
+                    : execute.state.phase === 'executing'
+                      ? `Probing — ${execute.state.elapsedSeconds.toFixed(1)}s measured.`
+                      : execute.state.phase === 'completed'
+                        ? 'The run completed but returned no data.results array.'
+                        : 'No telemetry to display.'}
+                </p>
+              ) : (
+                <div className="min-w-0 overflow-x-auto">
+                  <table className="w-full min-w-[560px] border-collapse font-mono text-[11px]">
+                    <thead>
+                      <tr className="border-b border-neutral-800 text-left text-[9px] uppercase tracking-[0.18em] text-neutral-600">
+                        <th className="px-3 py-1.5 font-normal">model</th>
+                        <th className="px-3 py-1.5 font-normal">provider</th>
+                        <th className="px-3 py-1.5 font-normal">status</th>
+                        <th className="px-3 py-1.5 text-right font-normal">pass</th>
+                        <th className="px-3 py-1.5 text-right font-normal">fail</th>
+                        <th className="px-3 py-1.5 font-normal">latency</th>
+                        <th className="px-3 py-1.5 font-normal">detail</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row, index) => {
+                        const status = String(row.status ?? 'UNKNOWN')
+                        const tone = statusTone(status)
+                        const latency = Number(row.latency_ms) || 0
+                        const passed = Array.isArray(row.tests_passed) ? row.tests_passed : []
+                        const failedTests = Array.isArray(row.tests_failed) ? row.tests_failed : []
+                        const detail = row.error
+                          ? errorMessage(row.error)
+                          : failedTests.length > 0
+                            ? failedTests.join(' · ')
+                            : passed.join(' · ')
+                        return (
+                          <tr
+                            key={`${row.provider_id ?? 'p'}-${row.model ?? 'm'}-${index}`}
+                            className="border-b border-neutral-900 align-top hover:bg-neutral-900/50"
+                          >
+                            <td className="max-w-[190px] truncate px-3 py-2 text-neutral-200" title={row.model}>
+                              {row.model ?? '—'}
+                            </td>
+                            <td className="max-w-[150px] truncate px-3 py-2 text-neutral-500" title={row.provider_name ?? row.provider_id ?? ''}>
+                              {row.provider_name ?? row.provider_id ?? '—'}
+                            </td>
+                            <td className="px-3 py-2">
+                              <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 ${tone.chip}`}>
+                                <span className={`size-1.5 rounded-full ${tone.dot}`} />
+                                {status}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-right text-emerald-400">{passed.length}</td>
+                            <td className="px-3 py-2 text-right text-red-400">{failedTests.length}</td>
+                            <td className="px-3 py-2 text-neutral-400">
+                              <div className="flex items-center gap-1.5">
+                                <span className="w-14 text-right">{latency > 0 ? `${latency.toFixed(1)}ms` : '—'}</span>
+                                <span className="h-1 w-14 overflow-hidden rounded bg-neutral-800">
+                                  <span
+                                    className={`block h-full ${tone.dot}`}
+                                    style={{ width: `${maxLatency ? Math.min(100, (latency / maxLatency) * 100) : 0}%` }}
+                                  />
+                                </span>
+                              </div>
+                            </td>
+                            {/* Two lines keeps 50 probes scannable; the whole
+                                message stays on the cell's title. */}
+                            <td className="max-w-[260px] px-3 py-2 align-top" title={detail || undefined}>
+                              {detail ? (
+                                <span
+                                  className={`line-clamp-2 break-words ${
+                                    row.error
+                                      ? 'text-red-300'
+                                      : failedTests.length > 0
+                                        ? 'text-amber-300'
+                                        : 'text-neutral-500'
+                                  }`}
+                                >
+                                  {detail}
+                                </span>
+                              ) : (
+                                <span className="text-neutral-700">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+
+            {execute.state.phase !== 'idle' && (
+              <ToolResultPanel state={execute.state} toolId="sys.health.check" toolName={manifest.name} onRerun={execute.reset} />
+            )}
 
             {/* CREDENTIAL REGISTRY */}
             <section className="min-w-0 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
@@ -288,128 +436,27 @@ export default function ModelHealthCheckPage({
                 </>
               )}
             </section>
-          </div>
 
-          {/* TELEMETRY BOARD */}
-          <div className="min-w-0 space-y-4">
-            {summaryTiles.length > 0 && (
-              <section className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-lg border border-neutral-800 bg-neutral-800 sm:grid-cols-5">
-                {summaryTiles.map((tile) => (
-                  <div key={tile.label} className="min-w-0 bg-neutral-950 px-3 py-2.5">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-neutral-600">{tile.label}</p>
-                    <p className={`font-mono text-lg font-bold leading-tight ${tile.tone}`}>{String(tile.value ?? '—')}</p>
-                  </div>
-                ))}
-              </section>
-            )}
-
-            <section className="min-w-0 overflow-hidden rounded-lg border border-neutral-800 bg-neutral-950">
-              {/*
-                The run control sits in this header rather than across the page:
-                it is the action that fills the matrix directly underneath it.
-              */}
-              <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-neutral-800 bg-neutral-900 px-3 py-2">
-                <h2 className="flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
-                  <Gauge className="size-3 shrink-0" /> probe matrix
-                </h2>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className="font-mono text-[10px] text-neutral-500">
-                    {completed ? `${rows.length} rows returned` : execute.state.phase === 'executing' ? 'sweeping…' : 'no run yet'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => void run()}
-                    disabled={execute.busy || !deps.ready}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded bg-sky-500/20 px-2.5 py-1 font-mono text-[11px] font-bold text-sky-300 hover:bg-sky-500/30 disabled:opacity-40"
-                  >
-                    {execute.busy ? <Loader2 className="size-3 animate-spin" /> : <Play className="size-3" />}
-                    {execute.busy ? `sweeping · ${execute.state.elapsedSeconds.toFixed(1)}s` : 'run sweep'}
-                  </button>
-                </div>
-              </header>
-
-              {rows.length === 0 ? (
-                <p className="px-3 py-12 text-center font-mono text-xs text-neutral-600">
-                  {execute.state.phase === 'idle'
-                    ? 'Run a sweep. Rows appear only after the backend returns data.results.'
-                    : execute.state.phase === 'executing'
-                      ? `Probing — ${execute.state.elapsedSeconds.toFixed(1)}s measured.`
-                      : execute.state.phase === 'completed'
-                        ? 'The run completed but returned no data.results array.'
-                        : 'No telemetry to display.'}
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[760px] border-collapse font-mono text-[11px]">
-                    <thead>
-                      <tr className="border-b border-neutral-800 text-left text-[9px] uppercase tracking-[0.18em] text-neutral-600">
-                        <th className="px-3 py-1.5 font-normal">model</th>
-                        <th className="px-3 py-1.5 font-normal">provider</th>
-                        <th className="px-3 py-1.5 font-normal">status</th>
-                        <th className="px-3 py-1.5 text-right font-normal">pass</th>
-                        <th className="px-3 py-1.5 text-right font-normal">fail</th>
-                        <th className="px-3 py-1.5 font-normal">latency</th>
-                        <th className="px-3 py-1.5 font-normal">detail</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((row, index) => {
-                        const status = String(row.status ?? 'UNKNOWN')
-                        const tone = statusTone(status)
-                        const latency = Number(row.latency_ms) || 0
-                        const passed = Array.isArray(row.tests_passed) ? row.tests_passed : []
-                        const failedTests = Array.isArray(row.tests_failed) ? row.tests_failed : []
-                        return (
-                          <tr
-                            key={`${row.provider_id ?? 'p'}-${row.model ?? 'm'}-${index}`}
-                            className="border-b border-neutral-900 align-top hover:bg-neutral-900/50"
-                          >
-                            <td className="max-w-[190px] truncate px-3 py-2 text-neutral-200" title={row.model}>
-                              {row.model ?? '—'}
-                            </td>
-                            <td className="px-3 py-2 text-neutral-500">{row.provider_name ?? row.provider_id ?? '—'}</td>
-                            <td className="px-3 py-2">
-                              <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 ${tone.chip}`}>
-                                <span className={`size-1.5 rounded-full ${tone.dot}`} />
-                                {status}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 text-right text-emerald-400">{passed.length}</td>
-                            <td className="px-3 py-2 text-right text-red-400">{failedTests.length}</td>
-                            <td className="px-3 py-2 text-neutral-400">
-                              <div className="flex items-center gap-1.5">
-                                <span className="w-14 text-right">{latency > 0 ? `${latency.toFixed(1)}ms` : '—'}</span>
-                                <span className="h-1 w-14 overflow-hidden rounded bg-neutral-800">
-                                  <span
-                                    className={`block h-full ${tone.dot}`}
-                                    style={{ width: `${maxLatency ? Math.min(100, (latency / maxLatency) * 100) : 0}%` }}
-                                  />
-                                </span>
-                              </div>
-                            </td>
-                            <td className="max-w-[260px] px-3 py-2">
-                              {row.error ? (
-                                <span className="break-words text-red-300">{row.error}</span>
-                              ) : failedTests.length > 0 ? (
-                                <span className="break-words text-amber-300">{failedTests.join(' · ')}</span>
-                              ) : passed.length > 0 ? (
-                                <span className="break-words text-neutral-500">{passed.join(' · ')}</span>
-                              ) : (
-                                <span className="text-neutral-700">—</span>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
-
-            {execute.state.phase !== 'idle' && (
-              <ToolResultPanel state={execute.state} toolId="sys.health.check" toolName={manifest.name} onRerun={execute.reset} />
-            )}
+            {/* Run state for the matrix above: which phase it is in, how long the
+                last sweep took, and when its report was produced. */}
+            <dl className="min-w-0 space-y-1 rounded-lg border border-neutral-800 bg-neutral-950 p-3 font-mono text-[11px] text-neutral-500">
+              <div className="flex min-w-0 items-baseline justify-between gap-3">
+                <dt className="shrink-0">phase</dt>
+                <dd className="min-w-0 truncate text-right font-bold text-neutral-200">{execute.state.phase}</dd>
+              </div>
+              <div className="flex min-w-0 items-baseline justify-between gap-3">
+                <dt className="shrink-0">measured</dt>
+                <dd className="min-w-0 truncate text-right font-bold text-neutral-200">
+                  {execute.state.elapsedSeconds.toFixed(1)}s
+                </dd>
+              </div>
+              <div className="flex min-w-0 items-baseline justify-between gap-3">
+                <dt className="shrink-0">report timestamp</dt>
+                <dd className="min-w-0 truncate text-right font-bold text-neutral-200" title={timestamp ?? ''}>
+                  {timestamp ?? '—'}
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
       </div>
