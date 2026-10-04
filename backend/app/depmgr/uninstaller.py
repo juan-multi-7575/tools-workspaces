@@ -16,7 +16,6 @@ from typing import Any
 
 from app.depmgr.catalog import get as get_dep
 from app.depmgr.store import deps_root, prefix_for_id, record_removal
-from app.tools.deps_map import tools_for_dep
 
 
 class RemovalError(Exception):
@@ -25,6 +24,9 @@ class RemovalError(Exception):
 
 def dependents(dep_id: str) -> list[str]:
     """Registered tool ids that stop working if ``dep_id`` is removed."""
+    # Lazy import: see the note in app/depmgr/resolver.py about the app.tools cycle.
+    from app.tools.deps_map import tools_for_dep
+
     return tools_for_dep(dep_id)
 
 

@@ -38,13 +38,21 @@ from app.depmgr.store import (
     micromamba_bin,
     prefix_for_id,
 )
-from app.tools.deps_map import deps_for_tool
+
+
+def _deps_for_tool(tool_id: str) -> list[str]:
+    # Imported lazily on purpose: app.tools.deps_map lives inside the app.tools
+    # package, whose __init__ imports every tool driver, and downloader.py imports
+    # env_for from this module. A module-level import would close that cycle.
+    from app.tools.deps_map import deps_for_tool
+
+    return deps_for_tool(tool_id)
 
 
 def bin_dirs_for_tool(tool_id: str) -> list[str]:
     """Ordered, de-duplicated existing bin dirs for a tool's deps."""
     ordered: list[str] = []
-    for dep_id in deps_for_tool(tool_id):
+    for dep_id in _deps_for_tool(tool_id):
         for d in bin_dirs_for_id(dep_id):
             s = str(d)
             if s not in ordered and os.path.isdir(s):
@@ -54,7 +62,7 @@ def bin_dirs_for_tool(tool_id: str) -> list[str]:
 
 def env_for(tool_id: str) -> dict[str, str]:
     """Overrides for a tool's subprocess env. Pure function; os.environ untouched."""
-    dep_ids = deps_for_tool(tool_id)
+    dep_ids = _deps_for_tool(tool_id)
     bin_dirs = bin_dirs_for_tool(tool_id)
     env: dict[str, str] = {}
 
