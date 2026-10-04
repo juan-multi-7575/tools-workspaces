@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type DragEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader2, Upload } from 'lucide-react'
 import { api, errorMessage } from '../../lib/api'
 import type { ToolManifest } from '../../lib/api'
-import { IMAGEMAGICK_ID, type FieldSpec } from './imagemagickManifest'
+import type { FieldSpec } from './imagemagickManifest'
 
 export interface ImageMagickHeroProps {
   manifest: ToolManifest
@@ -21,16 +21,18 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
 
   const schema = (manifest.parameters_schema ?? {}) as Record<string, FieldSpec>
 
-  /**
-   * The four manifest defaults, rendered exactly as the backend declares them.
-   * A default that is the empty string is shown as `(empty)` rather than being
-   * replaced with a plausible-looking value — the geometry really does start
-   * unset, and the site says so.
+  /*
+   * The manifest's own defaults, labelled with the manifest's own titles. A
+   * default that is the empty string is shown as `(empty)` rather than replaced
+   * with a plausible-looking value — the geometry really does start unset.
    */
   const resize = String(schema.resize?.default ?? '')
   const defaults: [string, string][] = (Object.keys(schema) as (keyof typeof schema)[]).map((key) => {
     const value = schema[key]?.default
-    return [key, value === undefined || value === '' ? '(empty)' : String(value)]
+    return [
+      schema[key]?.title ?? key,
+      value === undefined || value === '' ? '(empty)' : String(value),
+    ]
   })
 
   const chooseImage = async (file: File | undefined) => {
@@ -47,8 +49,21 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
     }
   }
 
+  const dropped = (event: DragEvent) => {
+    // Only a file drag; a text selection dragged in must not open a picker.
+    if (!Array.from(event.dataTransfer.types).includes('Files')) return
+    event.preventDefault()
+    void chooseImage(event.dataTransfer.files?.[0])
+  }
+
   return (
-    <div className="im-root">
+    <div
+      className="im-root"
+      onDragOver={(event) => {
+        if (Array.from(event.dataTransfer.types).includes('Files')) event.preventDefault()
+      }}
+      onDrop={dropped}
+    >
       <header className="im-bar">
         <button type="button" className="im-bar__home" onClick={() => navigate('/')}>
           <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
@@ -73,8 +88,8 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
             and sizes.
           </h1>
           <p className="im-hero__lede">
-            {manifest.description} Point it at an image on this machine, choose a target format,
-            a quality and a geometry, and it writes one real file into the artifact index.
+            {manifest.description} Point it at an image on this machine, choose a target format, a
+            quality and a geometry, and it writes the converted file to the artifact index.
           </p>
 
           <div className="im-hero__actions">
@@ -116,16 +131,11 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
               {uploadError}
             </p>
           )}
-
-          <p className="im-hero__note">
-            Both panes stay blank until a real file is chosen — no placeholder image is drawn
-            where a missing one should be.
-          </p>
         </div>
 
         <div className="im-stack" aria-hidden="true">
           <div className="im-panel im-panel--back">
-            <p className="im-panel__label">Manifest defaults</p>
+            <p className="im-panel__label">Default settings</p>
             <div className="im-panel__rows">
               {defaults.map(([key, value]) => (
                 <p className="im-panel__row" key={key}>
@@ -162,12 +172,6 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
         </div>
       </main>
 
-      <footer className="im-dock" style={{ gridTemplateColumns: 'minmax(0, 1fr)' }}>
-        <p className="im-hero__note" style={{ margin: 0 }}>
-          {IMAGEMAGICK_ID} — every parameter the manifest declares:{' '}
-          {Object.keys(schema).join(' · ')}
-        </p>
-      </footer>
-    </div>
+      </div>
   )
 }

@@ -161,10 +161,8 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
 
           <div className="im-rail__body" id="im-rail-body">
             <div className="im-field" data-param-key="format">
-              <span className="im-field__label" id="im-format-label">
-                <span>
-                  {schema.format?.title ?? 'format'} <span className="im-field__key">format</span>
-                </span>
+              <span className="im-field__label" id="im-format-label" title="format">
+                {schema.format?.title ?? 'Format'}
               </span>
               <div className="im-seg" role="group" aria-labelledby="im-format-label">
                 {formatOptions.map((option) => (
@@ -179,18 +177,12 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                   </button>
                 ))}
               </div>
-              <p className="im-field__hint">
-                Passed to the backend as the target extension. One of the {formatOptions.length} values
-                the manifest declares.
-              </p>
+              <p className="im-field__hint">The output file is written in this format.</p>
             </div>
 
             <div className="im-field" data-param-key="quality">
-              <label className="im-field__label" htmlFor="im-quality">
-                <span>
-                  {schema.quality?.title ?? 'quality'}{' '}
-                  <span className="im-field__key">quality</span>
-                </span>
+              <label className="im-field__label" htmlFor="im-quality" title="quality">
+                {schema.quality?.title ?? 'Quality'}
                 <span className="im-value">{Number.isFinite(quality) ? quality : '—'}</span>
               </label>
               <input
@@ -203,18 +195,12 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                 value={Number.isFinite(quality) ? quality : 85}
                 onChange={(event) => setKey('quality', Number(event.target.value))}
               />
-              <p className="im-field__hint">
-                Ignored by PNG, honoured by JPEG and WebP — that is the encoder&apos;s own rule, not
-                this page&apos;s.
-              </p>
+              <p className="im-field__hint">Applies to JPEG and WebP; PNG ignores it.</p>
             </div>
 
             <div className="im-field" data-param-key="input_path">
-              <span className="im-field__label" id="im-source-label">
-                <span>
-                  {schema.input_path?.title ?? 'input_path'}{' '}
-                  <span className="im-field__key">input_path</span>
-                </span>
+              <span className="im-field__label" id="im-source-label" title="input_path">
+                {schema.input_path?.title ?? 'Input Image File'}
               </span>
 
               <div
@@ -235,7 +221,6 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                 }}
               >
                 <span>{uploading ? 'Uploading…' : 'Drop an image, or click to browse'}</span>
-                <span className="im-field__key">a real upload, not a stub</span>
               </div>
               <input
                 ref={fileRef}
@@ -272,7 +257,7 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                     value=""
                     onChange={(event) => event.target.value && setKey('input_path', event.target.value)}
                   >
-                    <option value="">— an image the backend already has —</option>
+                    <option value="">— an image already on this machine —</option>
                     {recent.map((entry) => (
                       <option key={entry.path} value={entry.path}>
                         {entry.name} · {formatBytes(entry.size)}
@@ -294,8 +279,8 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                 <span>What the geometry string means</span>
               </span>
               <p className="im-field__hint">
-                A geometry with no operator is a bound, not a target: a 640×400 source sent through{' '}
-                <code>240x160</code> comes back 240×150.
+                Without an operator a geometry is a box the image fits inside, so{' '}
+                <code>240x160</code> on a 640×400 source comes back 240×150.
               </p>
               <dl className="im-keylist">
                 {GEOMETRY_KEY.map(([token, meaning]) => (
@@ -331,13 +316,8 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                     </p>
                     <p className="im-empty__title">No image chosen yet.</p>
                     <p className="im-empty__body">
-                      Pick a file with <strong>Choose an image</strong> on the intro page, drop one on
-                      this rail, or type a path this machine can read.
-                    </p>
-                    <p className="im-empty__why">
-                      The pane is empty on purpose. The backend reads{' '}
-                      <code>input_path</code> off disk and returns a failure if it is missing, so
-                      nothing is drawn here that the backend has not actually been handed.
+                      Choose a file with <strong>Choose an image</strong> on the intro page, drop one
+                      on this rail, or type a path this machine can read.
                     </p>
                   </div>
                 )}
@@ -383,14 +363,12 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                     <p className="im-empty__why">
                       {resize ? (
                         <>
-                          This pane will load <code>{outputFormat ?? String(params.format ?? '')}</code> at
-                          geometry <code>{resize}</code>, straight from the artifact index.
+                          The next run writes{' '}
+                          <code>{outputFormat ?? String(params.format ?? '')}</code> at{' '}
+                          <code>{resize}</code>.
                         </>
                       ) : (
-                        <>
-                          <code>resize</code> is empty, so the output keeps the source dimensions.
-                          Type a geometry below to change that.
-                        </>
+                        <>No geometry set, so the output keeps the source dimensions.</>
                       )}
                     </p>
                   </div>
@@ -436,9 +414,9 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
         <div className="im-dock__main">
           <div className="im-dock__row">
             <div className="im-field im-dock__geo" data-param-key="resize">
-              <label className="im-field__label" htmlFor="im-resize">
+              <label className="im-field__label" htmlFor="im-resize" title="resize">
                 <span>
-                  {schema.resize?.title ?? 'resize'} <span className="im-field__key">resize</span>
+                  {schema.resize?.title ?? 'Resize Geometry'}
                 </span>
                 <span className="im-value">{resize || 'source size kept'}</span>
               </label>

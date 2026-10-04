@@ -119,11 +119,50 @@ test('the empty canvas is a designed state that says what to do — never a text
   const html = renderWorkspace()
   assert.match(html, /No image chosen yet\./, 'the input pane must say it is empty')
   assert.match(html, /Choose an image/, 'the empty state must point at the action that fills it')
-  assert.match(html, /empty on purpose/, 'the empty state must say why nothing is drawn')
   assert.match(html, /Nothing converted yet\./, 'the output pane must say it is empty')
   // The brief bans a checkerboard standing in for absent content.
   assert.doesNotMatch(html, /conic-gradient/, 'no checkerboard may stand in for a missing image')
   assert.doesNotMatch(html, /checkerboard/i)
+})
+
+/**
+ * House rule: a page that behaves honestly does not narrate that it does. These
+ * are the exact sentences the template shipped that explained the page's own
+ * virtue and the backend's internals instead of helping someone use the tool.
+ */
+const SELF_NARRATION =
+  /not this page|on purpose|nothing is drawn|manifest declares|backend reads|not a stub|the encoder|already been handed|no placeholder/i
+
+test('no site copy explains the page’s own honesty or the backend’s internals', () => {
+  const surfaces: [string, string][] = [
+    ['hero', renderHero()],
+    ['workspace', renderWorkspace()],
+    ['home', renderToStaticMarkup(
+      <MemoryRouter>
+        <HomeSite />
+      </MemoryRouter>,
+    )],
+  ]
+  for (const [name, html] of surfaces) {
+    const text = html.replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;/g, ' ')
+    assert.doesNotMatch(text, SELF_NARRATION, `the ${name} site narrates itself`)
+  }
+})
+
+test('a label carries the human title, never the bare manifest key beside it', () => {
+  const html = renderWorkspace()
+  for (const spec of Object.values(MANIFEST.parameters_schema) as { title: string }[]) {
+    assert.doesNotMatch(
+      html,
+      new RegExp(`>${spec.title}[^<]*<span`),
+      `label "${spec.title}" still renders its key as a visible suffix`,
+    )
+  }
+  // The keys stay reachable for anything that needs them.
+  for (const key of PARAM_KEYS) {
+    assert.ok(html.includes(`data-param-key="${key}"`), `parameter "${key}" lost its hook`)
+    assert.ok(html.includes(`title="${key}"`), `parameter "${key}" lost its tooltip key`)
+  }
 })
 
 test('the dependency gate is hosted in the trailing action bar, outside the scrolling canvas', () => {
