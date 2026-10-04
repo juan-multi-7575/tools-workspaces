@@ -7,6 +7,7 @@ from app.errors import public_error, unexpected_error, stream_public_data
 
 import asyncio
 import json
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +17,11 @@ from app.core.scheduler import execute_dag_pipeline, stop_dag_pipeline, ACTIVE_P
 from app.core.cache import detect_existing_artifacts
 from app.core.canvas import get_workspace_canvas, save_workspace_canvas, reset_workspace_canvas
 from app.deps import check_dependencies, upgrade_package
+from app.depmgr import environ as dep_environ
+from app.depmgr import installer as dep_installer
+from app.depmgr import resolver as dep_resolver
+from app.depmgr import uninstaller as dep_uninstaller
+from app.depmgr.catalog import all_deps as all_managed_deps
 from app.download_manager import get_manager
 from app.remote import get_token, regenerate_token
 from app import paths
@@ -729,6 +735,152 @@ async def run_dep_update(payload: dict):
         res = upgrade_package(package)
     app.state.dep_check = check_dependencies(index=lambda u: None)
     return res
+
+
+# ---------------------------------------------------------------------------
+# Managed dependency manager (app/depmgr): app-owned, root-free installs.
+# Distinct from /api/settings/deps above, which is the legacy apt/pip updater.
+# ---------------------------------------------------------------------------
+
+#: job_id -> asyncio.Event, so a client can cancel an in-flight install.
+ACTIVE_DEP_INSTALLS: dict[str, asyncio.Event] = {}
+
+
+@app.get("/api/deps")
+async def list_managed_deps():
+    """Every managed dependency with probed status, size and dependent tools."""
+    statuses = {s.dep_id: s for s in dep_resolver.check_all()}
+    entries = []
+    for dep in all_managed_deps():
+        status = statuses[dep.id]
+        entry = status.as_dict()
+        entry["packages"] = list(dep.packages)
+        entry["dependents"] = dep_uninstaller.dependents(dep.id)
+        entries.append(entry)
+    return {
+        "deps_root": dep_resolver.deps_root_path(),
+        "micromamba": {
+            "installed": dep_installer.micromamba_bin().exists(),
+            "version": dep_installer.micromamba_version(),
+            "url": dep_installer.micromamba_url(),
+        },
+        "totals": dep_resolver.totals(),
+        "deps": entries,
+    }
+
+
+@app.get("/api/tools/{tool_id}/deps")
+async def get_tool_deps(tool_id: str):
+    """What a single tool needs, whether it can run, and the env it would get."""
+    try:
+        get(tool_id)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=public_error("TOOL_NOT_FOUND", "Requested resource not found."))
+    state = dep_resolver.check(tool_id)
+    state["environ"] = dep_environ.preview(tool_id)
+    return state
+
+
+@app.post("/api/deps/install")
+async def install_managed_deps(payload: dict):
+    """Install deps, streaming granular progress as Server-Sent Events."""
+    dep_ids = payload.get("dep_ids") or []
+    if not isinstance(dep_ids, list) or not dep_ids:
+        raise HTTPException(status_code=400, detail="dep_ids must be a non-empty list")
+    known = {d.id for d in all_managed_deps()}
+    unknown = [d for d in dep_ids if d not in known]
+    if unknown:
+        raise HTTPException(status_code=422, detail=public_error("UNKNOWN_DEPENDENCY", f"Unknown dependency ids: {', '.join(map(str, unknown))}"))
+
+    job_id = f"depinstall-{uuid.uuid4().hex[:12]}"
+    cancel_event = asyncio.Event()
+    ACTIVE_DEP_INSTALLS[job_id] = cancel_event
+    event_queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=256)
+    connected = True
+
+    async def enqueue(evt: dict[str, Any]):
+        if not connected:
+            return
+        if event_queue.full():
+            event_queue.get_nowait()
+        event_queue.put_nowait(evt)
+
+    async def run_task():
+        try:
+            result = await dep_installer.install(
+                dep_ids, on_progress=enqueue, cancel_event=cancel_event
+            )
+            await enqueue({
+                "type": "finished",
+                "status": "cancelled" if result["cancelled"] else ("completed" if result["ok"] else "failed"),
+                "job_id": job_id,
+                "result": stream_public_data(result),
+            })
+        except Exception as exc:
+            await enqueue({
+                "type": "finished",
+                "status": "failed",
+                "job_id": job_id,
+                "result": {"ok": False, "error": unexpected_error(exc)},
+            })
+        finally:
+            ACTIVE_DEP_INSTALLS.pop(job_id, None)
+
+    execution_task = asyncio.create_task(run_task())
+    tasks = getattr(app.state, "dep_install_tasks", set())
+    app.state.dep_install_tasks = tasks
+    tasks.add(execution_task)
+    execution_task.add_done_callback(tasks.discard)
+
+    async def event_generator():
+        nonlocal connected
+        try:
+            await enqueue({"type": "started", "job_id": job_id, "dep_ids": dep_ids})
+            while True:
+                try:
+                    msg = await asyncio.wait_for(event_queue.get(), timeout=STREAM_HEARTBEAT_SECONDS)
+                except asyncio.TimeoutError:
+                    yield ": heartbeat\n\n"
+                    continue
+                yield f"data: {json.dumps(stream_public_data(msg))}\n\n"
+                if msg.get("type") == "finished":
+                    break
+        finally:
+            connected = False
+            # A dropped client must not leave a 2.5 GB download running.
+            cancel_event.set()
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+
+@app.post("/api/deps/install/cancel")
+async def cancel_managed_dep_install(payload: dict):
+    """Cancel an in-flight install stream."""
+    job_id = payload.get("job_id") or ""
+    event = ACTIVE_DEP_INSTALLS.get(job_id)
+    if event is None:
+        return {"cancelled": False, "job_id": job_id}
+    event.set()
+    return {"cancelled": True, "job_id": job_id}
+
+
+@app.post("/api/deps/remove")
+async def remove_managed_dep(payload: dict):
+    """Remove one dep and report which tools that breaks."""
+    dep_id = payload.get("dep_id") or ""
+    if not dep_id:
+        raise HTTPException(status_code=400, detail="dep_id is required")
+    try:
+        result = dep_uninstaller.remove(dep_id)
+    except dep_uninstaller.RemovalError as exc:
+        raise HTTPException(status_code=404, detail=public_error("DEPENDENCY_NOT_FOUND", str(exc)))
+    return stream_public_data(result)
+
+
+@app.post("/api/deps/nuke")
+async def nuke_managed_deps():
+    """Delete the entire deps root: micromamba, every prefix, cache and manifest."""
+    return stream_public_data(dep_uninstaller.nuke())
 
 
 @app.get("/api/settings/ytdlp")
