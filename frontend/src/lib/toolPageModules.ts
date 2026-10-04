@@ -11,6 +11,7 @@ import OcrMyPdfPage from '../pages/tools/OcrMyPdfPage'
 import PackagerPage from '../pages/tools/PackagerPage'
 import MediainfoPage from '../pages/tools/MediainfoPage'
 import StreamlinkPage from '../pages/tools/StreamlinkPage'
+import SoxPage from '../pages/tools/SoxPage'
 
 /**
  * Bespoke per-tool pages. Append-only: each batch adds its own keys.
@@ -32,4 +33,5 @@ export const BESPOKE_PAGES: Record<string, ToolPageComponent> = {
   packager: PackagerPage,
   mediainfo: MediainfoPage,
   streamlink: StreamlinkPage,
+  sox: SoxPage,
 }
