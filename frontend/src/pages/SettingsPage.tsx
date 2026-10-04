@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { RefreshCw, Save, KeyRound, Server, PackageCheck, CheckCircle2, ArrowUpCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { RefreshCw, Save, KeyRound, Server, PackageCheck, CheckCircle2, ArrowUpCircle, HardDrive } from 'lucide-react'
 import { api, type ProviderInfo } from '../lib/api'
 
 export default function SettingsPage() {
@@ -340,18 +341,27 @@ export default function SettingsPage() {
               <h2 className="text-xs font-bold uppercase tracking-wider text-brand-espresso">
                 Core Binary Dependencies
               </h2>
-              <p className="font-mono text-xs text-brand-caramel-text">EXTERNAL CLI UTILITIES</p>
+              <p className="font-mono text-xs text-brand-caramel-text">EXTERNAL CLI UTILITIES · SYSTEM-WIDE UPDATES</p>
             </div>
           </div>
 
-          <button
-            onClick={runCheck}
-            disabled={checkingDeps}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-brand-sage bg-brand-cream-dark px-3.5 py-1.5 text-xs font-semibold text-brand-espresso transition-all hover:bg-brand-sage/40 active:scale-95 disabled:opacity-40 shadow-xs"
-          >
-            <RefreshCw className={`size-3.5 ${checkingDeps ? 'animate-spin text-brand-caramel' : ''}`} />
-            Check Updates
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              to="/dependencies"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-brand-sage bg-brand-cream-dark px-3.5 py-1.5 text-xs font-semibold text-brand-espresso transition-all hover:bg-brand-sage/40 active:scale-95 shadow-xs"
+            >
+              <HardDrive className="size-3.5 text-brand-caramel" />
+              Managed installs
+            </Link>
+            <button
+              onClick={runCheck}
+              disabled={checkingDeps}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-brand-sage bg-brand-cream-dark px-3.5 py-1.5 text-xs font-semibold text-brand-espresso transition-all hover:bg-brand-sage/40 active:scale-95 disabled:opacity-40 shadow-xs"
+            >
+              <RefreshCw className={`size-3.5 ${checkingDeps ? 'animate-spin text-brand-caramel' : ''}`} />
+              Check Updates
+            </button>
+          </div>
         </div>
 
         <div className="space-y-2">

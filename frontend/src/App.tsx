@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useNavigate, useLocation } from 'react-router-dom'
-import { Wrench, FolderTree, Settings, Smartphone, Terminal, Menu, X } from 'lucide-react'
+import { Wrench, FolderTree, Settings, Smartphone, Terminal, Menu, X, HardDrive } from 'lucide-react'
 import ToolsPage from './pages/ToolsPage'
 import ToolPageRouter from './pages/ToolPageRouter'
 import WorkspacesPage from './pages/WorkspacesPage'
 import WorkspaceDetailPage from './pages/WorkspaceDetailPage'
 import SettingsPage from './pages/SettingsPage'
+import DependencyManagerPanel from './components/deps/DependencyManagerPanel'
 import RemoteControlPage from './pages/RemoteControlPage'
 import ActivitySidebar, { ActivityProvider } from './components/activity/ActivitySidebar'
 import AudioPlayerModal, { type AudioPlayerMedia } from './components/audio/AudioPlayerModal'
@@ -16,6 +17,7 @@ import { useHealth } from './hooks/useHealth'
 const nav = [
   { to: '/tools', label: 'Tools', icon: Wrench },
   { to: '/workspaces', label: 'Workspaces', icon: FolderTree },
+  { to: '/dependencies', label: 'Dependencies', icon: HardDrive },
   { to: '/remote', label: 'Remote', icon: Smartphone },
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
@@ -172,6 +174,7 @@ function AppShell() {
             <Route path="/workspaces" element={<WorkspacesPage />} />
             <Route path="/workspaces/:id" element={<WorkspaceDetailPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/dependencies" element={<DependencyManagerPanel />} />
             <Route path="/remote" element={<RemoteControlPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

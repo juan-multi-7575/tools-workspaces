@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readdir, readFile } from 'node:fs/promises'
 import { renderToStaticMarkup } from 'react-dom/server'
 import {
   depEventReducer,
@@ -10,6 +11,7 @@ import {
 } from '../hooks/useToolDeps'
 import { formatBytes, type DepEntry, type DepEvent } from '../lib/depsApi'
 import DependencyGate from '../components/deps/DependencyGate'
+import DependencyManagerPanel from '../components/deps/DependencyManagerPanel'
 
 function entry(overrides: Partial<DepEntry> & { dep_id: string }): DepEntry {
   return {
@@ -314,4 +316,33 @@ test('a failed dependency check is reported and offers a retry', () => {
 test('the checking state is announced rather than silently blank', () => {
   const html = renderToStaticMarkup(<DependencyGate toolId="pandoc" state={state({ status: 'checking' })} />)
   assert.match(html, /Checking what this tool needs/)
+})
+
+// ── every tool page is actually wired ─────────────────────────────────────────
+
+test('every tool page calls useToolDeps, renders the gate, and ORs readiness into Run', async () => {
+  const dir = new URL('../pages/tools/', import.meta.url)
+  const files = (await readdir(dir)).filter((name) => name.endsWith('.tsx')).sort()
+  assert.ok(files.length >= 22, `expected at least 22 tool pages, found ${files.length}`)
+
+  const missing: string[] = []
+  for (const file of files) {
+    const source = await readFile(new URL(file, dir), 'utf8')
+    const hasHook = /const deps = useToolDeps\(/.test(source)
+    const hasGate = /<DependencyGate\b/.test(source)
+    // `||` must be the operator: `busy || !input && !ready` would leave Run enabled.
+    const gatesRun = /disabled=\{[^}]*\|\|\s*!deps\.ready\}/.test(source)
+    if (!hasHook || !hasGate || !gatesRun) {
+      missing.push(`${file} (hook:${hasHook} gate:${hasGate} disablesRun:${gatesRun})`)
+    }
+  }
+  assert.deepEqual(missing, [], `tool pages not wired to the dependency gate:\n${missing.join('\n')}`)
+})
+
+test('the manager console renders its own identity and re-probe control', () => {
+  const html = renderToStaticMarkup(<DependencyManagerPanel />)
+  assert.match(html, /Managed dependencies/)
+  assert.match(html, /Re-probe/)
+  // Not a tool page: it carries no tool Run action and claims no inventory yet.
+  assert.doesNotMatch(html, /data-dep-gate/)
 })
