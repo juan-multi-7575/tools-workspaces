@@ -10,6 +10,42 @@ import GalleryDlPage from '../pages/tools/GalleryDlPage'
 
 const MEDIA_UTILITY_IDS = ['mediainfo', 'streamlink', 'sox', 'demucs', 'gallery-dl'] as const
 
+/**
+ * Undo the entity escaping React applies to text it renders. An `&lt;` written
+ * inside a JS string literal is inert JSX, so it reaches the DOM as the literal
+ * six characters and React escapes the `&` on top of that (`&amp;lt;`) —
+ * decoding once leaves the entity text visible, which is what a user would read.
+ */
+function decodeEntities(html: string): string {
+  return html
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;|&#39;/g, "'")
+    .replace(/&amp;/g, '&')
+}
+
+test('the SoX command preview prints real angle brackets, not escaped entity text', () => {
+  const html = renderToStaticMarkup(
+    <SoxPage
+      manifest={{
+        id: 'sox',
+        name: 'sox',
+        description: 'sox manifest',
+        category: 'Media',
+        tags: ['sox'],
+        input_kinds: ['any'],
+        output_kinds: ['any'],
+        parameters_schema: { effect: { type: 'string', title: 'effect' } },
+      }}
+      initialParams={{}}
+    />,
+  )
+  const text = decodeEntities(html)
+  assert.match(text, /sox <input> <output>/, 'the command preview must show real < and >')
+  assert.doesNotMatch(text, /&lt;|&gt;/, 'no entity text may reach the user')
+})
+
 test('the five media utility tools each have a bespoke page', () => {
   for (const id of MEDIA_UTILITY_IDS) {
     assert.ok(BESPOKE_PAGES[id], `${id} must have a bespoke page`)
