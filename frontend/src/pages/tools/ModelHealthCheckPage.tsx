@@ -412,11 +412,6 @@ export default function ModelHealthCheckPage({
             {execute.state.phase !== 'idle' && (
               <ToolResultPanel state={execute.state} toolId="sys.health.check" toolName={manifest.name} onRerun={execute.reset} />
             )}
-
-            <p className="font-mono text-[10px] text-brand-caramel-text">
-              {Object.keys(schema).length} manifest keys on this page: {Object.keys(schema).join(', ')} ·{' '}
-              {Object.keys(complementSchema).length} rendered outside the shared form
-            </p>
           </div>
         </div>
       </div>

@@ -224,7 +224,6 @@ export default function ImageMagickPage({
               onChange={(e) => setKey('quality', Number(e.target.value))}
               className="w-full accent-brand-caramel"
             />
-            <p className="font-mono text-[10px] text-brand-cream-dark/50">Sent verbatim as <code>quality</code>; ImageMagick applies it via <code>-quality</code>.</p>
           </div>
 
           <div data-param-key="resize" className="space-y-2">
@@ -355,9 +354,6 @@ export default function ImageMagickPage({
             onSendToTool={onSendToTool}
           />
         )}
-        <p className="font-mono text-[10px] text-brand-caramel-text">
-          {Object.keys(schema).length} manifest keys on this page: {Object.keys(schema).join(', ')}
-        </p>
       </div>
     </ToolPageShell>
   )

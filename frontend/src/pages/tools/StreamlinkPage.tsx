@@ -142,10 +142,6 @@ export default function StreamlinkPage({
           >
             <RotateCcw className="size-3.5" /> strike the tally
           </button>
-
-          <p className="border-t border-[#1b2127] pt-3 text-[10px] text-[#6c7a86]">
-            manifest keys on this page: {Object.keys(schema).join(', ') || '—'}
-          </p>
         </div>
       }
     >

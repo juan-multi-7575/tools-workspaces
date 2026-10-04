@@ -355,9 +355,6 @@ export default function ExifScrubberPage({
             onSendToTool={onSendToTool}
           />
         )}
-        <p className="font-mono text-[10px] text-brand-caramel-text">
-          {Object.keys(schema).length} manifest keys on this page: {Object.keys(schema).join(', ')}
-        </p>
       </div>
     </ToolPageShell>
   )

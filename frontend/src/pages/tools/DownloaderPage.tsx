@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import {
-  AlertCircle,
-  CheckCircle2,
   ChevronDown,
   ChevronRight,
   FileUp,
@@ -676,10 +674,6 @@ export default function DownloaderPage({
           </div>
           <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-widest text-slate-500">
             <span className="border border-slate-800 px-2 py-1">{DOWNLOADER_ID}</span>
-            <span className="border border-slate-800 px-2 py-1">
-              manifest params {allKeys.length} = form {DOWNLOADER_FORM_KEYS.size} + complement {complementKeys.length}
-              {complementKeys.length === allKeys.length ? '' : ` (${allKeys.length - complementKeys.length - DOWNLOADER_FORM_KEYS.size} unmatched)`}
-            </span>
             <span className="border border-slate-800 px-2 py-1">{manifest.category || 'General'}</span>
             {hasActive && (
               <span className="inline-flex items-center gap-1.5 border border-emerald-500/50 px-2 py-1 text-emerald-300">
@@ -1248,12 +1242,6 @@ export default function DownloaderPage({
                   {tag}
                 </span>
               ))}
-              <span className="inline-flex items-center gap-1">
-                <CheckCircle2 className="size-3" /> every control above is bound to a real backend parameter
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <AlertCircle className="size-3" /> no percentage, phase, or title on this page is invented
-              </span>
             </footer>
           </div>
         </div>

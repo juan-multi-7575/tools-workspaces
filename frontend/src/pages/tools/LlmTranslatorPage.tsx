@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   ArrowRight,
   CloudDownload,
-  Cpu,
   FileDiff,
   KeyRound,
   Loader2,
@@ -673,10 +672,6 @@ export default function LlmTranslatorPage({
             onSendToTool={onSendToTool}
           />
         )}
-
-        <p className="flex items-center gap-1.5 font-mono text-[10px] text-brand-caramel-text">
-          <Cpu className="size-3" /> {Object.keys(schema).length} manifest keys on this page: {Object.keys(schema).join(', ')}
-        </p>
       </div>
     </ToolPageShell>
   )

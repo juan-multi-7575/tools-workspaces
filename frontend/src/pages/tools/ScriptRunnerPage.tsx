@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   CircleDot,
   Download,
-  FileCode2,
   Loader2,
   Play,
   Square,
@@ -298,11 +297,6 @@ export default function ScriptRunnerPage({
           </div>
         )}
       </div>
-
-      <p className="mt-4 flex items-center gap-1.5 font-mono text-[10px] text-brand-caramel-text">
-        <FileCode2 className="size-3" /> {Object.keys(schema).length} manifest keys on this page:{' '}
-        {Object.keys(schema).join(', ')}
-      </p>
     </ToolPageShell>
   )
 }

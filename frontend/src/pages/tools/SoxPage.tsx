@@ -239,8 +239,8 @@ export default function SoxPage({
               className="w-full rounded-lg border border-[#4a3a31] bg-[#171210] px-2.5 py-2 font-mono text-xs text-[#ffe0bd] placeholder-[#6b574a] focus:border-[#e0a96d] focus:outline-none"
             />
             <p className="font-mono text-[10px] leading-snug text-[#a08a76]">
-              {schema.effect?.description ?? 'SoX effect chain.'} Sent verbatim as <code>effect</code>; the backend
-              splits it on whitespace and appends the tokens to the <code>sox</code> command line.
+              {schema.effect?.description ?? 'SoX effect chain.'} Split on whitespace, and the tokens are appended
+              to the <code>sox</code> command line in the order written.
             </p>
             {diverged && (
               <button
@@ -306,8 +306,8 @@ export default function SoxPage({
               accept="audio/*,video/*"
             />
             <p className="font-mono text-[10px] leading-snug text-[#a08a76]">
-              <code>input_path</code> is not in this tool&apos;s manifest schema, but the backend requires it — see
-              backend/app/tools/mediainfo_tool.py:167. Without it the run fails with{' '}
+              <code>input_path</code> is the audio or video file the rack reads. It is not declared in this
+              tool&apos;s manifest schema, but the run needs it: without a path the backend answers{' '}
               <code>input_path is required</code>, which is shown here verbatim.
             </p>
           </div>

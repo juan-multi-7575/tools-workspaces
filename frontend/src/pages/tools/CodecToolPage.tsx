@@ -5,12 +5,10 @@ import {
   Check,
   Copy,
   Download,
-  FileUp,
   Hash,
   Link2,
   Play,
   Sigma,
-  Type,
 } from 'lucide-react'
 import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
@@ -269,11 +267,6 @@ export default function CodecToolPage({
             onSendToTool={onSendToTool}
           />
         )}
-
-        <p className="flex items-center gap-1.5 border-t border-brand-sage pt-4 font-mono text-[10px] text-brand-caramel-text">
-          {text.length > 0 ? <Type className="size-3" /> : <FileUp className="size-3" />}
-          {Object.keys(schema).length} manifest keys on this page: {Object.keys(schema).join(', ')}
-        </p>
       </div>
     </ToolPageShell>
   )
