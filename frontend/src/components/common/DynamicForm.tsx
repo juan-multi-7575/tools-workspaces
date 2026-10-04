@@ -182,7 +182,7 @@ export default function DynamicForm({
       {/* 1. HERO URL INSERTION BAR (High-Priority Primary Control)                */}
       {/* ========================================================================= */}
       {urlKey && (
-        <div className="relative rounded-2xl border-2 border-brand-caramel/50 bg-brand-cream p-4 shadow-sm ring-1 ring-brand-caramel/20 transition-all focus-within:border-brand-caramel focus-within:ring-2 focus-within:ring-brand-caramel/30">
+        <div data-param-key={urlKey} className="relative rounded-2xl border-2 border-brand-caramel/50 bg-brand-cream p-4 shadow-sm ring-1 ring-brand-caramel/20 transition-all focus-within:border-brand-caramel focus-within:ring-2 focus-within:ring-brand-caramel/30">
           <div className="flex items-center justify-between mb-2">
             <label className="flex items-center gap-2 font-bold text-brand-espresso text-xs">
               <span className="flex size-5 items-center justify-center rounded-md bg-brand-caramel text-brand-cream-light">
@@ -242,7 +242,7 @@ export default function DynamicForm({
       {/* 2. DOWNLOAD MODE SELECTOR (Video + Audio / Audio Only / Video Only)        */}
       {/* ========================================================================= */}
       {hasDownloadMode && (
-        <div className="rounded-2xl border border-brand-sage bg-brand-cream-dark/50 p-3.5 space-y-2.5 shadow-2xs">
+        <div data-param-key="download_mode" className="rounded-2xl border border-brand-sage bg-brand-cream-dark/50 p-3.5 space-y-2.5 shadow-2xs">
           <div className="flex items-center justify-between">
             <span className="font-mono text-xs uppercase font-bold tracking-wider text-brand-caramel-text flex items-center gap-1.5">
               <Sparkles className="size-3 text-brand-caramel" />
@@ -414,7 +414,7 @@ export default function DynamicForm({
           return parts.join(' · ')
         })()
         return (
-          <div key={key} className={`space-y-2 rounded-2xl border border-brand-sage bg-surface-white p-3.5 transition-all hover:border-brand-caramel/70 shadow-xs ${
+          <div key={key} data-param-key={key} className={`space-y-2 rounded-2xl border border-brand-sage bg-surface-white p-3.5 transition-all hover:border-brand-caramel/70 shadow-xs ${
             isFullWidth ? 'sm:col-span-2' : ''
           }`}>
             <div className="flex items-center justify-between">

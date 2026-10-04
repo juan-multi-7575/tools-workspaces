@@ -207,6 +207,7 @@ function getTools(signal?: AbortSignal): Promise<{ tools: ToolManifest[] }> {
 export const api = {
   health: (signal?: AbortSignal) => request<{ status: string; version: string }>('/api/health', { signal }),
   listTools: (signal?: AbortSignal) => getTools(signal),
+  getTool: (toolId: string) => request<ToolManifest>(`/api/tools/${encodeURIComponent(toolId)}`),
   listWorkspaces: (signal?: AbortSignal) => request<{ workspaces: Workspace[] }>('/api/workspaces', { signal }),
   createWorkspace: (name: string) =>
     request<Workspace>('/api/workspaces', {

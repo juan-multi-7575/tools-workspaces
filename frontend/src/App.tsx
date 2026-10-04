@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useNavigate, useLocation } from 'react-router-dom'
 import { Wrench, FolderTree, Settings, Smartphone, Terminal, Menu, X } from 'lucide-react'
 import ToolsPage from './pages/ToolsPage'
+import ToolPageRouter from './pages/ToolPageRouter'
 import WorkspacesPage from './pages/WorkspacesPage'
 import WorkspaceDetailPage from './pages/WorkspaceDetailPage'
 import SettingsPage from './pages/SettingsPage'
@@ -13,7 +14,7 @@ import ErrorBoundary from './components/common/ErrorBoundary'
 import { useHealth } from './hooks/useHealth'
 
 const nav = [
-  { to: '/', label: 'Tools', icon: Wrench },
+  { to: '/tools', label: 'Tools', icon: Wrench },
   { to: '/workspaces', label: 'Workspaces', icon: FolderTree },
   { to: '/remote', label: 'Remote', icon: Smartphone },
   { to: '/settings', label: 'Settings', icon: Settings },
@@ -116,7 +117,7 @@ function AppShell() {
                 <NavLink
                   key={to}
                   to={to}
-                  end={to === '/'}
+                  end={to === '/tools'}
                   onClick={() => setMobileNavOpen(false)}
                   className={({ isActive }) =>
                     cn(
@@ -165,7 +166,9 @@ function AppShell() {
         <main className="flex-1 h-full min-h-0 overflow-hidden flex flex-col bg-brand-cream text-brand-espresso min-w-0 w-full">
           <ErrorBoundary name="Application view" resetKey={location.pathname}>
           <Routes>
-            <Route path="/" element={<ToolsPage onOpenAudioPlayer={setActiveMedia} />} />
+            <Route path="/" element={<Navigate to="/tools" replace />} />
+            <Route path="/tools" element={<ToolsPage onOpenAudioPlayer={setActiveMedia} />} />
+            <Route path="/tools/:toolId" element={<ToolPageRouter onOpenAudioPlayer={setActiveMedia} />} />
             <Route path="/workspaces" element={<WorkspacesPage />} />
             <Route path="/workspaces/:id" element={<WorkspaceDetailPage />} />
             <Route path="/settings" element={<SettingsPage />} />
