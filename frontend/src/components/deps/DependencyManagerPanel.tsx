@@ -208,7 +208,7 @@ export default function DependencyManagerPanel() {
   }
 
   return (
-    <div className="h-full overflow-y-auto" style={{ backgroundColor: SURFACE, color: '#DCE7EC' }}>
+    <div className="dep-instrument h-full overflow-y-auto" style={{ backgroundColor: SURFACE, color: '#DCE7EC' }}>
       <div className="mx-auto w-full max-w-[1400px] space-y-4 px-4 py-5 sm:px-8">
         {/* ── board header ─────────────────────────────────────────────── */}
         <header className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-start sm:justify-between" style={{ borderColor: BORDER }}>
@@ -344,11 +344,11 @@ export default function DependencyManagerPanel() {
               }
             >
               <div
-                className="dep-gate__bar h-full rounded-full"
+                className="dep-progress-bar h-full rounded-full"
                 style={{ width: `${percent ?? 0}%`, backgroundColor: '#5EEAD4' }}
               />
               {byteProgress.activeDepId && (
-                <span className="dep-gate__track--active pointer-events-none absolute inset-0" aria-hidden="true" />
+                <span className="dep-progress-sheen pointer-events-none absolute inset-0" aria-hidden="true" />
               )}
             </div>
             <p className="mt-2 font-mono text-[11px] tabular-nums text-[#93A7B1]">

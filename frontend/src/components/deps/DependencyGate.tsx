@@ -272,7 +272,7 @@ export default function DependencyGate({ toolId, state, accent, onReadyChange }:
             }
           >
             <div
-              className="dep-gate__bar h-full rounded-full"
+              className="dep-progress-bar h-full rounded-full"
               style={{
                 width: `${percent ?? 0}%`,
                 backgroundColor: accent ?? 'var(--dep-active)',
@@ -281,7 +281,7 @@ export default function DependencyGate({ toolId, state, accent, onReadyChange }:
             {activeDepId && (
               // Indeterminate: the backend streams stages, not byte offsets, so
               // a running dep gets a sweep rather than a fabricated percentage.
-              <span className="dep-gate__track--active pointer-events-none absolute inset-0" aria-hidden="true" />
+              <span className="dep-progress-sheen pointer-events-none absolute inset-0" aria-hidden="true" />
             )}
           </div>
 
