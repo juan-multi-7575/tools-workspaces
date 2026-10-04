@@ -16,6 +16,8 @@ import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import UniversalFileInput from '../../components/common/UniversalFileInput'
 import { api, resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
 
 /**
@@ -51,6 +53,7 @@ export default function DemucsPage({
   onSendToTool,
 }: ToolPageProps) {
   const execute = useToolExecute('demucs')
+  const deps = useToolDeps('demucs')
   const schema = manifest.parameters_schema as Record<string, { title?: string; description?: string }>
   const [params, setParams] = useState<Record<string, unknown>>(() =>
     initialInputPath ? { ...initialParams, input_path: initialInputPath } : initialParams,
@@ -130,10 +133,12 @@ export default function DemucsPage({
             which this API does not forward, so no percentage is invented here.
           </p>
 
+          <DependencyGate toolId="demucs" state={deps} />
+
           <button
             type="button"
             onClick={() => void run()}
-            disabled={execute.busy || !inputPath}
+            disabled={execute.busy || !inputPath || !deps.ready}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-espresso px-3 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-brand-cream-light disabled:opacity-50"
           >
             {execute.busy ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5 fill-current" />}

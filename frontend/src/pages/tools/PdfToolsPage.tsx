@@ -10,6 +10,8 @@ import {
 } from 'lucide-react'
 import { resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import UniversalFileInput from '../../components/common/UniversalFileInput'
@@ -47,6 +49,7 @@ export default function PdfToolsPage({
 }: ToolPageProps) {
   const schema = manifest.parameters_schema as Record<string, FieldSpec>
   const execute = useToolExecute('pdf_tools')
+  const deps = useToolDeps('pdf_tools')
 
   const [params, setParams] = useState<Record<string, unknown>>(() =>
     initialInputPath ? { ...initialParams, input_path: initialInputPath } : initialParams,
@@ -124,6 +127,8 @@ export default function PdfToolsPage({
           />
         </div>
 
+        <DependencyGate toolId="pdf_tools" state={deps} />
+
         <div data-param-key="action" className="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-sage bg-brand-cream-dark/40 p-3.5">
           <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-brand-caramel-text">
             {schema.action?.title ?? 'action'}
@@ -148,7 +153,7 @@ export default function PdfToolsPage({
           <button
             type="button"
             onClick={() => void run()}
-            disabled={execute.busy}
+            disabled={execute.busy || !deps.ready}
             className="ml-auto inline-flex items-center gap-2 rounded-xl bg-brand-caramel px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-brand-cream-light disabled:opacity-50"
           >
             {execute.busy ? <Loader2 className="size-3.5 animate-spin" /> : <FileSearch className="size-3.5" />}

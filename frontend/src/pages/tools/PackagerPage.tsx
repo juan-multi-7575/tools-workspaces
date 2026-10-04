@@ -15,6 +15,8 @@ import {
 } from 'lucide-react'
 import { api, errorMessage, resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
@@ -77,6 +79,7 @@ export default function PackagerPage({
 }: ToolPageProps) {
   const schema = manifest.parameters_schema as Record<string, FieldSpec>
   const execute = useToolExecute('packager')
+  const deps = useToolDeps('packager')
   const fileRef = useRef<HTMLInputElement>(null)
 
   const initialPaths = Array.isArray(initialParams.paths) ? (initialParams.paths as unknown[]).map(String) : []
@@ -296,11 +299,13 @@ export default function PackagerPage({
                   <Plus className="size-3" /> add
                 </button>
               </div>
+              <DependencyGate toolId="packager" state={deps} />
+
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => void run()}
-                  disabled={execute.busy || selected.length === 0}
+                  disabled={execute.busy || selected.length === 0 || !deps.ready}
                   className="inline-flex items-center gap-2 rounded-xl bg-brand-caramel px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-brand-cream-light disabled:opacity-40"
                 >
                   {execute.busy ? <Loader2 className="size-3.5 animate-spin" /> : <Package className="size-3.5" />}

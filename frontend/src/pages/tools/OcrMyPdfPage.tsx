@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import { api, errorMessage, resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
@@ -51,6 +53,7 @@ export default function OcrMyPdfPage({
 }: ToolPageProps) {
   const schema = manifest.parameters_schema as Record<string, FieldSpec>
   const ocr = useToolExecute('ocrmypdf')
+  const deps = useToolDeps('ocrmypdf')
   const read = useToolExecute('pdf_tools')
 
   const fileRef = useRef<HTMLInputElement>(null)
@@ -219,6 +222,8 @@ export default function OcrMyPdfPage({
           )}
         </div>
 
+        <DependencyGate toolId="ocrmypdf" state={deps} />
+
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-sage bg-brand-cream-dark/40 p-3.5">
           <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-brand-caramel-text">
             {Object.keys(schema).length} manifest {Object.keys(schema).length === 1 ? 'key' : 'keys'} · the only one this tool declares is <code>input_pdf</code>
@@ -226,7 +231,7 @@ export default function OcrMyPdfPage({
           <button
             type="button"
             onClick={() => void run()}
-            disabled={busy}
+            disabled={busy || !deps.ready}
             className="ml-auto inline-flex items-center gap-2 rounded-xl bg-brand-caramel px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-brand-cream-light disabled:opacity-50"
           >
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : <ScanText className="size-3.5" />}

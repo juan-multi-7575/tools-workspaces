@@ -14,6 +14,8 @@ import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import { resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
 
 interface FieldSpec {
@@ -50,6 +52,7 @@ export default function ScriptRunnerPage({
     [manifest.parameters_schema],
   )
   const execute = useToolExecute('script_runner')
+  const deps = useToolDeps('script_runner')
   const [params, setParams] = useState<Record<string, unknown>>({ ...initialParams })
   const [scrollTop, setScrollTop] = useState(0)
 
@@ -147,6 +150,8 @@ export default function ScriptRunnerPage({
               />
             </div>
 
+            <DependencyGate toolId="script_runner" state={deps} />
+
             <div data-param-key="timeout" className="flex items-center gap-2">
               <label htmlFor="sr-timeout" className="flex items-center gap-1 font-mono text-[11px] text-neutral-500">
                 <Timer className="size-3" /> timeout
@@ -176,7 +181,7 @@ export default function ScriptRunnerPage({
               <button
                 type="button"
                 onClick={() => void run()}
-                disabled={!canRun}
+                disabled={!canRun || !deps.ready}
                 className="inline-flex items-center gap-1.5 rounded bg-emerald-500/20 px-3 py-1.5 font-mono text-[11px] font-bold text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30"
               >
                 <Play className="size-3" /> run

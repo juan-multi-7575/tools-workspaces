@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import { api, resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
@@ -63,6 +65,7 @@ export default function ImageMagickPage({
 }: ToolPageProps) {
   const schema = manifest.parameters_schema as Record<string, FieldSpec>
   const execute = useToolExecute('imagemagick')
+  const deps = useToolDeps('imagemagick')
   const fileRef = useRef<HTMLInputElement>(null)
   const [params, setParams] = useState<Record<string, unknown>>(() =>
     initialInputPath ? { ...initialParams, input_path: initialInputPath } : initialParams,
@@ -249,10 +252,12 @@ export default function ImageMagickPage({
             </div>
           </div>
 
+          <DependencyGate toolId="imagemagick" state={deps} />
+
           <button
             type="button"
             onClick={() => void run()}
-            disabled={execute.busy}
+            disabled={execute.busy || !deps.ready}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-caramel px-3 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-brand-cream-light disabled:opacity-50"
           >
             {execute.busy ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5 fill-current" />}

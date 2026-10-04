@@ -19,6 +19,8 @@ import UniversalFileInput from '../../components/common/UniversalFileInput'
 import { ToolForm } from '../../lib/toolForms'
 import { api, errorMessage, resolveUrl, type ArtifactFile, type Run, type Workspace } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
 
 interface TrimRegion {
@@ -90,6 +92,7 @@ function sourceName(path: string): string {
 
 export default function TrimmerPage({ manifest, initialParams, initialInputPath, onComplete }: ToolPageProps) {
   const execute = useToolExecute('trimmer')
+  const deps = useToolDeps('trimmer')
   const probe = useToolExecute('mediainfo')
 
   const [params, setParams] = useState<Record<string, unknown>>(() => ({
@@ -776,29 +779,34 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
           </div>
         )}
 
-        <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 pt-3">
-          <span className="text-xs text-slate-400">
-            {regions.length} region{regions.length === 1 ? '' : 's'} · {Object.keys(manifest.parameters_schema ?? {}).length}{' '}
-            manifest parameter(s)
-          </span>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={execute.reset}
-              disabled={execute.busy}
-              className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-bold text-slate-200 disabled:opacity-40"
-            >
-              Clear results
-            </button>
-            <button
-              type="button"
-              onClick={() => void runStandalone()}
-              disabled={execute.busy || problems.length > 0}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500 px-4 py-1.5 text-xs font-bold text-slate-950 hover:bg-sky-400 disabled:opacity-40"
-            >
-              <Scissors className="size-3.5" />
-              {execute.busy ? `Trimming… ${execute.state.elapsedSeconds.toFixed(1)}s` : 'Cut segments with FFmpeg'}
-            </button>
+        <footer className="space-y-2 border-t border-slate-800 pt-3">
+          <DependencyGate toolId="trimmer" state={deps} />
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs text-slate-400">
+              {regions.length} region{regions.length === 1 ? '' : 's'} · {Object.keys(manifest.parameters_schema ?? {}).length}{' '}
+              manifest parameter(s)
+            </span>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={execute.reset}
+                disabled={execute.busy}
+                className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-bold text-slate-200 disabled:opacity-40"
+              >
+                Clear results
+              </button>
+              <button
+                type="button"
+                onClick={() => void runStandalone()}
+                disabled={execute.busy || problems.length > 0 || !deps.ready}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-500 px-4 py-1.5 text-xs font-bold text-slate-950 hover:bg-sky-400 disabled:opacity-40"
+              >
+                <Scissors className="size-3.5" />
+                {execute.busy ? `Trimming… ${execute.state.elapsedSeconds.toFixed(1)}s` : 'Cut segments with FFmpeg'}
+              </button>
+            </div>
           </div>
         </footer>
       </div>

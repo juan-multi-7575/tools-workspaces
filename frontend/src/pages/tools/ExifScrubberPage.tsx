@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import { resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import UniversalFileInput from '../../components/common/UniversalFileInput'
@@ -83,6 +85,7 @@ export default function ExifScrubberPage({
 }: ToolPageProps) {
   const schema = manifest.parameters_schema as Record<string, FieldSpec>
   const action = useToolExecute('exif_scrubber')
+  const deps = useToolDeps('exif_scrubber')
   const verify = useToolExecute('exif_scrubber')
 
   const [params, setParams] = useState<Record<string, unknown>>(() =>
@@ -215,11 +218,13 @@ export default function ExifScrubberPage({
               </button>
             ))}
           </div>
+          <DependencyGate toolId="exif_scrubber" state={deps} />
+
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => void run()}
-              disabled={busy}
+              disabled={busy || !deps.ready}
               className="inline-flex items-center gap-2 rounded-xl bg-brand-espresso px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-brand-cream-light disabled:opacity-50"
             >
               {busy ? <Loader2 className="size-3.5 animate-spin" /> : mode === 'inspect' ? <ScanSearch className="size-3.5" /> : <Trash2 className="size-3.5" />}

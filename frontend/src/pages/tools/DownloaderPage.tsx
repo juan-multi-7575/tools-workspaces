@@ -18,6 +18,8 @@ import {
 } from 'lucide-react'
 import { api, errorMessage, resolveUrl, type DownloadTask, type ToolManifest } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import DownloaderForm from '../../components/tools/DownloaderForm'
 import DynamicForm from '../../components/common/DynamicForm'
@@ -333,6 +335,7 @@ export default function DownloaderPage({
 
   // ---- standalone ----------------------------------------------------------
   const standalone = useToolExecute(DOWNLOADER_ID)
+  const deps = useToolDeps(DOWNLOADER_ID)
   const [enqueueNote, setEnqueueNote] = useState<string | null>(null)
 
   // ---- atomic helpers ------------------------------------------------------
@@ -864,10 +867,12 @@ export default function DownloaderPage({
                 <p className="text-[10px] text-slate-600">
                   bypasses the queue and calls POST /api/tools/{DOWNLOADER_ID}/execute with the same {allKeys.length} params
                 </p>
+                <DependencyGate toolId={DOWNLOADER_ID} state={deps} />
+
                 <button
                   type="button"
                   onClick={() => void runStandalone()}
-                  disabled={standalone.busy}
+                  disabled={standalone.busy || !deps.ready}
                   className="inline-flex w-full items-center justify-center gap-1.5 border border-slate-600 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-200 hover:border-emerald-500/60 hover:text-emerald-300 disabled:opacity-40"
                 >
                   {standalone.busy ? <Loader2 className="size-3 animate-spin" /> : <Play className="size-3 fill-current" />}

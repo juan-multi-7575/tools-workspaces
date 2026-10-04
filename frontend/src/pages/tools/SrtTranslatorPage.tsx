@@ -17,6 +17,8 @@ import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import { ToolForm } from '../../lib/toolForms'
 import { api, errorMessage, resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
 
 interface FieldSpec {
@@ -114,6 +116,7 @@ export default function SrtTranslatorPage({
     [manifest.parameters_schema],
   )
   const execute = useToolExecute('subtitle.translate.srt')
+  const deps = useToolDeps('subtitle.translate.srt')
   const [params, setParams] = useState<Record<string, unknown>>(() =>
     initialInputPath ? { ...initialParams, input_path: initialInputPath } : initialParams,
   )
@@ -228,10 +231,12 @@ export default function SrtTranslatorPage({
       }
       aside={
         <div className="space-y-4">
+          <DependencyGate toolId="subtitle.translate.srt" state={deps} />
+
           <button
             type="button"
             onClick={() => void run()}
-            disabled={execute.busy || !canRun}
+            disabled={execute.busy || !canRun || !deps.ready}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-espresso px-3 py-2.5 text-xs font-bold text-brand-cream-light transition-colors hover:bg-brand-caramel disabled:opacity-40"
           >
             {execute.busy ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}

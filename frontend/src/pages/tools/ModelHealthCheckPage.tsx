@@ -17,6 +17,8 @@ import DynamicForm from '../../components/common/DynamicForm'
 import { ToolForm } from '../../lib/toolForms'
 import { api, errorMessage } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
 
 interface FieldSpec {
@@ -75,6 +77,7 @@ export default function ModelHealthCheckPage({
     [manifest.parameters_schema],
   )
   const execute = useToolExecute('sys.health.check')
+  const deps = useToolDeps('sys.health.check')
   const [params, setParams] = useState<Record<string, unknown>>({ ...initialParams })
 
   const [credentials, setCredentials] = useState<{ providers: string[]; error: string | null } | null>(null)
@@ -183,6 +186,8 @@ export default function ModelHealthCheckPage({
           {/* ── CONTROL COLUMN ───────────────────────────────────────── */}
           <div className="space-y-4">
             <section className="rounded-lg border border-neutral-800 bg-neutral-950 p-3">
+              <DependencyGate toolId="sys.health.check" state={deps} />
+
               <div className="mb-2.5 flex items-center justify-between">
                 <h2 className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
                   <Activity className="size-3" /> probe
@@ -190,7 +195,7 @@ export default function ModelHealthCheckPage({
                 <button
                   type="button"
                   onClick={() => void run()}
-                  disabled={execute.busy}
+                  disabled={execute.busy || !deps.ready}
                   className="inline-flex items-center gap-1.5 rounded bg-sky-500/20 px-2.5 py-1 font-mono text-[11px] font-bold text-sky-300 hover:bg-sky-500/30 disabled:opacity-40"
                 >
                   {execute.busy ? <Loader2 className="size-3 animate-spin" /> : <Play className="size-3" />}

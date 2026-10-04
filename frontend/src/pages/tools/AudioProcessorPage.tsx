@@ -19,6 +19,8 @@ import UniversalFileInput from '../../components/common/UniversalFileInput'
 import { ToolForm } from '../../lib/toolForms'
 import { errorMessage, resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
 import type { AudioPlayerMedia } from '../../components/audio/AudioPlayerModal'
 
@@ -40,6 +42,7 @@ export default function AudioProcessorPage({
   onOpenAudioPlayer,
 }: ToolPageProps) {
   const execute = useToolExecute('audio_processor')
+  const deps = useToolDeps('audio_processor')
   const [params, setParams] = useState<Record<string, unknown>>(() => ({
     ...initialParams,
     ...(initialInputPath ? { input_path: initialInputPath } : {}),
@@ -282,10 +285,12 @@ export default function AudioProcessorPage({
             </ul>
           )}
 
+          <DependencyGate toolId="audio_processor" state={deps} />
+
           <button
             type="button"
             onClick={() => void runConversion()}
-            disabled={execute.busy || problems.length > 0}
+            disabled={execute.busy || problems.length > 0 || !deps.ready}
             className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-fuchsia-500 px-3 py-2.5 text-sm font-bold text-[#06080c] hover:bg-fuchsia-400 disabled:opacity-40"
           >
             {execute.busy ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}

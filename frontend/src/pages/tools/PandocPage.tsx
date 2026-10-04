@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import { api, errorMessage, resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import UniversalFileInput from '../../components/common/UniversalFileInput'
@@ -55,6 +57,7 @@ export default function PandocPage({
 }: ToolPageProps) {
   const schema = manifest.parameters_schema as Record<string, FieldSpec>
   const execute = useToolExecute('pandoc')
+  const deps = useToolDeps('pandoc')
 
   const [params, setParams] = useState<Record<string, unknown>>(() =>
     initialInputPath ? { ...initialParams, input_path: initialInputPath } : initialParams,
@@ -177,6 +180,8 @@ export default function PandocPage({
               <FileCode2 className="size-3.5 text-brand-caramel" />
               {schema.to?.title ?? 'to'}
             </span>
+            <DependencyGate toolId="pandoc" state={deps} />
+
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex flex-wrap gap-1.5">
                 {targets.map((option) => (
@@ -198,7 +203,7 @@ export default function PandocPage({
               <button
                 type="button"
                 onClick={() => void run()}
-                disabled={execute.busy}
+                disabled={execute.busy || !deps.ready}
                 className="ml-auto inline-flex items-center gap-2 rounded-xl bg-brand-caramel px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider text-brand-cream-light disabled:opacity-50"
               >
                 {execute.busy ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5 fill-current" />}

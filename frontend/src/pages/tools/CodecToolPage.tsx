@@ -17,6 +17,8 @@ import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import UniversalFileInput from '../../components/common/UniversalFileInput'
 import { resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
 
 interface FieldSpec {
@@ -52,6 +54,7 @@ export default function CodecToolPage({
     [manifest.parameters_schema],
   )
   const execute = useToolExecute('codec_tool')
+  const deps = useToolDeps('codec_tool')
   const [params, setParams] = useState<Record<string, unknown>>(() =>
     initialInputPath ? { ...initialParams, input_path: initialInputPath } : initialParams,
   )
@@ -182,11 +185,13 @@ export default function CodecToolPage({
           </p>
         </section>
 
+        <DependencyGate toolId="codec_tool" state={deps} />
+
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => void run()}
-            disabled={execute.busy || !canRun}
+            disabled={execute.busy || !canRun || !deps.ready}
             className="inline-flex items-center gap-2 rounded-lg bg-brand-espresso px-4 py-2 font-mono text-xs font-bold text-brand-cream-light transition-colors hover:bg-brand-caramel disabled:opacity-30"
           >
             <Play className="size-3.5" />

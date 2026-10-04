@@ -15,6 +15,8 @@ import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import UniversalFileInput from '../../components/common/UniversalFileInput'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
 
 /**
@@ -114,6 +116,7 @@ export default function MediainfoPage({
   onSendToTool,
 }: ToolPageProps) {
   const execute = useToolExecute('mediainfo')
+  const deps = useToolDeps('mediainfo')
   const schema = manifest.parameters_schema as Record<string, { title?: string; description?: string; default?: unknown }>
   const [params, setParams] = useState<Record<string, unknown>>(() =>
     initialInputPath ? { ...initialParams, input_path: initialInputPath } : initialParams,
@@ -224,10 +227,12 @@ export default function MediainfoPage({
             </p>
           </div>
 
+          <DependencyGate toolId="mediainfo" state={deps} />
+
           <button
             type="button"
             onClick={() => void run()}
-            disabled={execute.busy}
+            disabled={execute.busy || !deps.ready}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#7cc4ff] px-3 py-2 text-xs font-bold uppercase tracking-wider text-[#0c1015] disabled:opacity-50"
           >
             {execute.busy ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5 fill-current" />}

@@ -14,6 +14,8 @@ import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import { api, resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
 
 /**
@@ -49,6 +51,7 @@ export default function GalleryDlPage({
   onSendToTool,
 }: ToolPageProps) {
   const execute = useToolExecute('gallery-dl')
+  const deps = useToolDeps('gallery-dl')
   const schema = manifest.parameters_schema as Record<string, { title?: string; description?: string }>
   const [params, setParams] = useState<Record<string, unknown>>(initialParams)
   const [indexedSizes, setIndexedSizes] = useState<Record<string, number>>({})
@@ -146,6 +149,8 @@ export default function GalleryDlPage({
             <label htmlFor="gallery-url" className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#c9cbe0]">
               {schema.url?.title ?? 'url'} — gallery, album or image-set page
             </label>
+            <DependencyGate toolId="gallery-dl" state={deps} />
+
             <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 id="gallery-url"
@@ -161,7 +166,7 @@ export default function GalleryDlPage({
               <button
                 type="button"
                 onClick={() => void run()}
-                disabled={execute.busy || !url}
+                disabled={execute.busy || !url || !deps.ready}
                 className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#c9cbe0] px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-[0.18em] text-[#16161e] disabled:opacity-50"
               >
                 {execute.busy ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}

@@ -18,6 +18,8 @@ import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import UniversalFileInput from '../../components/common/UniversalFileInput'
 import { api, errorMessage, resolveUrl, type DetectedModelProvider } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
 
 interface FieldSpec {
@@ -105,6 +107,7 @@ export default function LlmTranslatorPage({
 }: ToolPageProps) {
   const schema = (manifest.parameters_schema ?? {}) as Record<string, FieldSpec>
   const execute = useToolExecute('text.translate.llm')
+  const deps = useToolDeps('text.translate.llm')
   const [params, setParams] = useState<Record<string, unknown>>(() =>
     initialInputPath ? { ...initialParams, input_path: initialInputPath } : initialParams,
   )
@@ -462,10 +465,12 @@ export default function LlmTranslatorPage({
             )}
           </div>
 
+          <DependencyGate toolId="text.translate.llm" state={deps} />
+
           <button
             type="button"
             onClick={() => void run()}
-            disabled={execute.busy || !canRun}
+            disabled={execute.busy || !canRun || !deps.ready}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-brand-caramel px-3 py-2.5 text-xs font-bold text-brand-cream-light transition-colors hover:bg-brand-espresso disabled:opacity-40"
           >
             {execute.busy ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}

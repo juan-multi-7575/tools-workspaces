@@ -19,6 +19,8 @@ import UniversalFileInput from '../../components/common/UniversalFileInput'
 import { ToolForm } from '../../lib/toolForms'
 import { api, errorMessage, resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
+import DependencyGate from '../../components/deps/DependencyGate'
+import { useToolDeps } from '../../hooks/useToolDeps'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
 
 interface Cue {
@@ -112,6 +114,7 @@ export default function TranscriberPage({
   onSendToTool,
 }: ToolPageProps) {
   const execute = useToolExecute('transcriber')
+  const deps = useToolDeps('transcriber')
   const [params, setParams] = useState<Record<string, unknown>>(() => ({
     ...initialParams,
     ...(initialInputPath ? { input_path: initialInputPath } : {}),
@@ -308,10 +311,12 @@ export default function TranscriberPage({
             The only live indicator is elapsed wall-clock time measured with <span className="text-[#171512]">Date.now()</span>{' '}
             around the real request. No percentage is invented.
           </p>
+          <DependencyGate toolId="transcriber" state={deps} />
+
           <button
             type="button"
             onClick={() => void runTranscription()}
-            disabled={execute.busy || !inputPath}
+            disabled={execute.busy || !inputPath || !deps.ready}
             className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-[#171512] px-3 py-2 text-xs font-bold text-[#FBF8F1] hover:bg-[#3A342C] disabled:opacity-40"
           >
             {execute.busy ? <Loader2 className="size-3.5 animate-spin" /> : <Mic className="size-3.5" />}
