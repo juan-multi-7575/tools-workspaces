@@ -12,6 +12,7 @@ import PackagerPage from '../pages/tools/PackagerPage'
 import MediainfoPage from '../pages/tools/MediainfoPage'
 import StreamlinkPage from '../pages/tools/StreamlinkPage'
 import SoxPage from '../pages/tools/SoxPage'
+import DemucsPage from '../pages/tools/DemucsPage'
 
 /**
  * Bespoke per-tool pages. Append-only: each batch adds its own keys.
@@ -34,4 +35,5 @@ export const BESPOKE_PAGES: Record<string, ToolPageComponent> = {
   mediainfo: MediainfoPage,
   streamlink: StreamlinkPage,
   sox: SoxPage,
+  demucs: DemucsPage,
 }
