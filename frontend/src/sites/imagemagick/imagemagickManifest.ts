@@ -59,11 +59,20 @@ export const GEOMETRY_PRESETS: { label: string; value: string }[] = [
   { label: '800×600 cover', value: '800x600^' },
 ]
 
-/** What the geometry syntax actually means, so the string is not a black box. */
+/**
+ * What the geometry syntax actually means, so the string is not a black box.
+ *
+ * These descriptions were checked against a real run rather than recalled: a
+ * 640x400 source sent through `-resize 240x160` came back 240x150. A geometry
+ * without an operator is a *bound* the aspect ratio is fitted inside, not a pair
+ * of target dimensions — only an explicit `!` overrides that, and this tool
+ * exposes no flag to add one.
+ */
 export const GEOMETRY_KEY = [
-  ['1200x', 'width 1200; height follows the aspect ratio'],
-  ['x1200', 'height 1200; width follows the aspect ratio'],
-  ['800x600', 'both dimensions — this one may change the aspect ratio'],
-  ['800x600>', 'fit inside 800×600, only ever shrinking the image'],
+  ['1200x', 'width 1200; height follows from the aspect ratio'],
+  ['x1200', 'height 1200; width follows from the aspect ratio'],
+  ['800x600', 'fit inside 800×600 — the result may be smaller than the box'],
+  ['800x600>', 'the same fit, but only ever shrinks; a small image is left alone'],
+  ['800x600^', 'scale to *cover* 800×600, so the box is filled'],
   ['50%', 'scale by this percentage of the original'],
 ]

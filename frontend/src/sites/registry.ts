@@ -94,12 +94,25 @@ export function describeSite(toolId: string): SiteDescriptor {
   return NEUTRAL
 }
 
+/**
+ * Short, because this text sits on all 28 rows. The index carries one legend
+ * above the grid; repeating the full sentence per row turned a strict index
+ * into a column of identical disclaimers.
+ */
 export const AVAILABILITY_LABEL: Record<SiteDescriptor['availability'], string> = {
   built: 'Open site',
-  planned: 'Standalone site not built yet',
-  alias: 'Legacy id — same tool',
-  hosted: 'No page of its own — hosted in its parent tool',
+  planned: 'Site not built',
+  alias: 'Legacy id',
+  hosted: 'Hosted in its parent',
 }
+
+/** The same four states, said once, where there is room to say them. */
+export const AVAILABILITY_LEGEND: [SiteDescriptor['availability'], string][] = [
+  ['built', 'has its own standalone site'],
+  ['planned', 'briefed, site not built yet — not a link, because there is nowhere to go'],
+  ['alias', 'an older id for a tool that is listed above it'],
+  ['hosted', 'a helper the backend registers with no page of its own'],
+]
 
 /** Tool ids whose site is built, so the router knows what to serve. */
 export const BUILT_SITES: Record<string, string> = Object.fromEntries(

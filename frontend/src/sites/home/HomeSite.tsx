@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { api, errorMessage, type ToolManifest } from '../../lib/api'
-import { AVAILABILITY_LABEL, describeSite } from '../registry'
+import { AVAILABILITY_LABEL, AVAILABILITY_LEGEND, describeSite } from '../registry'
 import './home.css'
 
 /**
@@ -38,7 +38,7 @@ export default function HomeSite() {
             <p className="hs-mark__note">local · single user</p>
           </div>
           <h1 className="hs-lede">
-            Every tool the backend registers, <em>in the order it registers them.</em>
+            Every tool the backend registers, <em>in its own colours.</em>
           </h1>
           <div className="hs-links">
             <Link className="hs-link" to="/tools">
@@ -64,6 +64,14 @@ export default function HomeSite() {
             <p className="hs-section">
               {tools.length} registered · {built} with a standalone site
             </p>
+            <ul className="hs-legend">
+              {AVAILABILITY_LEGEND.map(([state, meaning]) => (
+                <li key={state}>
+                  <span className="hs-legend__key">{AVAILABILITY_LABEL[state]}</span>
+                  {meaning}
+                </li>
+              ))}
+            </ul>
             <ol className="hs-grid">
               {tools.map((tool, index) => {
                 const site = describeSite(tool.id)

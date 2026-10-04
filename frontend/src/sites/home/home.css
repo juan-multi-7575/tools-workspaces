@@ -20,9 +20,15 @@
   --hs-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo,
     Consolas, "Liberation Mono", monospace;
 
+  /*
+   * The site scrolls its own height rather than letting the document do it, so
+   * the scrollbar it draws is the one restyled below instead of the app-level
+   * cream one, which belongs to the Tools Garage shell.
+   */
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow-y: auto;
   background-color: var(--hs-ground);
   color: var(--hs-ink);
   font-family: var(--hs-ui);
@@ -69,6 +75,9 @@
   max-width: 1180px;
   margin: 0 auto;
   padding: 0 24px;
+  /* The shell must be able to grow past the viewport for the scrollbar on
+     `.hs-root` to have anything to scroll. */
+  flex: 0 0 auto;
 }
 
 .hs-head {
@@ -97,7 +106,7 @@
 }
 
 .hs-lede {
-  max-width: 62ch;
+  max-width: 21ch;
   margin: 44px 0 40px;
   font-size: clamp(1.75rem, 3.6vw, 2.9rem);
   font-weight: 400;
@@ -144,6 +153,26 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--hs-ink-42);
+}
+
+.hs-legend {
+  display: grid;
+  gap: 3px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--hs-ink-42);
+}
+
+.hs-legend__key {
+  display: inline-block;
+  min-width: 15ch;
+  margin-right: 10px;
+  font-family: var(--hs-mono);
+  font-size: 11px;
+  color: var(--hs-ink-64);
 }
 
 .hs-grid {

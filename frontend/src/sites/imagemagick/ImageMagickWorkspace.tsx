@@ -293,6 +293,10 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
               <span className="im-field__label">
                 <span>What the geometry string means</span>
               </span>
+              <p className="im-field__hint">
+                A geometry with no operator is a bound, not a target: a 640×400 source sent through{' '}
+                <code>240x160</code> comes back 240×150.
+              </p>
               <dl className="im-keylist">
                 {GEOMETRY_KEY.map(([token, meaning]) => (
                   <div key={token} style={{ display: 'contents' }}>
