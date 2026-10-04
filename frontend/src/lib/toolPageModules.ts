@@ -14,6 +14,7 @@ import StreamlinkPage from '../pages/tools/StreamlinkPage'
 import SoxPage from '../pages/tools/SoxPage'
 import DemucsPage from '../pages/tools/DemucsPage'
 import GalleryDlPage from '../pages/tools/GalleryDlPage'
+import SummarizerPage from '../pages/tools/SummarizerPage'
 
 /**
  * Bespoke per-tool pages. Append-only: each batch adds its own keys.
@@ -38,4 +39,5 @@ export const BESPOKE_PAGES: Record<string, ToolPageComponent> = {
   sox: SoxPage,
   demucs: DemucsPage,
   'gallery-dl': GalleryDlPage,
+  summarizer: SummarizerPage,
 }
