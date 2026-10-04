@@ -14,6 +14,7 @@ import {
 import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import DynamicForm from '../../components/common/DynamicForm'
+import { ToolForm } from '../../lib/toolForms'
 import { api, errorMessage } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
 import type { ToolPageProps } from '../../lib/toolPageTypes'
@@ -196,7 +197,13 @@ export default function ModelHealthCheckPage({
                   {execute.busy ? `sweeping · ${execute.state.elapsedSeconds.toFixed(1)}s` : 'run sweep'}
                 </button>
               </div>
-              <DynamicForm schema={schema as Record<string, unknown>} value={params} onChange={setParams} />
+              <ToolForm
+                toolId="sys.health.check"
+                schema={schema as Record<string, unknown>}
+                value={params}
+                onChange={setParams}
+                disabled={execute.busy}
+              />
             </section>
 
             {Object.keys(complementSchema).length > 0 && (
