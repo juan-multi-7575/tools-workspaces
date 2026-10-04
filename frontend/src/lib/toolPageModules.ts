@@ -18,6 +18,7 @@ import SummarizerPage from '../pages/tools/SummarizerPage'
 import SrtTranslatorPage from '../pages/tools/SrtTranslatorPage'
 import LlmTranslatorPage from '../pages/tools/LlmTranslatorPage'
 import CodecToolPage from '../pages/tools/CodecToolPage'
+import ScriptRunnerPage from '../pages/tools/ScriptRunnerPage'
 
 /**
  * Bespoke per-tool pages. Append-only: each batch adds its own keys.
@@ -46,4 +47,5 @@ export const BESPOKE_PAGES: Record<string, ToolPageComponent> = {
   'subtitle.translate.srt': SrtTranslatorPage,
   'text.translate.llm': LlmTranslatorPage,
   codec_tool: CodecToolPage,
+  script_runner: ScriptRunnerPage,
 }
