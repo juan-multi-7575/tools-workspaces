@@ -6,6 +6,14 @@ from app.paths import run_dir, tool_downloads_dir
 from app.runners.subprocess_runner import AsyncSubprocessRunner
 from app.tools.base import Artifact, PortKind, Tool, ToolManifest, ToolResult, ToolRunContext
 
+#: exiftool ships as the managed dependency ``conda.exiftool``, which the
+#: dependency manager installs root-free. Naming a distro package here sent users
+#: to a privileged install the app no longer performs or needs.
+EXIFTOOL_MISSING = (
+    "exiftool is not installed. It is the managed dependency conda.exiftool and can be "
+    "installed from the Dependencies console on this page."
+)
+
 
 class ImageMagickTool(Tool):
     manifest = ToolManifest(
@@ -110,7 +118,7 @@ class ExifScrubberTool(Tool):
             try:
                 res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
             except FileNotFoundError:
-                return ToolResult(artifacts=[], status="failed", error="exiftool not installed (apt install libimage-exiftool-perl)")
+                return ToolResult(artifacts=[], status="failed", error=EXIFTOOL_MISSING)
             if res.cancelled:
                 return ToolResult(artifacts=[], status="cancelled", error="cancelled")
             if res.exit_code != 0:
@@ -137,7 +145,7 @@ class ExifScrubberTool(Tool):
             try:
                 res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
             except FileNotFoundError:
-                return ToolResult(artifacts=[], status="failed", error="exiftool not installed (apt install libimage-exiftool-perl)")
+                return ToolResult(artifacts=[], status="failed", error=EXIFTOOL_MISSING)
             if res.cancelled:
                 return ToolResult(artifacts=[], status="cancelled", error="cancelled")
             if res.exit_code != 0 or not out_path.exists():
