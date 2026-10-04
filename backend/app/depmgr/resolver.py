@@ -26,7 +26,6 @@ from typing import Any
 
 from app.depmgr.catalog import Dep, get as get_dep
 from app.depmgr.store import bin_dirs_for, deps_root, du_bytes, installed_records, prefix_for
-from app.tools.deps_map import deps_for_tool
 
 STATUS_INSTALLED = "installed"
 STATUS_MISSING = "missing"
@@ -108,6 +107,12 @@ def _probe_version(dep: Dep, paths: dict[str, str], record: dict[str, Any] | Non
             if not output:
                 continue
             first = output.splitlines()[0].strip()
+            # Several tools (sox, exiftool) prefix their banner with argv[0], which we
+            # resolved to an absolute path. Strip it so the version stays readable.
+            argv0 = os.path.basename(binary)
+            head, sep, rest = first.partition(":")
+            if sep and argv0 and os.path.basename(head) == argv0:
+                first = rest.lstrip() or first
             return first[:200]
     if record and record.get("version"):
         return str(record["version"])
@@ -181,6 +186,10 @@ def check_all(*, probe_version: bool = True) -> list[DepStatus]:
 
 def check(tool_id: str, *, probe_version: bool = True) -> dict[str, Any]:
     """Resolve every dep a tool needs and report whether the tool can run."""
+    # Lazy import: app.tools.deps_map's package __init__ pulls in every tool
+    # driver, and downloader.py imports back into app.depmgr.
+    from app.tools.deps_map import deps_for_tool
+
     dep_ids = deps_for_tool(tool_id)
     deps = [check_dep(d, probe_version=probe_version) for d in dep_ids]
     missing = [d.dep_id for d in deps if d.status != STATUS_INSTALLED]

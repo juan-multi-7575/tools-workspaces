@@ -53,7 +53,10 @@ class Dep:
 
 _FFMPEG_NOTE = (
     "ffmpeg/ffprobe decode, trim, convert and probe every media file. "
-    "Required by the downloader, trimmer, audio processor and subtitle tools."
+    "Required by the downloader, trimmer, audio processor and subtitle tools. "
+    "conda-forge's ffmpeg build is generously codec'd (av1, vp9, dav1d, x264, "
+    "x265), which is why this is the largest non-OCR install despite 'ffmpeg' "
+    "sounding small - measured ~660 MB, not the ~80 MB a bare static build would be."
 )
 
 CATALOG: tuple[Dep, ...] = (
@@ -62,7 +65,7 @@ CATALOG: tuple[Dep, ...] = (
         kind=KIND_CONDA,
         packages=("ffmpeg",),
         provides=("ffmpeg", "ffprobe"),
-        approx_bytes=160_000_000,
+        approx_bytes=660_000_000,
         heavy=False,
         notes=_FFMPEG_NOTE,
         prefix="media",
