@@ -1,0 +1,54 @@
+{
+ "home 1440x900": {
+  "overflow": 0,
+  "docOverflowPx": 0,
+  "garage": [],
+  "gates": 0,
+  "paramKeys": []
+ },
+ "hero 1440x900": {
+  "overflow": 0,
+  "docOverflowPx": 0,
+  "garage": [],
+  "gates": 0,
+  "paramKeys": []
+ },
+ "workspace 1440x900": {
+  "overflow": 0,
+  "docOverflowPx": 0,
+  "garage": [],
+  "gates": 1,
+  "paramKeys": [
+   "format",
+   "quality",
+   "input_path",
+   "resize"
+  ]
+ },
+ "home 390x844": {
+  "overflow": 0,
+  "docOverflowPx": 0,
+  "garage": [],
+  "gates": 0,
+  "paramKeys": []
+ },
+ "hero 390x844": {
+  "overflow": 0,
+  "docOverflowPx": 0,
+  "garage": [],
+  "gates": 0,
+  "paramKeys": []
+ },
+ "workspace 390x844": {
+  "overflow": 0,
+  "docOverflowPx": 0,
+  "garage": [],
+  "gates": 1,
+  "paramKeys": [
+   "format",
+   "quality",
+   "input_path",
+   "resize"
+  ]
+ }
+}
