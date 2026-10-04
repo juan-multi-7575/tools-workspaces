@@ -165,6 +165,7 @@ export default function ModelHealthCheckPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="sys.health.check" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
           <Radar className="size-3" /> fleet telemetry
@@ -195,11 +196,7 @@ export default function ModelHealthCheckPage({
           {/* TARGET SELECTION */}
           <div className="min-w-0 space-y-4">
             <section className="min-w-0 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
-              {/* The gate owns the top of this panel: it is the preflight that
-                  authorises the run, and it gets its own flow position. */}
-              <DependencyGate toolId="sys.health.check" state={deps} />
-
-              <h2 className="mb-2.5 flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
+              <h2 className="mb-2.5 mt-3 flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
                 <Activity className="size-3 shrink-0" /> probe target
               </h2>
               <div className="min-w-0">
@@ -225,12 +222,14 @@ export default function ModelHealthCheckPage({
             </section>
           </div>
 
-          {/* TELEMETRY BOARD */}
-          <div className="min-w-0 space-y-4">
+          {/* TELEMETRY BOARD. It is a container so the summary strip below can
+              step its own column count off this column's width, not the
+              viewport's — the strip is never as wide as the window. */}
+          <div className="@container min-w-0 space-y-4">
             {summaryTiles.length > 0 && (
-              // Five across needs ~150px per tile before the longest label
-              // ("unconfigured") stops fitting, so the strip steps down to three.
-              <section className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-lg border border-neutral-800 bg-neutral-800 sm:grid-cols-3 2xl:grid-cols-5">
+              // Five across needs ~110px per tile before the longest label
+              // ("unconfigured") stops fitting.
+              <section className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-lg border border-neutral-800 bg-neutral-800 @min-[540px]:grid-cols-5">
                 {summaryTiles.map((tile) => (
                   <div key={tile.label} className="min-w-0 bg-neutral-950 px-3 py-2.5">
                     <p
@@ -242,6 +241,10 @@ export default function ModelHealthCheckPage({
                     <p className={`font-mono text-lg font-bold leading-tight ${tile.tone}`}>{String(tile.value ?? '—')}</p>
                   </div>
                 ))}
+                {/* Five metrics do not divide into two columns, so the folded
+                    layout would end on a hole. This cell fills it, and steps
+                    out of the way once all five fit on one row. */}
+                <div aria-hidden className="bg-neutral-950 @min-[540px]:hidden" />
               </section>
             )}
 
