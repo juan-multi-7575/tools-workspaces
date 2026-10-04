@@ -92,6 +92,7 @@ export default function ScriptRunnerPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="script_runner" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-300">
           <Terminal className="size-3" /> terminal
@@ -149,8 +150,6 @@ export default function ScriptRunnerPage({
                 className="min-w-0 flex-1 rounded border border-neutral-800 bg-neutral-950 px-2 py-1 font-mono text-xs text-neutral-200 placeholder:text-neutral-700 focus:border-emerald-500/60 focus:outline-none"
               />
             </div>
-
-            <DependencyGate toolId="script_runner" state={deps} />
 
             <div data-param-key="timeout" className="flex items-center gap-2">
               <label htmlFor="sr-timeout" className="flex items-center gap-1 font-mono text-[11px] text-neutral-500">

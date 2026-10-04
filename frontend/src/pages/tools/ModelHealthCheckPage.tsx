@@ -164,6 +164,7 @@ export default function ModelHealthCheckPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="sys.health.check" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
           <Radar className="size-3" /> fleet telemetry
@@ -182,62 +183,61 @@ export default function ModelHealthCheckPage({
           </div>
         )}
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
-          {/* ── CONTROL COLUMN ───────────────────────────────────────── */}
-          <div className="space-y-4">
-            <section className="rounded-lg border border-neutral-800 bg-neutral-950 p-3">
+        {/*
+         * Two equal columns, and neither one is a rail. The shared picker lays its
+         * provider cards out on viewport breakpoints, so it needs real width to
+         * stay readable, and the matrix needs width for its own columns; the fixed
+         * 340px track this replaced crushed both into one-word-per-line columns.
+         * Every flex child below carries `min-w-0`, so a long provider id or model
+         * name truncates instead of pushing its track wider than the page.
+         */}
+        <div className="grid min-w-0 gap-4 xl:grid-cols-2 xl:items-start">
+          {/* TARGET SELECTION */}
+          <div className="min-w-0 space-y-4">
+            <section className="min-w-0 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
               <DependencyGate toolId="sys.health.check" state={deps} />
 
-              <div className="mb-2.5 flex items-center justify-between">
-                <h2 className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
-                  <Activity className="size-3" /> probe
-                </h2>
-                <button
-                  type="button"
-                  onClick={() => void run()}
-                  disabled={execute.busy || !deps.ready}
-                  className="inline-flex items-center gap-1.5 rounded bg-sky-500/20 px-2.5 py-1 font-mono text-[11px] font-bold text-sky-300 hover:bg-sky-500/30 disabled:opacity-40"
-                >
-                  {execute.busy ? <Loader2 className="size-3 animate-spin" /> : <Play className="size-3" />}
-                  {execute.busy ? `sweeping · ${execute.state.elapsedSeconds.toFixed(1)}s` : 'run sweep'}
-                </button>
+              <h2 className="mb-2.5 mt-3 flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
+                <Activity className="size-3 shrink-0" /> probe target
+              </h2>
+              <div className="min-w-0">
+                <ToolForm
+                  toolId="sys.health.check"
+                  schema={schema as Record<string, unknown>}
+                  value={params}
+                  onChange={setParams}
+                  disabled={execute.busy}
+                />
               </div>
-              <ToolForm
-                toolId="sys.health.check"
-                schema={schema as Record<string, unknown>}
-                value={params}
-                onChange={setParams}
-                disabled={execute.busy}
-              />
+
+              {Object.keys(complementSchema).length > 0 && (
+                <div className="mt-3 border-t border-neutral-800 pt-3">
+                  <h3 className="mb-2.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">
+                    <TerminalSquare className="size-3 shrink-0" /> remaining manifest keys
+                  </h3>
+                  <fieldset disabled={execute.busy} className="min-w-0">
+                    <DynamicForm schema={complementSchema} value={params} onChange={setParams} />
+                  </fieldset>
+                </div>
+              )}
             </section>
 
-            {Object.keys(complementSchema).length > 0 && (
-              <section className="rounded-lg border border-neutral-800 bg-neutral-950 p-3">
-                <h2 className="mb-2.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">
-                  <TerminalSquare className="size-3" /> remaining manifest keys
-                </h2>
-                <fieldset disabled={execute.busy} className="min-w-0">
-                  <DynamicForm schema={complementSchema} value={params} onChange={setParams} />
-                </fieldset>
-              </section>
-            )}
-
-            {/* ── CREDENTIAL REGISTRY ─────────────────────────────── */}
-            <section className="rounded-lg border border-neutral-800 bg-neutral-950 p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">
-                  <KeyRound className="size-3" /> stored keys
+            {/* CREDENTIAL REGISTRY */}
+            <section className="min-w-0 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                <h2 className="flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">
+                  <KeyRound className="size-3 shrink-0" /> stored keys
                 </h2>
                 <button
                   type="button"
                   onClick={() => void loadCredentials()}
-                  className="font-mono text-[10px] text-sky-400 hover:text-sky-300"
+                  className="shrink-0 font-mono text-[10px] text-sky-400 hover:text-sky-300"
                 >
                   refresh
                 </button>
               </div>
 
-              {credsError && <p className="font-mono text-[10px] leading-relaxed text-red-300">{credsError}</p>}
+              {credsError && <p className="break-words font-mono text-[10px] leading-relaxed text-red-300">{credsError}</p>}
               {!credentials && !credsError && <p className="font-mono text-[10px] text-neutral-600">loading…</p>}
 
               {credentials && (
@@ -250,9 +250,12 @@ export default function ModelHealthCheckPage({
                   </p>
                   <ul className="space-y-1">
                     {credentials.providers.map((providerId) => (
-                      <li key={providerId} className="flex items-center gap-1.5">
-                        <span className="inline-flex items-center gap-1 rounded border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-300">
-                          <CheckCircle2 className="size-2.5" /> {providerId}
+                      <li key={providerId} className="flex min-w-0 items-center gap-1.5">
+                        <span
+                          title={providerId}
+                          className="inline-flex min-w-0 shrink items-center gap-1 truncate rounded border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-300"
+                        >
+                          <CheckCircle2 className="size-2.5 shrink-0" /> {providerId}
                         </span>
                         <input
                           type="password"
@@ -265,7 +268,7 @@ export default function ModelHealthCheckPage({
                           type="button"
                           onClick={() => void saveKey(providerId)}
                           disabled={keyState[providerId] === 'saving' || !(keyDrafts[providerId] ?? '').trim()}
-                          className="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-[10px] text-neutral-300 hover:bg-sky-500/30 disabled:opacity-30"
+                          className="shrink-0 rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-[10px] text-neutral-300 hover:bg-sky-500/30 disabled:opacity-30"
                         >
                           {keyState[providerId] === 'saving' ? '…' : 'save'}
                         </button>
@@ -273,43 +276,28 @@ export default function ModelHealthCheckPage({
                     ))}
                     {credentials.providers.length === 0 && (
                       <li className="flex items-center gap-1.5 font-mono text-[10px] text-amber-300">
-                        <ShieldAlert className="size-3" /> no stored keys — providers will report UNCONFIGURED
+                        <ShieldAlert className="size-3 shrink-0" /> no stored keys — providers will report UNCONFIGURED
                       </li>
                     )}
                   </ul>
                   {Object.entries(keyErrors)
                     .filter(([, message]) => message)
                     .map(([providerId, message]) => (
-                      <p key={providerId} className="mt-1 font-mono text-[10px] text-red-300">
+                      <p key={providerId} className="mt-1 break-words font-mono text-[10px] text-red-300">
                         {providerId}: {message}
                       </p>
                     ))}
                 </>
               )}
             </section>
-
-            <dl className="space-y-1 rounded-lg border border-neutral-800 bg-neutral-950 p-3 font-mono text-[11px] text-neutral-500">
-              <div className="flex justify-between">
-                <dt>phase</dt>
-                <dd className="font-bold text-neutral-200">{execute.state.phase}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt>measured</dt>
-                <dd className="font-bold text-neutral-200">{execute.state.elapsedSeconds.toFixed(1)}s</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt>report timestamp</dt>
-                <dd className="font-bold text-neutral-200">{timestamp ?? '—'}</dd>
-              </div>
-            </dl>
           </div>
 
-          {/* ── TELEMETRY BOARD ─────────────────────────────────────── */}
-          <div className="space-y-4">
+          {/* TELEMETRY BOARD */}
+          <div className="min-w-0 space-y-4">
             {summaryTiles.length > 0 && (
-              <section className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-neutral-800 bg-neutral-800 sm:grid-cols-5">
+              <section className="grid min-w-0 grid-cols-2 gap-px overflow-hidden rounded-lg border border-neutral-800 bg-neutral-800 sm:grid-cols-5">
                 {summaryTiles.map((tile) => (
-                  <div key={tile.label} className="bg-neutral-950 px-3 py-2.5">
+                  <div key={tile.label} className="min-w-0 bg-neutral-950 px-3 py-2.5">
                     <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-neutral-600">{tile.label}</p>
                     <p className={`font-mono text-lg font-bold leading-tight ${tile.tone}`}>{String(tile.value ?? '—')}</p>
                   </div>
@@ -317,14 +305,29 @@ export default function ModelHealthCheckPage({
               </section>
             )}
 
-            <section className="overflow-hidden rounded-lg border border-neutral-800 bg-neutral-950">
-              <header className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800 bg-neutral-900 px-3 py-2">
-                <h2 className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
-                  <Gauge className="size-3" /> probe matrix
+            <section className="min-w-0 overflow-hidden rounded-lg border border-neutral-800 bg-neutral-950">
+              {/*
+                The run control sits in this header rather than across the page:
+                it is the action that fills the matrix directly underneath it.
+              */}
+              <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-neutral-800 bg-neutral-900 px-3 py-2">
+                <h2 className="flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
+                  <Gauge className="size-3 shrink-0" /> probe matrix
                 </h2>
-                <span className="font-mono text-[10px] text-neutral-500">
-                  {completed ? `${rows.length} rows returned` : execute.state.phase === 'executing' ? 'sweeping…' : 'no run yet'}
-                </span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="font-mono text-[10px] text-neutral-500">
+                    {completed ? `${rows.length} rows returned` : execute.state.phase === 'executing' ? 'sweeping…' : 'no run yet'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => void run()}
+                    disabled={execute.busy || !deps.ready}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded bg-sky-500/20 px-2.5 py-1 font-mono text-[11px] font-bold text-sky-300 hover:bg-sky-500/30 disabled:opacity-40"
+                  >
+                    {execute.busy ? <Loader2 className="size-3 animate-spin" /> : <Play className="size-3" />}
+                    {execute.busy ? `sweeping · ${execute.state.elapsedSeconds.toFixed(1)}s` : 'run sweep'}
+                  </button>
+                </div>
               </header>
 
               {rows.length === 0 ? (

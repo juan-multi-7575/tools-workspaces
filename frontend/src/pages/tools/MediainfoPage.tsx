@@ -168,6 +168,7 @@ export default function MediainfoPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="mediainfo" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded-md bg-[#12161c] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[#7cc4ff]">
           <Database className="size-3" /> probe grid
@@ -226,8 +227,6 @@ export default function MediainfoPage({
               Filters real keys and values out of the payload. It never adds a field that ffprobe did not report.
             </p>
           </div>
-
-          <DependencyGate toolId="mediainfo" state={deps} />
 
           <button
             type="button"

@@ -150,6 +150,7 @@ export default function PandocPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="pandoc" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
           <Quote className="size-3" /> editorial desk
@@ -180,7 +181,6 @@ export default function PandocPage({
               <FileCode2 className="size-3.5 text-brand-caramel" />
               {schema.to?.title ?? 'to'}
             </span>
-            <DependencyGate toolId="pandoc" state={deps} />
 
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex flex-wrap gap-1.5">

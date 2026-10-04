@@ -178,6 +178,7 @@ export default function ImageMagickPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="imagemagick" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
           <Images className="size-3" /> before / after
@@ -251,8 +252,6 @@ export default function ImageMagickPage({
               ))}
             </div>
           </div>
-
-          <DependencyGate toolId="imagemagick" state={deps} />
 
           <button
             type="button"

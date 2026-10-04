@@ -158,6 +158,7 @@ export default function OcrMyPdfPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="ocrmypdf" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
           <ScanText className="size-3" /> ocr pipeline
@@ -221,8 +222,6 @@ export default function OcrMyPdfPage({
             </p>
           )}
         </div>
-
-        <DependencyGate toolId="ocrmypdf" state={deps} />
 
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-sage bg-brand-cream-dark/40 p-3.5">
           <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-brand-caramel-text">

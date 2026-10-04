@@ -280,6 +280,7 @@ export default function TranscriberPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="transcriber" state={deps} />}
       aside={
         <div className="space-y-3 rounded-2xl border border-[#C9C0AC] bg-[#FBF8F1] p-3.5 font-mono text-xs text-[#171512]">
           <h2 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[#6B6255]">
@@ -311,7 +312,6 @@ export default function TranscriberPage({
             The only live indicator is elapsed wall-clock time measured with <span className="text-[#171512]">Date.now()</span>{' '}
             around the real request. No percentage is invented.
           </p>
-          <DependencyGate toolId="transcriber" state={deps} />
 
           <button
             type="button"

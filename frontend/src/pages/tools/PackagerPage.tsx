@@ -159,6 +159,7 @@ export default function PackagerPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="packager" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
           <Package className="size-3" /> zip builder
@@ -299,7 +300,6 @@ export default function PackagerPage({
                   <Plus className="size-3" /> add
                 </button>
               </div>
-              <DependencyGate toolId="packager" state={deps} />
 
               <div className="flex flex-wrap items-center gap-2">
                 <button

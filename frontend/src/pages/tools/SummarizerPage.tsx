@@ -112,6 +112,7 @@ export default function SummarizerPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="summarizer" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-sage bg-brand-cream-dark px-3 py-1 font-mono text-[10px] uppercase tracking-[0.24em] text-brand-caramel-text">
           <BookOpen className="size-3" /> reading view
@@ -178,8 +179,6 @@ export default function SummarizerPage({
               ))}
             </div>
           </div>
-
-          <DependencyGate toolId="summarizer" state={deps} />
 
           <button
             type="button"

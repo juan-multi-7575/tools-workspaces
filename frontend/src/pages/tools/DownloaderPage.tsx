@@ -867,7 +867,6 @@ export default function DownloaderPage({
                 <p className="text-[10px] text-slate-600">
                   bypasses the queue and calls POST /api/tools/{DOWNLOADER_ID}/execute with the same {allKeys.length} params
                 </p>
-                <DependencyGate toolId={DOWNLOADER_ID} state={deps} />
 
                 <button
                   type="button"
@@ -1257,6 +1256,16 @@ export default function DownloaderPage({
               </span>
             </footer>
           </div>
+        </div>
+
+        {/* The gate owns the primary action on every tool page, so it is pinned
+            to the viewport here too rather than buried in a column far down the
+            console. Its surfaces stay on this page's palette. */}
+        <div
+          data-tool-gate-region={DOWNLOADER_ID}
+          className="sticky bottom-0 z-drawer -mx-3 border-t border-slate-800 bg-[#080c11]/95 px-3 py-3 backdrop-blur sm:-mx-6 sm:px-6"
+        >
+          <DependencyGate toolId={DOWNLOADER_ID} state={deps} />
         </div>
       </div>
     </div>

@@ -296,7 +296,7 @@ export default function DependencyGate({ toolId, state, accent, onReadyChange }:
             )}
           </p>
 
-          <ul className="mt-2">
+          <ul className="dep-gate__scroll mt-2">
             {(progress.order.length > 0 ? progress.order : missingEntries.map((entry) => entry.dep_id)).map((depId) => {
               const entry = state.data?.deps.find((candidate) => candidate.dep_id === depId)
               const stage = progress.stageByDep[depId]
@@ -363,11 +363,13 @@ export default function DependencyGate({ toolId, state, accent, onReadyChange }:
 
       {missingEntries.length > 0 && !installing && (
         <>
-          <ul className="mt-3">
-            {missingEntries.map((entry) => (
-              <MissingDepRow key={entry.dep_id} entry={entry} />
-            ))}
-          </ul>
+          <div className="dep-gate__scroll mt-3">
+            <ul>
+              {missingEntries.map((entry) => (
+                <MissingDepRow key={entry.dep_id} entry={entry} />
+              ))}
+            </ul>
+          </div>
           <p className="mt-2 font-mono text-[11px] tabular-nums text-current/70">
             {state.missingBytes === 0
               ? 'the backend reported no download size for these'

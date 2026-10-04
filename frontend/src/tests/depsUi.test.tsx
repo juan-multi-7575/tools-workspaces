@@ -12,6 +12,19 @@ import {
 import { formatBytes, type DepEntry, type DepEvent } from '../lib/depsApi'
 import DependencyGate from '../components/deps/DependencyGate'
 import DependencyManagerPanel from '../components/deps/DependencyManagerPanel'
+import ToolPageShell from '../components/tools/ToolPageShell'
+import type { ToolManifest } from '../lib/api'
+
+const SHELL_MANIFEST: ToolManifest = {
+  id: 'demo.tool',
+  name: 'Demo Tool',
+  description: 'A tool used to prove where the gate is hosted.',
+  category: 'Testing',
+  tags: [],
+  input_kinds: ['any'],
+  output_kinds: ['json'],
+  parameters_schema: {},
+}
 
 function entry(overrides: Partial<DepEntry> & { dep_id: string }): DepEntry {
   return {
@@ -337,6 +350,35 @@ test('every tool page calls useToolDeps, renders the gate, and ORs readiness int
     }
   }
   assert.deepEqual(missing, [], `tool pages not wired to the dependency gate:\n${missing.join('\n')}`)
+})
+
+test('every tool page pins the gate in the shell instead of burying it in a rail', async () => {
+  const dir = new URL('../pages/tools/', import.meta.url)
+  const files = (await readdir(dir)).filter((name) => name.endsWith('.tsx')).sort()
+  const unpinned: string[] = []
+  for (const file of files) {
+    const source = await readFile(new URL(file, dir), 'utf8')
+    // The install control is the reason the gate exists, so a page that renders it
+    // inline puts it wherever the page happens to be tall. It belongs in a pinned
+    // region: the shell's `gate` slot, or the downloader's own dark one.
+    if (!/gate=\{<DependencyGate\b/.test(source) && !/data-tool-gate-region/.test(source)) unpinned.push(file)
+  }
+  assert.deepEqual(unpinned, [], `tool pages that do not hand the gate to the shell:\n${unpinned.join('\n')}`)
+})
+
+test('the shell hosts the gate in a sticky region, not in the trailing aside', () => {
+  const html = renderToStaticMarkup(
+    <ToolPageShell manifest={SHELL_MANIFEST} gate={<p>preflight</p>}>
+      <p>body</p>
+    </ToolPageShell>,
+  )
+  const region = html.match(/<div data-tool-gate-region="demo\.tool"[^>]*>/)
+  assert.ok(region, 'the shell rendered no sticky gate region')
+  assert.match(region[0], /sticky bottom-0/, 'the gate region is not pinned to the viewport')
+  assert.ok(
+    html.indexOf('preflight') > html.indexOf('data-tool-gate-region'),
+    'the gate is not inside the region it was handed to',
+  )
 })
 
 test('the manager console renders its own identity and re-probe control', () => {

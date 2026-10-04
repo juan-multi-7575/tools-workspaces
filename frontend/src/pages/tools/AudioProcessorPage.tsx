@@ -113,6 +113,7 @@ export default function AudioProcessorPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="audio_processor" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded-full border border-fuchsia-700 bg-fuchsia-950/60 px-3 py-1 font-mono text-xs text-fuchsia-200">
           <AudioWaveform className="size-3.5" />
@@ -284,8 +285,6 @@ export default function AudioProcessorPage({
               ))}
             </ul>
           )}
-
-          <DependencyGate toolId="audio_processor" state={deps} />
 
           <button
             type="button"

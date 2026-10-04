@@ -85,6 +85,7 @@ export default function CodecToolPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="codec_tool" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.3em] text-brand-caramel-text">
           codec / transformer
@@ -184,8 +185,6 @@ export default function CodecToolPage({
             {schema.input_path?.description ?? 'Path to file to encode or decode.'}
           </p>
         </section>
-
-        <DependencyGate toolId="codec_tool" state={deps} />
 
         <div className="flex items-center gap-3">
           <button

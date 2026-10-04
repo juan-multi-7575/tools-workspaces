@@ -36,10 +36,9 @@ export default function GenericToolPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId={manifest.id} state={deps} />}
       footer={
         <div className="space-y-2">
-          <DependencyGate toolId={manifest.id} state={deps} />
-
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="font-mono text-xs text-brand-caramel-text">
               {schemaKeys.length} parameter{schemaKeys.length === 1 ? '' : 's'} sent to the backend

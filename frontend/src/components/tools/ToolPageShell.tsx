@@ -6,11 +6,18 @@ export interface ToolPageShellProps {
   manifest: ToolManifest
   children: ReactNode
   aside?: ReactNode
+  /**
+   * The dependency gate. It is hosted in the sticky action region below rather
+   * than in `aside`, because the preflight panel is the one thing a user must be
+   * able to see before they touch anything else. `aside` is a tall rail that
+   * scrolls its own gate off the bottom of the viewport.
+   */
+  gate?: ReactNode
   footer?: ReactNode
   headerActions?: ReactNode
 }
 
-export default function ToolPageShell({ manifest, children, aside, footer, headerActions }: ToolPageShellProps) {
+export default function ToolPageShell({ manifest, children, aside, gate, footer, headerActions }: ToolPageShellProps) {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto w-full max-w-[1600px] space-y-6 px-4 py-6 sm:px-8">
@@ -47,8 +54,12 @@ export default function ToolPageShell({ manifest, children, aside, footer, heade
           {aside && <div className="w-full shrink-0 xl:w-[340px]">{aside}</div>}
         </div>
 
-        {footer && (
-          <div className="sticky bottom-0 z-drawer -mx-4 border-t border-brand-sage bg-brand-cream-dark/95 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8">
+        {(gate || footer) && (
+          <div
+            data-tool-gate-region={manifest.id}
+            className="sticky bottom-0 z-drawer -mx-4 space-y-3 border-t border-brand-sage bg-brand-cream-dark/95 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8"
+          >
+            {gate}
             {footer}
           </div>
         )}

@@ -99,6 +99,7 @@ export default function StreamlinkPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="streamlink" state={deps} />}
       headerActions={
         <span
           className={`inline-flex items-center gap-2 rounded-md px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.24em] ${tally.plate} ${tally.text}`}
@@ -158,7 +159,6 @@ export default function StreamlinkPage({
             <label htmlFor="streamlink-url" className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#f0b429]">
               {schema.url?.title ?? 'url'} — live HLS/DASH stream address
             </label>
-            <DependencyGate toolId="streamlink" state={deps} />
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <input

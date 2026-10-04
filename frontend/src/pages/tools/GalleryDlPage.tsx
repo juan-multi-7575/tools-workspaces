@@ -84,6 +84,7 @@ export default function GalleryDlPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="gallery-dl" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded border border-[#3d3d4c] bg-[#1c1c26] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[#c9cbe0]">
           <Frame className="size-3" /> gallery wall
@@ -149,7 +150,6 @@ export default function GalleryDlPage({
             <label htmlFor="gallery-url" className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#c9cbe0]">
               {schema.url?.title ?? 'url'} — gallery, album or image-set page
             </label>
-            <DependencyGate toolId="gallery-dl" state={deps} />
 
             <div className="flex flex-col gap-2 sm:flex-row">
               <input

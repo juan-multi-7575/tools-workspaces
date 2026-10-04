@@ -100,6 +100,7 @@ export default function DemucsPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="demucs" state={deps} />}
       headerActions={
         <span className={`inline-flex -rotate-3 items-center gap-1.5 rounded border-2 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] ${stamp.ring}`}>
           <Stamp className="size-3" /> {stamp.label}
@@ -132,8 +133,6 @@ export default function DemucsPage({
             Only measured wall-clock seconds are shown. Demucs itself reports per-model progress on its own stderr,
             which this API does not forward, so no percentage is invented here.
           </p>
-
-          <DependencyGate toolId="demucs" state={deps} />
 
           <button
             type="button"

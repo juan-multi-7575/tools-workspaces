@@ -306,6 +306,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="trimmer" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 font-mono text-xs text-slate-300">
           <Timer className="size-3.5 text-sky-400" />
@@ -780,7 +781,6 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
         )}
 
         <footer className="space-y-2 border-t border-slate-800 pt-3">
-          <DependencyGate toolId="trimmer" state={deps} />
 
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-xs text-slate-400">

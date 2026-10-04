@@ -211,6 +211,7 @@ export default function SoxPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="sox" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded-md bg-[#2f2622] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[#e0a96d]">
           <Waves className="size-3" /> {stages.length} module{stages.length === 1 ? '' : 's'}
@@ -254,10 +255,8 @@ export default function SoxPage({
 
           <div className="space-y-1 rounded-xl bg-[#171210] p-3 font-mono text-[11px] leading-relaxed text-[#c9b6a4]">
             <p className="text-[#a08a76]">command the backend will build</p>
-            <p className="break-all text-[#ffe0bd]">sox {inputPath || '&lt;input&gt;'} &lt;output&gt; {effectParam || '(no effect tokens)'}</p>
+            <p className="break-all text-[#ffe0bd]">sox {inputPath || '\u003cinput\u003e'} &lt;output&gt; {effectParam || '(no effect tokens)'}</p>
           </div>
-
-          <DependencyGate toolId="sox" state={deps} />
 
           <button
             type="button"

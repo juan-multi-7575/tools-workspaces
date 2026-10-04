@@ -224,6 +224,7 @@ export default function SrtTranslatorPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="subtitle.translate.srt" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded-md bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
           <SplitSquareHorizontal className="size-3" /> dual-pane cues
@@ -231,7 +232,6 @@ export default function SrtTranslatorPage({
       }
       aside={
         <div className="space-y-4">
-          <DependencyGate toolId="subtitle.translate.srt" state={deps} />
 
           <button
             type="button"

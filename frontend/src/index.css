@@ -145,6 +145,17 @@ body {
   border-top: 1px solid color-mix(in oklab, currentColor 14%, transparent);
 }
 
+/*
+ * The gate is pinned to the bottom of the viewport on every tool page, so its
+ * per-dependency list gets its own bounded scroll: a catalog with many missing
+ * deps must not push the install control past the fold, because that control is
+ * the reason the gate exists.
+ */
+.dep-gate__scroll {
+  max-height: 10rem;
+  overflow-y: auto;
+}
+
 .dep-progress-bar {
   transition: width 420ms cubic-bezier(0.16, 1, 0.3, 1);
 }

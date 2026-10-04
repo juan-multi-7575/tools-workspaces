@@ -297,6 +297,7 @@ export default function LlmTranslatorPage({
   return (
     <ToolPageShell
       manifest={manifest}
+      gate={<DependencyGate toolId="text.translate.llm" state={deps} />}
       headerActions={
         <span className="inline-flex items-center gap-1.5 rounded-md border border-brand-caramel bg-brand-caramel-muted px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-espresso">
           <FileDiff className="size-3" /> diff workbench
@@ -464,8 +465,6 @@ export default function LlmTranslatorPage({
               </p>
             )}
           </div>
-
-          <DependencyGate toolId="text.translate.llm" state={deps} />
 
           <button
             type="button"
