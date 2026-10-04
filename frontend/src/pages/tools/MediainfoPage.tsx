@@ -126,7 +126,10 @@ export default function MediainfoPage({
 
   const data = execute.state.result?.status === 'completed' ? (execute.state.result.data as Payload | null) : null
   const format = data?.format && typeof data.format === 'object' ? (data.format as Payload) : null
-  const rawStreams = Array.isArray(data?.streams) ? (data!.streams as Payload[]) : []
+  const rawStreams = useMemo(
+    () => (Array.isArray(data?.streams) ? (data!.streams as Payload[]) : []),
+    [data],
+  )
 
   const groups = useMemo(() => {
     const byType = new Map<string, Payload[]>()
