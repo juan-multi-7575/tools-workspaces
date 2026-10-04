@@ -1,12 +1,24 @@
 import asyncio
+import os
 import subprocess
 import time
 from collections import deque
 from pathlib import Path
 from typing import Any
 
+from app.depmgr.environ import env_for
 from app.paths import tool_downloads_dir, run_dir, resolve_input_file
 from app.tools.base import Artifact, PortKind, Tool, ToolManifest, ToolRunContext, ToolResult
+
+def _ytdlp_env() -> dict[str, str]:
+    """yt-dlp is launched with plain subprocess (not AsyncSubprocessRunner) so the
+    download loop can poll its own deadline. It still needs the app-owned deps root
+    on PATH, otherwise a managed yt-dlp/ffmpeg is invisible to it.
+
+    Computed per call, not at import: the deps root follows app.paths.ROOT, which
+    tests relocate. os.environ itself is only read, never written.
+    """
+    return {**os.environ, **env_for("media.download.yt-dlp")}
 
 
 def _safe_put(queue: Any, msg: dict, loop: asyncio.AbstractEventLoop | None = None) -> None:
@@ -269,7 +281,7 @@ def resolve_media_url(url: str, timeout: float = 30.0) -> dict[str, Any]:
         (url or '').strip(),
     ]
     try:
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout, env=_ytdlp_env())
     except FileNotFoundError:
         return {"ok": False, "error": "yt-dlp is not installed on the server.", "error_code": "DEPENDENCY_UNAVAILABLE"}
     except subprocess.TimeoutExpired:
@@ -414,7 +426,7 @@ def execute_ydl(
 
     downloaded_targets: list[Path] = []
 
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=_ytdlp_env())
     try:
         assert proc.stdout is not None
         for line in proc.stdout:

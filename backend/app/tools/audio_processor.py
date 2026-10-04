@@ -73,7 +73,7 @@ class AudioProcessorTool(Tool):
             str(out_path),
         ]
 
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=300)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=300, tool_id=self.manifest.id)
         try:
             res = await runner.run(
                 cancel_event=context.cancel_event,

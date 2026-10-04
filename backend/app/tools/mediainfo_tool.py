@@ -31,7 +31,7 @@ class MediainfoTool(Tool):
         dest.mkdir(parents=True, exist_ok=True)
         out = dest / f"{src.stem}_info.json"
         cmd = ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", str(src)]
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=120)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=120, tool_id=self.manifest.id)
         try:
             res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
         except FileNotFoundError:
@@ -81,7 +81,7 @@ class StreamlinkTool(Tool):
 
         # Try real streamlink CLI
         cmd = ["streamlink", "--output", str(out), url, "best,worst"]
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=120)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=120, tool_id=self.manifest.id)
         try:
             res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
         except FileNotFoundError:
@@ -97,7 +97,7 @@ class StreamlinkTool(Tool):
 
         # Fallback to yt-dlp
         cmd_ytdlp = ["yt-dlp", "-o", str(out), url]
-        runner_ytdlp = AsyncSubprocessRunner(command=cmd_ytdlp, cwd=dest, timeout=120)
+        runner_ytdlp = AsyncSubprocessRunner(command=cmd_ytdlp, cwd=dest, timeout=120, tool_id=self.manifest.id)
         try:
             res_ytdlp = await runner_ytdlp.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
         except FileNotFoundError:
@@ -137,7 +137,7 @@ class OcrmypdfTool(Tool):
         out = dest / "ocr.pdf"
 
         cmd = ["ocrmypdf", "--force-ocr", str(src), str(out)]
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=120)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=120, tool_id=self.manifest.id)
         try:
             res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
         except FileNotFoundError:
@@ -179,7 +179,7 @@ class SoxTool(Tool):
         dest.mkdir(parents=True, exist_ok=True)
         out = dest / f"{Path(input_path).stem}_sox{Path(input_path).suffix}"
         cmd = ["sox", input_path, str(out)] + effect.split()
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=300)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=300, tool_id=self.manifest.id)
         try:
             res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
         except FileNotFoundError:
@@ -215,7 +215,7 @@ class GallerydlTool(Tool):
         dest.mkdir(parents=True, exist_ok=True)
 
         cmd = ["gallery-dl", "--directory", str(dest), url]
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=120)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=120, tool_id=self.manifest.id)
         try:
             res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
         except FileNotFoundError:
@@ -261,7 +261,7 @@ class DemucsTool(Tool):
         dest.mkdir(parents=True, exist_ok=True)
 
         cmd = ["demucs", "--out", str(dest), str(src)]
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=300)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest, timeout=300, tool_id=self.manifest.id)
         try:
             res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
         except FileNotFoundError:

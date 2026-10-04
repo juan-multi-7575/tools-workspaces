@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from app import paths
+from app.depmgr.environ import env_for
 
 
 def create_workspace(name: str) -> dict[str, Any]:
@@ -306,6 +307,7 @@ def trim_artifact(workspace_id: str, run_id: str, artifact_name: str, regions: l
                 ["ffmpeg", "-y", "-i", str(src_path), "-ss", str(start), "-to", str(end), str(out)],
                 check=True,
                 capture_output=True,
+                env={**os.environ, **env_for("trimmer")},
             )
         except Exception:
             continue
@@ -577,7 +579,7 @@ def mux_subtitles_to_video(
             str(out_path),
         ]
 
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, env={**os.environ, **env_for("subtitle.translate.srt")})
     if proc.returncode != 0 or not out_path.exists():
         raise RuntimeError(f"FFmpeg muxing failed: {proc.stderr[:400]}")
 

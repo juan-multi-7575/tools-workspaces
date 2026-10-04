@@ -53,7 +53,7 @@ class PandocTool(Tool):
         if to_fmt == "html":
             cmd.append("--standalone")
         cmd += [str(src), "-o", str(out_path)]
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=120)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=120, tool_id=self.manifest.id)
         try:
             res = await runner.run(cancel_event=context.cancel_event)
         except FileNotFoundError:
@@ -117,7 +117,7 @@ class PdfTools(Tool):
 
         if action == "extract_text":
             cmd = ["pdftotext", str(src), str(out_path)]
-            runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=120)
+            runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=120, tool_id=self.manifest.id)
             try:
                 res = await runner.run(cancel_event=context.cancel_event)
             except FileNotFoundError:
@@ -137,7 +137,7 @@ class PdfTools(Tool):
             )
         else:
             cmd = ["pdfinfo", str(src)]
-            runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=120)
+            runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=120, tool_id=self.manifest.id)
             try:
                 res = await runner.run(cancel_event=context.cancel_event)
             except FileNotFoundError:

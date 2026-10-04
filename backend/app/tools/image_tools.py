@@ -51,7 +51,7 @@ class ImageMagickTool(Tool):
         if resize:
             cmd += ["-resize", str(resize)]
         cmd += ["-quality", str(quality), str(out_path)]
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, tool_id=self.manifest.id)
         try:
             res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
         except FileNotFoundError:
@@ -106,7 +106,7 @@ class ExifScrubberTool(Tool):
         if action == "inspect":
             out_name = f"{src.stem}_exif.json"
             out_path = dest_dir / out_name
-            runner = AsyncSubprocessRunner(command=["exiftool", "-j", str(src)], cwd=dest_dir)
+            runner = AsyncSubprocessRunner(command=["exiftool", "-j", str(src)], cwd=dest_dir, tool_id=self.manifest.id)
             try:
                 res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
             except FileNotFoundError:
@@ -133,7 +133,7 @@ class ExifScrubberTool(Tool):
             out_name = f"{src.stem}_clean{src.suffix}"
             out_path = dest_dir / out_name
             out_path.unlink(missing_ok=True)
-            runner = AsyncSubprocessRunner(command=["exiftool", "-all=", "-o", str(out_path), str(src)], cwd=dest_dir)
+            runner = AsyncSubprocessRunner(command=["exiftool", "-all=", "-o", str(out_path), str(src)], cwd=dest_dir, tool_id=self.manifest.id)
             try:
                 res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
             except FileNotFoundError:

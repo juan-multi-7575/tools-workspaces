@@ -53,7 +53,7 @@ class ScriptRunnerTool(Tool):
         if custom_args:
             cmd.extend([a for a in custom_args.split() if a])
 
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=timeout)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=timeout, tool_id=self.manifest.id)
         log_file = dest_dir / "output.log"
         try:
             res = await runner.run(
