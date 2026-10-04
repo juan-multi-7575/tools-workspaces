@@ -11,7 +11,7 @@ import {
   TriangleAlert,
 } from 'lucide-react'
 import { deriveDepByteProgress, deriveDepProgress, type UseToolDeps } from '../../hooks/useToolDeps'
-import { depDisplayBytes, formatBytes, type DepEntry, type DepStage } from '../../lib/depsApi'
+import { depDisplayBytes, formatBytes, shortDepVersion, type DepEntry, type DepStage } from '../../lib/depsApi'
 
 export interface DependencyGateProps {
   toolId: string
@@ -106,13 +106,16 @@ function ReadyChip({ state }: { state: UseToolDeps }) {
     <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs text-current/70">
       <CircleCheck className="size-3.5 shrink-0" style={{ color: 'var(--dep-ok)' }} aria-hidden="true" />
       <span>Ready —</span>
-      {deps.map((entry, index) => (
-        <span key={entry.dep_id} className="font-mono">
-          {index > 0 ? ', ' : ''}
-          {entry.dep_id}
-          {entry.version ? ` ${entry.version}` : ''}
-        </span>
-      ))}
+      {deps.map((entry, index) => {
+        const short = shortDepVersion(entry.version)
+        return (
+          <span key={entry.dep_id} className="font-mono" title={entry.version ?? undefined}>
+            {index > 0 ? ', ' : ''}
+            {entry.dep_id}
+            {short ? ` ${short}` : ''}
+          </span>
+        )
+      })}
     </p>
   )
 }

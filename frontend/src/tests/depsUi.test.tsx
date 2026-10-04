@@ -9,7 +9,7 @@ import {
   EMPTY_PROGRESS,
   type UseToolDeps,
 } from '../hooks/useToolDeps'
-import { formatBytes, type DepEntry, type DepEvent } from '../lib/depsApi'
+import { formatBytes, shortDepVersion, type DepEntry, type DepEvent } from '../lib/depsApi'
 import DependencyGate from '../components/deps/DependencyGate'
 import DependencyManagerPanel from '../components/deps/DependencyManagerPanel'
 import ToolPageShell from '../components/tools/ToolPageShell'
@@ -241,6 +241,32 @@ test('the ready chip lists the real dep ids and probed versions', () => {
   assert.match(html, /conda\.sox/)
   assert.match(html, /14\.4\.2/)
   assert.doesNotMatch(html, /Install/)
+})
+
+test('the ready chip shows a trimmed version, and keeps the real build banner as a tooltip', () => {
+  const installed = entry({
+    dep_id: 'conda.imagemagick',
+    status: 'installed',
+    version: 'Version: ImageMagick 7.1.2-31 Q16-HDRI x86_64 8309dc92a:20260903 https://imagemagick.org',
+    provides: ['magick'],
+  })
+  const html = renderToStaticMarkup(
+    <DependencyGate toolId="imagemagick" state={state({ status: 'ready', ready: true, data: { tool_id: 'imagemagick', ready: true, missing: [], deps: [installed], environ: {} } })} />,
+  )
+  assert.match(html, /conda\.imagemagick 7\.1\.2-31/, 'the short version is the one extracted from the real string')
+  // What a reader sees is the element text; the tooltip is an attribute, so a
+  // commit hash, a build date and a project URL must not appear in either.
+  const visible = html.replace(/<[^>]*>/g, ' ').replace(/&[a-z]+;/g, ' ').replace(/\s+/g, ' ')
+  assert.doesNotMatch(visible, /8309dc92a/, 'no commit hash may be rendered as text')
+  assert.doesNotMatch(visible, /imagemagick\.org/, 'no build URL may be rendered as text')
+  // It is not discarded, only demoted.
+  assert.ok(html.includes('title="Version: ImageMagick'), 'the full probed string stays available as a tooltip')
+})
+
+test('a probed version with no version token in it is not invented into one', () => {
+  assert.equal(shortDepVersion('a build with no numbers in it'), null)
+  assert.equal(shortDepVersion(null), null)
+  assert.equal(shortDepVersion('14.4.2'), '14.4.2')
 })
 
 test('the missing panel names each dep, its plain-language purpose, its real size and the install control', () => {

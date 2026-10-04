@@ -335,6 +335,24 @@ export function depDisplayBytes(entry: Pick<DepEntry, 'approx_bytes' | 'measured
   return { bytes: null, measured: false }
 }
 
+/**
+ * The short, user-facing version of a probed dependency version.
+ *
+ * Probes return whatever the tool prints, which for ImageMagick is the whole
+ * build banner: `Version: ImageMagick 7.1.2-31 Q16-HDRI x86_64 8309dc92a:20260903
+ * https://imagemagick.org`. That is a build artefact, not a version a person
+ * needs, so this trims it to the first real version token it can find.
+ *
+ * It only ever *extracts*: the returned string is a substring of the input, and
+ * a string with no version token in it yields `null` rather than a guess. The
+ * full banner stays available as the tooltip.
+ */
+export function shortDepVersion(version: string | null | undefined): string | null {
+  if (typeof version !== 'string') return null
+  const token = version.match(/\d+(?:\.\d+)+(?:[-+][0-9A-Za-z.]+)?/)?.[0]
+  return token ?? null
+}
+
 const UNITS = ['B', 'kB', 'MB', 'GB', 'TB']
 
 /**
