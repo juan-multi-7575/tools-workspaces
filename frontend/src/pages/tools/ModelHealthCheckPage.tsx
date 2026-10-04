@@ -195,8 +195,6 @@ export default function ModelHealthCheckPage({
           {/* TARGET SELECTION */}
           <div className="min-w-0 space-y-4">
             <section className="min-w-0 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
-              <DependencyGate toolId="sys.health.check" state={deps} />
-
               <h2 className="mb-2.5 mt-3 flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
                 <Activity className="size-3 shrink-0" /> probe target
               </h2>
