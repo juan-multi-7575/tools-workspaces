@@ -117,7 +117,13 @@ class AsyncSubprocessRunner:
         cancel_event: asyncio.Event | None = None,
         progress_queue: asyncio.Queue[dict[str, Any]] | None = None,
         log_file: Path | None = None,
+        truncate_log: bool = False,
     ) -> SubprocessResult:
+        """``log_file`` is appended to by default, so callers that share one log
+        across several steps (``declarative.CommandTool`` writes every step of a
+        run into ``execution.log``) keep accumulating it. A caller whose log
+        belongs to a single invocation passes ``truncate_log=True`` so the file
+        starts empty and only holds what that invocation wrote."""
         start_time = time.monotonic()
         env = self._build_isolated_env()
         self.cwd.mkdir(parents=True, exist_ok=True)
@@ -138,7 +144,8 @@ class AsyncSubprocessRunner:
 
         stdout_lines: list[str] = []
         stderr_lines: list[str] = []
-        log_handle = log_file.open("a", encoding="utf-8") if log_file else None
+        log_mode = "w" if truncate_log else "a"
+        log_handle = log_file.open(log_mode, encoding="utf-8") if log_file else None
 
         async def _read_stream(stream: asyncio.StreamReader | None, stream_name: str, buffer: list[str]):
             if stream is None:

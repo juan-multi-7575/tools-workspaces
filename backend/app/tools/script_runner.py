@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import uuid
 from pathlib import Path
 from app.paths import run_dir, tool_downloads_dir
 from app.runners.subprocess_runner import AsyncSubprocessRunner
@@ -25,7 +26,21 @@ class ScriptRunnerTool(Tool):
     )
 
     async def execute(self, context: ToolRunContext) -> ToolResult:
-        dest_dir = tool_downloads_dir("script_runner") if context.kind == "standalone" else run_dir(context.workspace_id or "tmp", context.run_id or "tmp")
+        # A standalone run gets a directory of its own. Every run used to write
+        # into downloads/script_runner/, so output.log carried run 1's stdout
+        # forward (the runner appends) and iterdir() below reported run 1's files
+        # as this run's artifacts. The directory is a sibling of the tool
+        # directory rather than a child of it because the recent-artifacts
+        # listing globs exactly downloads/<dir>/<file> (main.py:275).
+        # Workspace and pipeline runs already get a per-run directory from
+        # run_dir(), and several steps of one run share it, so they keep both the
+        # shared directory and the appended log.
+        standalone = context.kind == "standalone"
+        dest_dir = (
+            tool_downloads_dir(f"script_runner.{uuid.uuid4().hex[:12]}")
+            if standalone
+            else run_dir(context.workspace_id or "tmp", context.run_id or "tmp")
+        )
         dest_dir.mkdir(parents=True, exist_ok=True)
 
         lang = context.params.get("language", "python")
@@ -60,6 +75,7 @@ class ScriptRunnerTool(Tool):
                 cancel_event=context.cancel_event,
                 progress_queue=context.progress_queue,
                 log_file=log_file,
+                truncate_log=standalone,
             )
         except FileNotFoundError:
             return ToolResult(artifacts=[], status="failed", error="bash not installed")
