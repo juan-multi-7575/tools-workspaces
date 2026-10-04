@@ -34,5 +34,17 @@ export async function load(url, context, nextLoad) {
       }).outputText,
     }
   }
+
+  /*
+   * Stylesheets are side-effect imports. Node cannot execute CSS, and a site
+   * component importing its own scoped stylesheet is the point of the scoped
+   * per-site architecture (D7), so an empty module stands in for the file. The
+   * tests assert on rendered markup and class names, never on computed style,
+   * so nothing is lost by dropping the bytes.
+   */
+  if (url.startsWith('file:') && /\.css$/.test(new URL(url).pathname)) {
+    return { format: 'module', shortCircuit: true, source: 'export default {}' }
+  }
+
   return nextLoad(url, context)
 }
