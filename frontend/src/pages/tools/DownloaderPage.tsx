@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   ChevronDown,
   ChevronRight,
@@ -659,7 +659,12 @@ export default function DownloaderPage({
 
   // ---- render --------------------------------------------------------------
   return (
-    <div className="h-full overflow-y-auto bg-[#080c11] font-mono text-slate-200">
+    // The console's accent, handed to the shared forms it hosts so the yt-dlp
+    // controls are the console's rather than the cream shell's.
+    <div
+      className="h-full overflow-y-auto bg-[#080c11] font-mono text-slate-200"
+      style={{ '--tool-accent': '#34d399' } as CSSProperties}
+    >
       <div className="mx-auto w-full max-w-[1800px] space-y-4 px-3 py-4 sm:px-6">
         {/* console header ------------------------------------------------- */}
         <header className="flex flex-col gap-2 border border-emerald-500/30 bg-[#0d131b] px-4 py-3 lg:flex-row lg:items-center lg:justify-between">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
   CheckCircle2,
   AlertCircle,
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { api, type DetectedModelProvider } from '../../lib/api'
 import { errorMessage } from '../../lib/apiTransport'
+import { useHostSkin } from '../../lib/hostSkin'
 
 export default function ModelHealthCheckForm({
   value = {},
@@ -21,6 +22,11 @@ export default function ModelHealthCheckForm({
   value?: Record<string, unknown>
   onChange: (nextValue: Record<string, unknown>) => void
 }) {
+  // This form is mounted inside a board on the health page as well as on the
+  // cream shell, and the two do not share a palette.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const skin = useHostSkin(rootRef)
+
   const [providers, setProviders] = useState<DetectedModelProvider[]>([])
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
@@ -120,39 +126,39 @@ export default function ModelHealthCheckForm({
   })
 
   return (
-    <div className="space-y-4 font-sans text-xs text-brand-espresso w-full min-w-0 overflow-x-hidden">
+    <div ref={rootRef} className="tool-form space-y-4 font-sans text-xs w-full min-w-0 overflow-x-hidden" data-tone={skin.tone} style={{ '--tool-ink': skin.ink } as CSSProperties}>
       {/* 1. BASHRC & ENV SCANNER HEADER */}
-      <div className="rounded-2xl border-2 border-brand-caramel/40 bg-brand-cream-dark/60 p-3.5 shadow-2xs">
+      <div className="tool-panel-quiet rounded-2xl border-2 p-3.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div>
             <div className="flex items-center gap-2">
-              <span className="flex size-6 items-center justify-center rounded-lg bg-brand-caramel text-brand-cream-light shadow-2xs">
+              <span className="tool-on-accent flex size-6 items-center justify-center rounded-lg">
                 <KeyRound className="size-3.5" />
               </span>
-              <h4 className="font-bold text-xs text-brand-espresso flex items-center gap-2">
+              <h4 className="font-bold text-xs flex items-center gap-2">
                 Shell Profile & Environment Credential Scanner
-                <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full bg-brand-caramel/15 border border-brand-caramel/30 text-brand-espresso">
+                <span className="tool-accent-chip font-mono text-xs font-bold px-2 py-0.5 rounded-full">
                   ZERO-DISK STORAGE
                 </span>
               </h4>
             </div>
-            <p className="mt-1 text-xs text-brand-caramel-text">
-              Scans <code className="bg-brand-cream px-1 py-0.2 rounded border border-brand-sage/60 font-bold">~/.bashrc</code>, <code className="bg-brand-cream px-1 py-0.2 rounded border border-brand-sage/60 font-bold">~/.zshrc</code>, and active process environment on the fly.
+            <p className="mt-1 text-xs tool-muted">
+              Scans <code className="tool-well px-1 py-0.2 rounded border font-bold">~/.bashrc</code>, <code className="tool-well px-1 py-0.2 rounded border font-bold">~/.zshrc</code>, and active process environment on the fly.
             </p>
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
-            <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-xl bg-brand-cream border border-brand-sage text-brand-espresso shadow-2xs">
+            <span className="tool-panel font-mono text-xs font-bold px-2.5 py-1 rounded-xl border">
               {loading ? 'Scanning...' : `${detectedCount} of ${providers.length} in Env`}
             </span>
             <button
               type="button"
               onClick={fetchProviders}
               disabled={scanning}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-brand-sage bg-surface-white px-3 py-1.5 text-xs font-bold text-brand-espresso hover:bg-brand-cream-dark active:scale-95 transition-all shadow-2xs"
+              className="tool-choice inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold active:scale-95 transition-all"
               title="Rescan ~/.bashrc and environment"
             >
-              <RefreshCw className={`size-3 text-brand-caramel ${scanning ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`size-3 tool-accent-text ${scanning ? 'animate-spin' : ''}`} />
               <span>{scanning ? 'Scanning...' : 'Rescan'}</span>
             </button>
           </div>
@@ -162,8 +168,8 @@ export default function ModelHealthCheckForm({
       {/* 2. INTERACTIVE PROVIDER SELECTOR GRID */}
       <div className="space-y-2.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <label className="font-bold text-brand-espresso text-xs flex items-center gap-1.5">
-            <Sparkles className="size-3.5 text-brand-caramel" />
+          <label className="font-bold text-xs flex items-center gap-1.5">
+            <Sparkles className="size-3.5 tool-accent-text" />
             Select Target AI Provider
           </label>
 
@@ -172,9 +178,7 @@ export default function ModelHealthCheckForm({
               type="button"
               onClick={() => setFilterMode('all')}
               className={`font-mono text-xs px-2.5 py-1 rounded-lg border transition-all ${
-                filterMode === 'all'
-                  ? 'bg-brand-caramel text-brand-cream-light border-brand-caramel font-bold shadow-2xs'
-                  : 'bg-surface-white text-brand-espresso border-brand-sage hover:bg-brand-cream-dark'
+                filterMode === 'all' ? 'tool-on-accent font-bold' : 'tool-choice'
               }`}
             >
               All Providers ({providers.length})
@@ -183,9 +187,7 @@ export default function ModelHealthCheckForm({
               type="button"
               onClick={() => setFilterMode('detected')}
               className={`font-mono text-xs px-2.5 py-1 rounded-lg border flex items-center gap-1.5 transition-all ${
-                filterMode === 'detected'
-                  ? 'bg-brand-caramel text-brand-cream-light border-brand-caramel font-bold shadow-2xs'
-                  : 'bg-surface-white text-brand-espresso border-brand-sage hover:bg-brand-cream-dark'
+                filterMode === 'detected' ? 'tool-on-accent font-bold' : 'tool-choice'
               }`}
             >
               <span className="size-1.5 rounded-full bg-emerald-500 inline-block" />
@@ -199,19 +201,17 @@ export default function ModelHealthCheckForm({
           <button
             type="button"
             onClick={() => handleSelectProvider('all')}
-            className={`flex flex-col items-start justify-between rounded-xl border p-3 text-left transition-all relative ${
-              selectedProviderId === 'all'
-                ? 'border-brand-caramel bg-brand-caramel text-brand-cream-light font-bold shadow-xs ring-1 ring-brand-caramel'
-                : 'border-brand-sage bg-surface-white text-brand-espresso hover:bg-brand-cream-dark/50 hover:border-brand-caramel'
+            className={`flex flex-col items-start justify-between rounded-xl border p-3 text-left transition-all relative font-bold ${
+              selectedProviderId === 'all' ? 'tool-on-accent' : 'tool-choice'
             }`}
           >
             <div className="flex items-center justify-between w-full mb-1">
               <span className="font-bold text-xs">All Providers</span>
-              {selectedProviderId === 'all' && <Check className="size-3 text-brand-cream-light" />}
+              {selectedProviderId === 'all' && <Check className="size-3" />}
             </div>
             <span
               className={`text-xs leading-tight ${
-                selectedProviderId === 'all' ? 'text-brand-cream-light/80' : 'text-brand-caramel-text'
+                selectedProviderId === 'all' ? 'opacity-80' : 'tool-muted'
               }`}
             >
               Full multi-provider sweep & benchmark ({providers.length} available)
@@ -227,43 +227,37 @@ export default function ModelHealthCheckForm({
                 type="button"
                 onClick={() => handleSelectProvider(p.id)}
                 className={`flex flex-col items-start justify-between rounded-xl border p-2.5 text-left transition-all relative ${
-                  isSelected
-                    ? 'border-brand-caramel bg-brand-caramel text-brand-cream-light font-bold shadow-xs ring-1 ring-brand-caramel'
-                    : p.has_key
-                    ? 'border-brand-caramel/70 bg-brand-cream-light text-brand-espresso hover:bg-brand-cream-dark/50 hover:border-brand-caramel'
-                    : 'border-brand-sage bg-surface-white text-brand-espresso hover:bg-brand-cream-dark/50 hover:border-brand-caramel'
+                  isSelected ? 'tool-on-accent font-bold' : p.has_key ? 'tool-card-flagged' : 'tool-card'
                 }`}
               >
                 <div className="flex items-center justify-between w-full mb-1">
                   <div className="flex items-center gap-1 min-w-0">
                     <span className="font-bold text-xs truncate">{p.name}</span>
                     {p.is_custom && (
-                      <span className={`font-mono text-[8px] px-1 py-0.2 rounded border ${
-                        isSelected ? 'bg-brand-cream-light/20 border-white/40' : 'bg-brand-cream-dark border-brand-sage'
+                      <span className={`font-mono text-[8px] px-1 py-0.2 rounded ${
+                        isSelected ? 'opacity-75' : 'tool-accent-chip border'
                       }`}>
                         Env
                       </span>
                     )}
                   </div>
-                  {isSelected && <Check className="size-3 text-brand-cream-light shrink-0" />}
+                  {isSelected && <Check className="size-3 shrink-0" />}
                 </div>
 
                 <div className="flex items-center justify-between w-full gap-1 mt-0.5">
                   {p.has_key ? (
                     <span
                       className={`inline-flex items-center gap-1 font-mono text-xs font-bold px-1.5 py-0.2 rounded-md ${
-                        isSelected
-                          ? 'bg-brand-cream-light/20 text-brand-cream-light'
-                          : 'bg-brand-caramel/15 text-brand-espresso border border-brand-caramel/40'
+                        isSelected ? 'opacity-80' : 'tool-accent-chip'
                       }`}
                     >
-                      <CheckCircle2 className={`size-2.5 ${isSelected ? 'text-brand-cream-light' : 'text-brand-caramel'}`} />
+                      <CheckCircle2 className={`size-2.5 ${isSelected ? '' : 'tool-accent-text'}`} />
                       {p.source === 'local-python' || p.source === 'local-daemon' ? 'Local Runtime' : p.source}
                     </span>
                   ) : (
                     <span
                       className={`inline-flex items-center gap-1 font-mono text-xs px-1.5 py-0.2 rounded-md ${
-                        isSelected ? 'bg-brand-cream-light/15 text-brand-cream-light/80' : 'bg-brand-cream-dark text-brand-caramel-text'
+                        isSelected ? 'opacity-70' : 'tool-panel-quiet'
                       }`}
                     >
                       <AlertCircle className="size-2.5 opacity-60" />
@@ -273,7 +267,7 @@ export default function ModelHealthCheckForm({
 
                   {p.env_vars && p.env_vars.length > 0 && (
                     <span className={`font-mono text-[8px] truncate max-w-[95px] ${
-                      isSelected ? 'text-brand-cream-light/70' : 'text-brand-caramel-text/80'
+                      isSelected ? 'opacity-70' : 'tool-muted'
                     }`} title={p.env_vars.join(', ')}>
                       {p.env_vars[0]}
                     </span>
@@ -347,18 +341,16 @@ export default function ModelHealthCheckForm({
           .filter((f) => f === 'all' || availableModels.some((m) => m.toLowerCase().includes(f)))
 
         return (
-          <div className="rounded-2xl border border-brand-sage bg-surface-white p-3.5 space-y-3 shadow-2xs">
+          <div className="tool-panel rounded-2xl border p-3.5 space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <label className="font-bold text-brand-espresso text-xs flex items-center gap-1.5">
-                <Cpu className="size-3.5 text-brand-caramel" />
+              <label className="font-bold text-xs flex items-center gap-1.5">
+                <Cpu className="size-3.5 tool-accent-text" />
                 Target Models for {selectedProviderObj.name}
               </label>
 
               <div className="flex items-center gap-2">
-                <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded-full border ${
-                  isLive
-                    ? 'bg-brand-caramel/15 border-brand-caramel/40 text-brand-espresso'
-                    : 'bg-brand-cream-dark border-brand-sage text-brand-caramel-text'
+                <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded-full ${
+                  isLive ? 'tool-accent-chip' : 'tool-panel-quiet'
                 }`}>
                   {isLive ? `Live API (${availableModels.length} models)` : `Default Catalog (${availableModels.length} models)`}
                 </span>
@@ -367,18 +359,18 @@ export default function ModelHealthCheckForm({
                   type="button"
                   onClick={() => fetchLiveModels(selectedProviderId)}
                   disabled={fetchingModels}
-                  className="inline-flex items-center gap-1 rounded-lg border border-brand-sage bg-brand-cream px-2.5 py-1 text-xs font-bold text-brand-espresso hover:bg-brand-cream-dark transition-all"
+                  className="tool-choice inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-bold transition-all"
                   title="Query /v1/models endpoint directly to fetch all live available models"
                 >
-                  <RefreshCw className={`size-3 text-brand-caramel ${fetchingModels ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`size-3 tool-accent-text ${fetchingModels ? 'animate-spin' : ''}`} />
                   <span>{fetchingModels ? 'Fetching Models...' : 'Fetch Live Models'}</span>
                 </button>
               </div>
             </div>
 
             {fetchInfo?.error && (
-              <div className="rounded-xl bg-brand-cream-dark/50 border border-brand-sage/60 px-3 py-1.5 text-xs text-brand-caramel-text flex items-center gap-1.5">
-                <AlertCircle className="size-3 text-brand-caramel shrink-0" />
+              <div className="tool-alert rounded-xl border px-3 py-1.5 text-xs tool-muted flex items-center gap-1.5">
+                <AlertCircle className="size-3 tool-alert-ink shrink-0" />
                 <span>{fetchInfo.error}</span>
               </div>
             )}
@@ -386,19 +378,19 @@ export default function ModelHealthCheckForm({
             {/* Model Search & Filter Header */}
             <div className="space-y-2">
               <div className="relative">
-                <Search className="size-3.5 text-brand-caramel-text absolute left-3 top-2.5" />
+                <Search className="size-3.5 tool-muted absolute left-3 top-2.5" />
                 <input
                   type="text"
                   value={modelSearchQuery}
                   onChange={(e) => setModelSearchQuery(e.target.value)}
-                  placeholder={`Search ${availableModels.length} models (e.g. nemotron, llama, gemma, mistral, deepseek)...`}
-                  className="w-full rounded-xl border border-brand-sage bg-brand-cream/40 pl-8 pr-16 py-1.5 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:bg-surface-white focus:outline-none shadow-2xs"
+                  placeholder={`Search ${availableModels.length} models — nemotron, llama, gemma…`}
+                  className="tool-well w-full rounded-xl pl-8 pr-16 py-1.5 font-mono text-xs"
                 />
                 {modelSearchQuery && (
                   <button
                     type="button"
                     onClick={() => setModelSearchQuery('')}
-                    className="absolute right-2 top-1 font-mono text-xs text-brand-caramel-text hover:text-brand-espresso px-1.5 py-0.5 rounded bg-brand-cream-dark"
+                    className="tool-quiet-action absolute right-2 top-1 font-mono text-xs px-1.5 py-0.5 rounded"
                   >
                     Clear
                   </button>
@@ -414,9 +406,7 @@ export default function ModelHealthCheckForm({
                       type="button"
                       onClick={() => setModelFamilyFilter(fam)}
                       className={`font-mono text-xs px-2 py-0.5 rounded-md capitalize border transition-all ${
-                        modelFamilyFilter === fam
-                          ? 'bg-brand-caramel border-brand-caramel text-brand-cream-light font-bold shadow-2xs'
-                          : 'bg-brand-cream-light border-brand-sage text-brand-caramel-text hover:bg-brand-cream-dark'
+                        modelFamilyFilter === fam ? 'tool-on-accent font-bold' : 'tool-choice'
                       }`}
                     >
                       {fam}
@@ -428,14 +418,14 @@ export default function ModelHealthCheckForm({
                   <button
                     type="button"
                     onClick={() => selectAllFiltered(filteredModels)}
-                    className="font-mono text-xs px-2 py-0.5 rounded-md border border-brand-sage bg-brand-cream-light text-brand-espresso hover:bg-brand-cream-dark transition-all"
+                    className="tool-choice font-mono text-xs px-2 py-0.5 rounded-md border transition-all"
                   >
                     Select All Filtered ({filteredModels.length})
                   </button>
                   <button
                     type="button"
                     onClick={clearSelection}
-                    className="font-mono text-xs px-2 py-0.5 rounded-md border border-brand-sage bg-brand-cream-light text-brand-caramel-text hover:bg-brand-cream-dark transition-all"
+                    className="tool-pill font-mono text-xs px-2 py-0.5 rounded-md border transition-all"
                   >
                     Reset
                   </button>
@@ -443,9 +433,7 @@ export default function ModelHealthCheckForm({
                     type="button"
                     onClick={() => selectAllFiltered(availableModels)}
                     className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md border transition-all ${
-                      selectedList.length === 0
-                        ? 'bg-brand-caramel/15 border-brand-caramel/40 text-brand-espresso hover:bg-brand-caramel/25'
-                        : 'bg-brand-cream-dark border-brand-sage text-brand-caramel-text hover:bg-brand-cream-dark/80'
+                      selectedList.length === 0 ? 'tool-accent-chip hover:brightness-110' : 'tool-panel-quiet'
                     }`}
                     title="Select and probe all available models from provider"
                   >
@@ -457,13 +445,13 @@ export default function ModelHealthCheckForm({
 
             {/* Complete Model Selection Grid (All Models, No Artificial Slicing) */}
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs text-brand-caramel-text font-mono">
+              <div className="flex items-center justify-between text-xs tool-muted font-mono">
                 <span>Click model to select/toggle:</span>
                 <span>Showing {filteredModels.length} of {availableModels.length} models</span>
               </div>
-              <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1 border border-brand-sage/40 rounded-xl p-2 bg-brand-cream/20">
+              <div className="tool-well flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1 border rounded-xl p-2">
                 {filteredModels.length === 0 ? (
-                  <div className="w-full py-4 text-center text-xs text-brand-caramel-text italic">
+                  <div className="w-full py-4 text-center text-xs tool-muted italic">
                     No models matching "{modelSearchQuery}" under {modelFamilyFilter}
                   </div>
                 ) : (
@@ -475,16 +463,14 @@ export default function ModelHealthCheckForm({
                         type="button"
                         onClick={() => toggleModel(m)}
                         className={`inline-flex items-center gap-1 font-mono text-xs px-2.5 py-1 rounded-lg border transition-all truncate max-w-[280px] ${
-                          isSelected
-                            ? 'bg-brand-caramel border-brand-caramel text-brand-cream-light font-bold shadow-xs'
-                            : 'bg-surface-white border-brand-sage text-brand-espresso hover:bg-brand-cream-dark hover:border-brand-caramel'
+                          isSelected ? 'tool-on-accent font-bold' : 'tool-choice'
                         }`}
                         title={m}
                       >
                         {isSelected ? (
-                          <Check className="size-2.5 text-brand-cream-light shrink-0" />
+                          <Check className="size-2.5 shrink-0" />
                         ) : (
-                          <span className="size-1.5 rounded-full bg-brand-sage shrink-0" />
+                          <span className="size-1.5 rounded-full tool-muted shrink-0" />
                         )}
                         <span className="truncate">{m}</span>
                       </button>
@@ -509,7 +495,7 @@ export default function ModelHealthCheckForm({
                   }
                   onChange(next)
                 }}
-                className="flex-1 min-w-0 rounded-xl border border-brand-sage bg-brand-cream/80 px-3 py-2 text-xs text-brand-espresso font-mono font-medium focus:border-brand-caramel focus:bg-surface-white focus:outline-none"
+                className="tool-well flex-1 min-w-0 rounded-xl px-3 py-2 text-xs font-mono font-medium"
               >
                 <option value="">
                   {selectedList.length > 1
@@ -527,12 +513,12 @@ export default function ModelHealthCheckForm({
                 type="text"
                 value={selectedModel}
                 onChange={(e) => setParam('model', e.target.value)}
-                placeholder="Or custom model ID..."
-                className="w-full sm:w-48 shrink-0 min-w-0 rounded-xl border border-brand-sage bg-brand-cream/60 px-3 py-2 text-xs text-brand-espresso font-mono placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:bg-surface-white focus:outline-none"
+                placeholder="Or a custom model ID"
+                className="tool-well w-full sm:w-48 shrink-0 min-w-0 rounded-xl px-3 py-2 text-xs font-mono"
               />
             </div>
 
-            <p className="text-xs text-brand-caramel-text">
+            <p className="text-xs tool-muted">
               {selectedProviderObj.description}
             </p>
           </div>
@@ -540,16 +526,16 @@ export default function ModelHealthCheckForm({
       })()}
 
       {/* 4. EPHEMERAL API KEY INPUT (If key missing or user wants custom ephemeral override) */}
-      <div className="rounded-2xl border border-brand-sage bg-surface-white p-3.5 space-y-2 shadow-2xs">
+      <div className="tool-panel rounded-2xl border p-3.5 space-y-2">
         <div className="flex items-center justify-between">
-          <label className="font-bold text-brand-espresso text-xs flex items-center gap-1.5">
-            <KeyRound className="size-3.5 text-brand-caramel" />
+          <label className="font-bold text-xs flex items-center gap-1.5">
+            <KeyRound className="size-3.5 tool-accent-text" />
             Ephemeral API Key Override (Optional)
           </label>
 
           {selectedProviderObj?.has_key && !apiKey && (
-            <span className="font-mono text-xs font-bold text-brand-espresso flex items-center gap-1">
-              <CheckCircle2 className="size-3 text-brand-caramel" />
+            <span className="font-mono text-xs font-bold flex items-center gap-1">
+              <CheckCircle2 className="size-3 tool-accent-text" />
               Detected from {selectedProviderObj.source}
             </span>
           )}
@@ -562,43 +548,43 @@ export default function ModelHealthCheckForm({
             onChange={(e) => setParam('api_key', e.target.value)}
             placeholder={
               selectedProviderObj?.has_key
-                ? `Using ${selectedProviderObj.source} credentials (or paste temporary override here)...`
+                ? `${selectedProviderObj.source} credentials in use — or paste an override`
                 : selectedProviderObj?.env_vars?.length
-                  ? `Enter temporary key (or export ${selectedProviderObj.env_vars.join(' / ')} in ~/.bashrc)...`
-                  : 'Enter temporary API key...'
+                  ? `Temporary key, or export ${selectedProviderObj.env_vars.join(' / ')}`
+                  : 'Enter a temporary API key'
             }
-            className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 pl-3.5 pr-10 py-2.5 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 shadow-inner focus:border-brand-caramel focus:bg-surface-white focus:outline-none font-medium"
+            className="tool-well w-full rounded-xl pl-3.5 pr-10 py-2.5 font-mono text-xs font-medium"
           />
           <button
             type="button"
             onClick={() => setShowSecret((p) => !p)}
-            className="absolute right-3 top-2.5 text-brand-caramel-text hover:text-brand-espresso transition-colors"
+            className="tool-quiet-action absolute right-3 top-2.5"
           >
             {showSecret ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
           </button>
         </div>
 
-        <p className="text-xs text-brand-caramel-text flex items-center gap-1.5">
-          <span className="size-1.5 rounded-full bg-brand-caramel inline-block" />
+        <p className="text-xs tool-muted flex items-center gap-1.5">
+          <span className="size-1.5 rounded-full tool-accent-text inline-block" />
           Never saved to disk or config. In-memory execution only for this probe.
         </p>
       </div>
 
       {/* 5. DRY-RUN MOCK SIMULATION TOGGLE */}
-      <div className="flex items-center justify-between rounded-xl border border-brand-sage/70 bg-brand-cream-dark/40 p-3">
+      <div className="tool-panel-quiet flex items-center justify-between rounded-xl border p-3">
         <div className="flex items-center gap-2">
           <input
             type="checkbox"
             id="mock-offline-toggle"
             checked={mockOffline}
             onChange={(e) => setParam('mock_offline', e.target.checked)}
-            className="size-4 rounded border-brand-sage bg-brand-cream accent-brand-caramel cursor-pointer"
+            className="tool-checkbox size-4 rounded cursor-pointer"
           />
-          <label htmlFor="mock-offline-toggle" className="text-xs font-bold text-brand-espresso cursor-pointer select-none">
+          <label htmlFor="mock-offline-toggle" className="text-xs font-bold cursor-pointer select-none">
             Mock Offline Simulation (Dry-Run Mode)
           </label>
         </div>
-        <span className="font-mono text-xs text-brand-caramel-text">Tests UI & probe flow without network calls</span>
+        <span className="font-mono text-xs tool-muted">Tests UI &amp; probe flow without network calls</span>
       </div>
     </div>
   )

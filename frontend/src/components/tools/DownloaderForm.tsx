@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, type CSSProperties } from 'react'
 import {
   Video,
   Music,
@@ -12,6 +12,7 @@ import {
   Sliders,
 } from 'lucide-react'
 import { api } from '../../lib/api'
+import { useHostSkin } from '../../lib/hostSkin'
 
 interface DownloaderFormProps {
   value: Record<string, unknown>
@@ -32,6 +33,12 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
   const [loadingMeta, setLoadingMeta] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Mounted by the downloader console (slate) and by the cream shell alike, so
+  // it reads the board it landed on rather than carrying the cream palette it
+  // was written in.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const skin = useHostSkin(rootRef)
 
   // Canonical parameters with fallback to defaults
   const downloadMode: 'video_audio' | 'audio_only' | 'video_only' =
@@ -153,16 +160,16 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
   }
 
   return (
-    <div className="space-y-4 text-brand-espresso">
+    <div ref={rootRef} className="tool-form space-y-4" data-tone={skin.tone} style={{ '--tool-ink': skin.ink } as CSSProperties}>
       {/* 1. Primary URL Input Box */}
-      <div className="rounded-2xl border-2 border-brand-sage bg-surface-white p-4 shadow-xs space-y-3">
-        <label className="block text-xs font-bold uppercase tracking-wider text-brand-espresso flex items-center justify-between">
+      <div className="tool-panel rounded-2xl border-2 p-4 space-y-3">
+        <label className="block text-xs font-bold uppercase tracking-wider flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <Globe className="size-3.5 text-brand-caramel" />
-            Video or Media URL <span className="text-accent-contrast">*</span>
+            <Globe className="size-3.5 tool-accent-text" />
+            Video or Media URL <span className="tool-alert-ink">*</span>
           </span>
           {loadingMeta && (
-            <span className="inline-flex items-center gap-1 text-xs font-mono text-brand-caramel lowercase font-normal">
+            <span className="inline-flex items-center gap-1 text-xs font-mono tool-accent-text lowercase font-normal">
               <Loader2 className="size-3 animate-spin" /> fetching title...
             </span>
           )}
@@ -173,48 +180,54 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
             type="url"
             value={url}
             onChange={(e) => handleUrlChange(e.target.value)}
-            placeholder="Paste YouTube, Vimeo, Twitch, or video link here..."
-            className="w-full rounded-xl border border-brand-sage bg-brand-cream/60 px-3.5 py-2.5 text-xs text-brand-espresso placeholder-brand-caramel-text/50 focus:border-brand-caramel focus:bg-surface-white focus:outline-none font-medium shadow-2xs transition-all pr-8"
+            placeholder="Paste a YouTube, Vimeo or Twitch link"
+            title="Paste a YouTube, Vimeo, Twitch, or other direct video link"
+            className="tool-well w-full rounded-xl px-3.5 py-2.5 text-xs pr-8 font-medium transition-all"
             autoFocus
           />
           {url && (
             <button
               type="button"
               onClick={() => handleUrlChange('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold text-brand-caramel-text hover:text-accent-contrast px-1"
+              className="tool-quiet-action absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold px-1"
               title="Clear URL"
             >
               ×
             </button>
           )}
+          {/* The full wording lives here, where it can wrap, rather than in a
+              placeholder that an input can only ever cut off mid-word. */}
+          <p className="text-[10px] tool-muted">
+            YouTube, Vimeo, Twitch, or any other direct video link.
+          </p>
         </div>
 
         {/* Instant Live Video Preview Card */}
         {metadata?.title && (
-          <div className="flex items-center gap-3.5 rounded-xl border border-brand-caramel/40 bg-brand-cream-dark/70 p-3 shadow-xs animate-in fade-in duration-200">
+          <div className="tool-panel-quiet flex items-center gap-3.5 rounded-xl border p-3">
             {metadata.thumbnail_url ? (
               <img
                 src={metadata.thumbnail_url}
                 alt={metadata.title}
-                className="h-14 w-24 rounded-lg object-cover border border-brand-sage shadow-2xs shrink-0"
+                className="h-14 w-24 rounded-lg object-cover border tool-rule shrink-0"
               />
             ) : (
-              <div className="flex h-14 w-24 items-center justify-center rounded-lg bg-brand-caramel text-brand-cream-light shrink-0">
+              <div className="tool-on-accent flex h-14 w-24 items-center justify-center rounded-lg shrink-0">
                 <Film className="size-6 opacity-70" />
               </div>
             )}
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-0.5">
-                <span className="font-mono text-xs font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-brand-caramel text-brand-cream-light">
+                <span className="tool-on-accent font-mono text-xs font-bold uppercase tracking-wider px-1.5 py-0.2 rounded">
                   {metadata.provider_name || 'YouTube'}
                 </span>
                 {metadata.author_name && (
-                  <span className="text-xs font-semibold text-brand-caramel-text truncate">
+                  <span className="text-xs font-semibold tool-muted truncate">
                     {metadata.author_name}
                   </span>
                 )}
               </div>
-              <p className="text-xs font-bold text-brand-espresso line-clamp-2 leading-snug">
+              <p className="text-xs font-bold line-clamp-2 leading-snug">
                 {metadata.title}
               </p>
             </div>
@@ -223,21 +236,19 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
       </div>
 
       {/* 2. Download Format & Quality Presets (Compact) */}
-      <div className="rounded-2xl border border-brand-sage bg-surface-white p-4 shadow-xs space-y-3.5">
+      <div className="tool-panel rounded-2xl border p-4 space-y-3.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Mode Switcher: Video+Audio vs Audio Only vs Video Only */}
           <div className="space-y-1">
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-brand-caramel-text block">
+            <span className="font-mono text-xs font-bold uppercase tracking-wider tool-muted block">
               Download Mode
             </span>
-            <div className="inline-flex flex-wrap rounded-xl border border-brand-sage bg-brand-cream-dark/70 p-1 gap-1">
+            <div className="tool-panel-quiet inline-flex flex-wrap rounded-xl border p-1 gap-1">
               <button
                 type="button"
                 onClick={() => handleModeChange('video_audio')}
                 className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                  downloadMode === 'video_audio'
-                    ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
-                    : 'text-brand-espresso hover:bg-brand-cream-dark'
+                  downloadMode === 'video_audio' ? 'tool-on-accent' : 'tool-pill'
                 }`}
               >
                 <Video className="size-3.5" />
@@ -247,9 +258,7 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
                 type="button"
                 onClick={() => handleModeChange('audio_only')}
                 className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                  downloadMode === 'audio_only'
-                    ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
-                    : 'text-brand-espresso hover:bg-brand-cream-dark'
+                  downloadMode === 'audio_only' ? 'tool-on-accent' : 'tool-pill'
                 }`}
               >
                 <Music className="size-3.5" />
@@ -259,9 +268,7 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
                 type="button"
                 onClick={() => handleModeChange('video_only')}
                 className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
-                  downloadMode === 'video_only'
-                    ? 'bg-brand-caramel text-brand-cream-light shadow-xs'
-                    : 'text-brand-espresso hover:bg-brand-cream-dark'
+                  downloadMode === 'video_only' ? 'tool-on-accent' : 'tool-pill'
                 }`}
               >
                 <Film className="size-3.5" />
@@ -272,14 +279,14 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
 
           {/* Quality or Audio Format Selector */}
           <div className="space-y-1">
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-brand-caramel-text block">
+            <span className="font-mono text-xs font-bold uppercase tracking-wider tool-muted block">
               {isAudioOnly ? 'Audio Format' : 'Resolution / Quality'}
             </span>
             {isAudioOnly ? (
               <select
                 value={audioFormat}
                 onChange={(e) => handleAudioFormatChange(e.target.value)}
-                className="rounded-xl border border-brand-sage bg-brand-cream/70 px-3 py-1.5 text-xs font-semibold text-brand-espresso focus:border-brand-caramel focus:outline-none"
+                className="tool-well rounded-xl px-3 py-1.5 text-xs font-semibold"
               >
                 <option value="best">Best Native Audio</option>
                 <option value="mp3">MP3 (Most Compatible)</option>
@@ -291,7 +298,7 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
               <select
                 value={formatPreset}
                 onChange={(e) => handleFormatPresetChange(e.target.value)}
-                className="rounded-xl border border-brand-sage bg-brand-cream/70 px-3 py-1.5 text-xs font-semibold text-brand-espresso focus:border-brand-caramel focus:outline-none"
+                className="tool-well rounded-xl px-3 py-1.5 text-xs font-semibold"
               >
                 <option value="best">Best Available (Highest)</option>
                 <option value="1080p">1080p (Full HD)</option>
@@ -303,22 +310,22 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
         </div>
 
         {/* Fast Feature Checkboxes */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-brand-sage/40">
-          <label className="flex items-center gap-2 text-xs font-semibold text-brand-espresso cursor-pointer">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t tool-rule">
+          <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
             <input
               type="checkbox"
               checked={writeSubs}
               onChange={(e) => handleWriteSubsChange(e.target.checked)}
-              className="rounded border-brand-sage text-brand-caramel focus:ring-0"
+              className="tool-checkbox rounded focus:ring-0"
             />
             <span className="flex items-center gap-1">
-              <Subtitles className="size-3.5 text-brand-caramel" /> Subtitles
+              <Subtitles className="size-3.5 tool-accent-text" /> Subtitles
             </span>
           </label>
 
           <label
             className={`flex items-center gap-2 text-xs font-semibold transition-opacity ${
-              writeSubs ? 'text-brand-espresso cursor-pointer' : 'text-brand-caramel-text/50 cursor-not-allowed'
+              writeSubs ? 'cursor-pointer' : 'tool-faint cursor-not-allowed'
             }`}
           >
             <input
@@ -326,58 +333,58 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
               disabled={!writeSubs}
               checked={embedSubs && writeSubs}
               onChange={(e) => updateParam('embed_subs', e.target.checked)}
-              className="rounded border-brand-sage text-brand-caramel focus:ring-0"
+              className="tool-checkbox rounded focus:ring-0"
             />
             <span>Embed Subtitles</span>
           </label>
 
-          <label className="flex items-center gap-2 text-xs font-semibold text-brand-espresso cursor-pointer">
+          <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
             <input
               type="checkbox"
               checked={embedThumbnail}
               onChange={(e) => updateParam('embed_thumbnail', e.target.checked)}
-              className="rounded border-brand-sage text-brand-caramel focus:ring-0"
+              className="tool-checkbox rounded focus:ring-0"
             />
             <span className="flex items-center gap-1">
-              <Image className="size-3.5 text-brand-caramel" /> Cover Art
+              <Image className="size-3.5 tool-accent-text" /> Cover Art
             </span>
           </label>
         </div>
       </div>
 
       {/* 3. Collapsible Advanced Technical Options Accordion */}
-      <div className="rounded-2xl border border-brand-sage bg-surface-white overflow-hidden shadow-xs">
+      <div className="tool-panel rounded-2xl border overflow-hidden">
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-brand-cream-dark/50 hover:bg-brand-cream-dark/80 transition-colors text-left font-mono text-xs font-bold text-brand-espresso"
+          className="tool-panel-quiet w-full flex items-center justify-between px-4 py-3 border-b text-left font-mono text-xs font-bold"
         >
           <span className="flex items-center gap-2">
-            <Sliders className="size-3.5 text-brand-caramel" />
-            Advanced & Technical Options
-            <span className="text-xs font-normal text-brand-caramel-text">
+            <Sliders className="size-3.5 tool-accent-text" />
+            Advanced &amp; Technical Options
+            <span className="text-xs font-normal tool-muted">
               (Cookies, Rate Limits, Filenames)
             </span>
           </span>
           {showAdvanced ? (
-            <ChevronUp className="size-4 text-brand-caramel-text" />
+            <ChevronUp className="size-4 tool-muted" />
           ) : (
-            <ChevronDown className="size-4 text-brand-caramel-text" />
+            <ChevronDown className="size-4 tool-muted" />
           )}
         </button>
 
         {showAdvanced && (
-          <div className="p-4 space-y-3.5 bg-surface-white border-t border-brand-sage/50 text-xs">
+          <div className="p-4 space-y-3.5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Browser Cookies (Anti-403) */}
               <div className="space-y-1">
-                <label className="font-mono text-xs uppercase font-bold text-brand-caramel-text block">
+                <label className="font-mono text-xs uppercase font-bold tool-muted block">
                   Browser Cookies (Anti-403 / Bot Bypass)
                 </label>
                 <select
                   value={cookiesFromBrowser}
                   onChange={(e) => updateParam('cookies_from_browser', e.target.value)}
-                  className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 px-3 py-1.5 text-xs text-brand-espresso"
+                  className="tool-well w-full rounded-xl px-3 py-1.5 text-xs"
                 >
                   <option value="none">None (Direct download)</option>
                   <option value="chrome">Google Chrome</option>
@@ -391,7 +398,7 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
 
               {/* Download Speed Limit */}
               <div className="space-y-1">
-                <label className="font-mono text-xs uppercase font-bold text-brand-caramel-text block">
+                <label className="font-mono text-xs uppercase font-bold tool-muted block">
                   Speed Throttling (Rate Limit)
                 </label>
                 <input
@@ -399,13 +406,13 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
                   value={limitRate}
                   onChange={(e) => updateParam('limit_rate', e.target.value)}
                   placeholder="e.g. 5M, 500K"
-                  className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 px-3 py-1.5 text-xs text-brand-espresso placeholder-brand-caramel-text/50"
+                  className="tool-well w-full rounded-xl px-3 py-1.5 text-xs"
                 />
               </div>
 
               {/* Custom Filename Template */}
               <div className="space-y-1 sm:col-span-2">
-                <label className="font-mono text-xs uppercase font-bold text-brand-caramel-text block">
+                <label className="font-mono text-xs uppercase font-bold tool-muted block">
                   Custom Filename Template
                 </label>
                 <input
@@ -413,13 +420,13 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
                   value={outputTemplate}
                   onChange={(e) => updateParam('output_template', e.target.value)}
                   placeholder="%(title)s.%(ext)s"
-                  className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 px-3 py-1.5 text-xs text-brand-espresso font-mono placeholder-brand-caramel-text/50"
+                  className="tool-well w-full rounded-xl px-3 py-1.5 text-xs font-mono"
                 />
               </div>
 
               {/* Raw CLI Flags */}
               <div className="space-y-1 sm:col-span-2">
-                <label className="font-mono text-xs uppercase font-bold text-brand-caramel-text block">
+                <label className="font-mono text-xs uppercase font-bold tool-muted block">
                   Raw yt-dlp Flags
                 </label>
                 <input
@@ -427,7 +434,7 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
                   value={rawArgs}
                   onChange={(e) => updateParam('raw_args', e.target.value)}
                   placeholder="--no-mtime --geo-bypass"
-                  className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 px-3 py-1.5 text-xs text-brand-espresso font-mono placeholder-brand-caramel-text/50"
+                  className="tool-well w-full rounded-xl px-3 py-1.5 text-xs font-mono"
                 />
               </div>
             </div>

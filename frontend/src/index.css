@@ -43,6 +43,14 @@
 :root {
   color-scheme: light;
   --color-focus-ring: var(--color-brand-caramel);
+  /* The one hue a shared tool form is allowed to bring with it. A host that
+     wants its own accent just sets `--tool-accent` on any element above the
+     form; it is read from the nearest ancestor, so nothing is hardcoded in
+     the form itself. */
+  --tool-accent: var(--color-brand-caramel);
+  /* Same arrangement for the one failure colour a shared form needs, so an
+     error reads on a dark board as well as on the cream shell. */
+  --tool-danger: var(--color-accent-contrast);
   --z-panel: 10;
   --z-sticky: 20;
   --z-overlay: 30;
@@ -229,5 +237,243 @@ body {
   .dep-instrument .animate-spin {
     animation: none;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Shared tool forms (.tool-form)
+
+   DownloaderForm, TranslatorForm, ModelHealthCheckForm, DynamicForm and
+   UniversalFileInput are mounted inside tool pages that each have their own
+   palette: the cream shell, the slate downloader console, the SoX rack, the
+   telemetry boards. None of them imposes one here. Every surface, edge, tint
+   and secondary ink is read from the tone of the board the form was dropped
+   into (`data-tone`, set from that board's own backdrop by `useHostTone`), and
+   the single hue -- the accent -- is inherited from `--tool-accent`, which a
+   host may override on any element above the form.
+
+   In the dark tone almost everything is a mix of `currentColor`, so the wash
+   picks up whatever hue the host uses (warm brown on the SoX rack, cool slate
+   on the downloader console) instead of guessing one. In the light tone the
+   tokens are the cream shell's own, so the forms still look native there.
+
+   `--tool-accent-ink` is the accent pulled halfway back toward `currentColor`
+   for use as text: the raw caramel only reaches 3.2:1 on cream and 3.9:1 on
+   near-black, while the mix clears 4.5:1 against either.
+   --------------------------------------------------------------------------- */
+.tool-form {
+  color-scheme: light;
+  /* Read from the board the form landed on (`useHostSkin` writes the measured
+     value inline). These are the values before that measurement lands, and the
+     ones a form server-rendered outside the app gets. */
+  --tool-ink: var(--color-brand-espresso);
+  color: var(--tool-ink);
+
+  --tool-surface: var(--color-surface-white);
+  --tool-well: #F2EBD9;
+  --tool-strip: var(--color-brand-cream-dark);
+  --tool-edge: var(--color-brand-sage);
+  --tool-edge-soft: color-mix(in oklab, var(--tool-edge) 55%, transparent);
+  --tool-ink-muted: var(--color-brand-caramel-text);
+  --tool-ink-faint: #96795F;
+  --tool-accent-ink: var(--tool-accent);
+  --tool-on-accent: var(--color-brand-cream-light);
+  --tool-danger-ink: var(--tool-danger);
+  --tool-danger-wash: color-mix(in oklab, var(--tool-danger) 10%, transparent);
+  --tool-danger-edge: color-mix(in oklab, var(--tool-danger) 40%, transparent);
+}
+
+.tool-form[data-tone='dark'] {
+  color-scheme: dark;
+  --tool-ink: #EDE7DE;
+
+  --tool-surface: color-mix(in oklab, currentColor 5%, transparent);
+  --tool-well: color-mix(in oklab, currentColor 9%, transparent);
+  --tool-strip: color-mix(in oklab, currentColor 7%, transparent);
+  --tool-edge: color-mix(in oklab, currentColor 26%, transparent);
+  --tool-edge-soft: color-mix(in oklab, currentColor 15%, transparent);
+  --tool-ink-muted: color-mix(in oklab, currentColor 74%, transparent);
+  --tool-ink-faint: color-mix(in oklab, currentColor 58%, transparent);
+  --tool-accent-ink: color-mix(in oklab, var(--tool-accent) 55%, currentColor);
+  --tool-on-accent: #17110C;
+  --tool-danger-ink: color-mix(in oklab, var(--tool-danger) 55%, currentColor);
+  --tool-danger-wash: color-mix(in oklab, var(--tool-danger) 14%, transparent);
+  --tool-danger-edge: color-mix(in oklab, var(--tool-danger) 45%, transparent);
+}
+
+/* A card that sits on the host's backdrop. */
+.tool-panel {
+  background-color: var(--tool-surface);
+  border-color: var(--tool-edge);
+}
+
+/* A header strip or grouped sub-panel within a card. */
+.tool-panel-quiet {
+  background-color: var(--tool-strip);
+  border-color: var(--tool-edge-soft);
+}
+
+.tool-panel-quiet:hover {
+  background-color: color-mix(in oklab, var(--tool-accent) 10%, var(--tool-strip));
+  border-color: color-mix(in oklab, var(--tool-accent) 45%, var(--tool-edge-soft));
+}
+
+/* A card in the parameter grid. Warms its edge on hover so the field under the
+   cursor is findable, without reading as a button. */
+.tool-card {
+  background-color: var(--tool-surface);
+  border-color: var(--tool-edge);
+  transition: border-color 120ms ease;
+}
+
+.tool-card:hover {
+  border-color: color-mix(in oklab, var(--tool-accent) 60%, var(--tool-edge));
+}
+
+/* A card edged in the accent because something on it is already configured --
+   on the health form, a key the scanner found in the environment. */
+.tool-card-flagged {
+  background-color: var(--tool-surface);
+  border-color: color-mix(in oklab, var(--tool-accent) 65%, var(--tool-edge));
+}
+
+.tool-card-flagged:hover {
+  border-color: var(--tool-accent);
+}
+
+/* An option in a set -- a card until it is chosen, the accent once it is. */
+.tool-choice {
+  background-color: var(--tool-surface);
+  border-color: var(--tool-edge);
+  color: inherit;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.tool-choice:hover {
+  border-color: var(--tool-accent);
+  background-color: color-mix(in oklab, var(--tool-accent) 8%, var(--tool-surface));
+}
+
+/* An unselected option sitting inside a segmented control. It only gains a
+   surface once the pointer is on it, so the chosen one stays the loud one. */
+.tool-pill {
+  color: var(--tool-ink-muted);
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.tool-pill:hover {
+  background-color: color-mix(in oklab, var(--tool-accent) 12%, transparent);
+  color: var(--tool-ink);
+}
+
+/* A hairline divider between groups. */
+.tool-rule {
+  border-color: var(--tool-edge-soft);
+}
+
+/* A checkbox: the native control, tinted with the host's accent. */
+.tool-checkbox {
+  border-color: var(--tool-edge);
+  accent-color: var(--tool-accent);
+}
+
+.tool-panel:focus-within {
+  border-color: var(--tool-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--tool-accent) 24%, transparent);
+}
+
+/* Any control the user types into or picks from. */
+.tool-well {
+  background-color: var(--tool-well);
+  border-color: var(--tool-edge);
+  color: inherit;
+}
+
+.tool-well::placeholder {
+  color: var(--tool-ink-faint);
+  opacity: 1;
+}
+
+.tool-well:hover {
+  border-color: color-mix(in oklab, var(--tool-accent) 60%, var(--tool-edge));
+}
+
+.tool-well:focus,
+.tool-well:focus-visible {
+  border-color: var(--tool-accent);
+  outline-offset: 3px;
+}
+
+.tool-muted {
+  color: var(--tool-ink-muted);
+}
+
+/* A secondary control -- a clear button, a reset link -- that warms toward the
+   accent on hover so it is still a target without competing with the field. */
+.tool-quiet-action {
+  color: var(--tool-ink-muted);
+  transition: color 120ms ease;
+}
+
+.tool-quiet-action:hover {
+  color: var(--tool-accent-ink);
+}
+
+.tool-faint {
+  color: var(--tool-ink-faint);
+}
+
+/* The accent used as text or as an icon. */
+.tool-accent-text {
+  color: var(--tool-accent-ink);
+}
+
+/* A failure notice. Its own hue, mixed toward the host ink so the words read
+   on a dark board; the wash and edge follow the same hue. */
+.tool-alert {
+  background-color: var(--tool-danger-wash);
+  border-color: var(--tool-danger-edge);
+}
+
+.tool-alert-ink {
+  color: var(--tool-danger-ink);
+}
+
+/* A small pill carrying status in the accent hue, over a wash of it. */
+.tool-accent-chip {
+  background-color: color-mix(in oklab, var(--tool-accent) 15%, transparent);
+  border-color: color-mix(in oklab, var(--tool-accent) 42%, transparent);
+  color: inherit;
+}
+
+/* The same pill once it is the selected option. */
+.tool-on-accent {
+  background-color: var(--tool-accent);
+  border-color: var(--tool-accent);
+  color: var(--tool-on-accent);
+}
+
+/*
+ * The file drop target. A dashed edge in the accent at rest, so it reads as a
+ * target rather than as an empty panel, and a filled wash while a file is over
+ * it. Both tones resolve from the tokens above, so it belongs to whichever
+ * board it lands on.
+ */
+.tool-dropzone {
+  background-color: var(--tool-surface);
+  border-color: color-mix(in oklab, var(--tool-accent) 42%, var(--tool-edge));
+}
+
+.tool-dropzone:hover {
+  background-color: color-mix(in oklab, var(--tool-accent) 8%, var(--tool-surface));
+  border-color: var(--tool-accent);
+}
+
+.tool-dropzone[data-dragging='true'] {
+  background-color: color-mix(in oklab, var(--tool-accent) 16%, var(--tool-surface));
+  border-color: var(--tool-accent);
+}
+
+.tool-form ::selection {
+  background-color: color-mix(in oklab, var(--tool-accent) 24%, transparent);
 }
 

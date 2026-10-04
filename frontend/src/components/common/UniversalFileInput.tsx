@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
   UploadCloud,
   File,
@@ -12,6 +12,7 @@ import {
   Music,
 } from 'lucide-react'
 import { api } from '../../lib/api'
+import { useHostSkin } from '../../lib/hostSkin'
 
 export interface UniversalFileInputProps {
   value?: string
@@ -36,6 +37,11 @@ export default function UniversalFileInput({
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [recentFiles, setRecentFiles] = useState<{ name: string; path: string; kind: string }[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // This control is mounted inside a dozen tool pages that each have their own
+  // palette, so it reads the board it landed in instead of carrying one.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const skin = useHostSkin(rootRef)
 
   // Fetch recent files from server workspaces and downloads
   useEffect(() => {
@@ -113,28 +119,28 @@ export default function UniversalFileInput({
 
   const getFileIcon = (filename: string) => {
     const ext = filename.split('.').pop()?.toLowerCase() || ''
-    if (['mp4', 'mkv', 'webm', 'mov', 'avi'].includes(ext)) return <Video className="size-4 text-brand-caramel" />
-    if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'].includes(ext)) return <Music className="size-4 text-brand-caramel" />
-    if (['srt', 'vtt', 'txt', 'md', 'doc', 'pdf'].includes(ext)) return <FileText className="size-4 text-brand-caramel" />
-    return <File className="size-4 text-brand-caramel-text" />
+    if (['mp4', 'mkv', 'webm', 'mov', 'avi'].includes(ext)) return <Video className="size-4 tool-accent-text" />
+    if (['mp3', 'wav', 'flac', 'aac', 'ogg', 'm4a'].includes(ext)) return <Music className="size-4 tool-accent-text" />
+    if (['srt', 'vtt', 'txt', 'md', 'doc', 'pdf'].includes(ext)) return <FileText className="size-4 tool-accent-text" />
+    return <File className="size-4 tool-muted" />
   }
 
   const fileNameOnly = value ? value.split('/').pop() : ''
 
   return (
-    <div className="space-y-2.5">
+    <div ref={rootRef} className="tool-form space-y-2.5" data-tone={skin.tone} style={{ '--tool-ink': skin.ink } as CSSProperties}>
       {/* 1. Quick Select Dropdown from Recent Artifacts */}
       {(recentFiles.length > 0 || availableArtifacts.length > 0) && (
         <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs text-brand-caramel-text font-semibold">
+          <div className="flex items-center justify-between text-xs font-semibold tool-muted">
             <span className="flex items-center gap-1.5">
-              <FolderOpen className="size-3 text-brand-caramel" /> Pick from recent artifacts & downloads:
+              <FolderOpen className="size-3 tool-accent-text" /> Pick from recent artifacts & downloads:
             </span>
           </div>
           <select
             value={value}
             onChange={(e) => onChange(e.target.value || undefined)}
-            className="w-full rounded-xl border border-brand-sage bg-brand-cream-dark/50 px-3 py-2 text-xs font-mono font-medium text-brand-espresso focus:border-brand-caramel focus:bg-surface-white focus:outline-none transition-colors"
+            className="tool-well w-full rounded-xl px-3 py-2 text-xs font-mono font-medium transition-colors"
           >
             <option value="">— Select an existing file from workspace or downloads —</option>
             {recentFiles.map((f) => (
@@ -157,11 +163,8 @@ export default function UniversalFileInput({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className={`relative flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-4 text-center cursor-pointer transition-all ${
-          isDragging
-            ? 'border-brand-caramel bg-brand-cream-dark scale-[1.01] shadow-md'
-            : 'border-brand-sage bg-brand-cream/40 hover:border-brand-caramel hover:bg-brand-cream-dark/50'
-        }`}
+        className="tool-dropzone relative flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-4 text-center cursor-pointer transition-all"
+        data-dragging={isDragging}
       >
         <input
           ref={inputRef}
@@ -172,34 +175,34 @@ export default function UniversalFileInput({
         />
 
         {uploading ? (
-          <div className="flex items-center gap-2 text-xs font-bold text-brand-caramel">
+          <div className="flex items-center gap-2 text-xs font-bold tool-accent-text">
             <Loader2 className="size-5 animate-spin" />
             <span>Uploading file to server...</span>
           </div>
         ) : value ? (
           <div className="flex items-center gap-2.5 max-w-full px-2">
-            <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-cream-dark border border-brand-sage">
+            <div className="tool-accent-chip flex size-7 shrink-0 items-center justify-center rounded-lg">
               {getFileIcon(fileNameOnly || value)}
             </div>
             <div className="min-w-0 text-left">
-              <p className="truncate text-xs font-bold text-brand-espresso max-w-md" title={value}>
+              <p className="truncate text-xs font-bold max-w-md" title={value}>
                 {fileNameOnly || value}
               </p>
-              <p className="text-xs text-brand-caramel-text flex items-center gap-1">
-                <CheckCircle2 className="size-2.5 text-emerald-600 inline" /> Ready • Click or drop to replace
+              <p className="text-xs tool-muted flex items-center gap-1">
+                <CheckCircle2 className="size-2.5 text-emerald-500 inline" /> Ready • Click or drop to replace
               </p>
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-1.5 py-1">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-brand-cream-dark text-brand-caramel border border-brand-sage">
-              <UploadCloud className="size-5" />
+            <div className="tool-accent-chip flex size-9 items-center justify-center rounded-xl">
+              <UploadCloud className="size-5 tool-accent-text" />
             </div>
             <div className="text-xs">
-              <span className="font-bold text-brand-espresso">Click to browse</span>
-              <span className="text-brand-caramel-text"> or drop files here</span>
+              <span className="font-bold">Click to browse</span>
+              <span className="tool-muted"> or drop files here</span>
             </div>
-            <span className="text-xs text-brand-caramel-text/80 font-mono">
+            <span className="text-xs font-mono tool-faint">
               Supports {accept ? accept.replace(/\./g, ' ').toUpperCase() : 'any file'}
             </span>
           </div>
@@ -207,9 +210,9 @@ export default function UniversalFileInput({
       </div>
 
       {uploadError && (
-        <div className="flex items-center gap-1.5 text-xs text-accent-contrast font-medium bg-accent-contrast/10 p-2 rounded-xl border border-accent-contrast/20">
-          <AlertCircle className="size-3.5 shrink-0" />
-          <span>{uploadError}</span>
+        <div className="tool-alert flex items-center gap-1.5 text-xs font-medium p-2 rounded-xl">
+          <AlertCircle className="size-3.5 tool-alert-ink shrink-0" />
+          <span className="tool-alert-ink">{uploadError}</span>
         </div>
       )}
 
@@ -221,13 +224,13 @@ export default function UniversalFileInput({
             value={value}
             onChange={(e) => onChange(e.target.value || undefined)}
             placeholder={placeholder}
-            className="w-full rounded-xl border border-brand-sage bg-surface-white pl-3 pr-8 py-2 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none transition-colors"
+            className="tool-well w-full rounded-xl pl-3 pr-8 py-2 font-mono text-xs transition-colors"
           />
           {value && (
             <button
               type="button"
               onClick={() => onChange(undefined)}
-              className="absolute right-2 top-2 text-brand-caramel-text hover:text-accent-contrast transition-colors"
+              className="tool-quiet-action absolute right-2 top-2"
               title="Clear input"
             >
               <X className="size-3.5" />

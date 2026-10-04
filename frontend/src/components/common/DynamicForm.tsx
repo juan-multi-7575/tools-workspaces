@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   Search,
   Eye,
@@ -17,6 +17,7 @@ import {
   FileCode,
 } from 'lucide-react'
 import UniversalFileInput from './UniversalFileInput'
+import { useHostSkin } from '../../lib/hostSkin'
 
 export interface SchemaField {
   type?: string
@@ -87,6 +88,11 @@ export default function DynamicForm({
   const [search, setSearch] = useState('')
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({})
   const [activeTab, setActiveTab] = useState<string>('all')
+
+  // Every tool page routes its manifest through this form, so none of them can
+  // be asked to theme it: it reads the board it was mounted in instead.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const skin = useHostSkin(rootRef)
 
   const setField = (key: string, val: unknown) => {
     const next = { ...value }
@@ -170,26 +176,33 @@ export default function DynamicForm({
 
   if (Object.keys(schema).length === 0) {
     return (
-      <div className="rounded-xl border border-brand-sage bg-brand-cream-dark/40 p-5 text-center text-xs text-brand-caramel-text font-mono">
-        No configurable parameters for this tool.
+      <div ref={rootRef} className="tool-form" data-tone={skin.tone} style={{ '--tool-ink': skin.ink } as CSSProperties}>
+        <div className="tool-panel-quiet rounded-xl border p-5 text-center text-xs font-mono tool-muted">
+          No configurable parameters for this tool.
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4 font-sans text-xs text-brand-espresso">
+    <div
+      ref={rootRef}
+      className="tool-form @container space-y-4 font-sans text-xs"
+      data-tone={skin.tone}
+      style={{ '--tool-ink': skin.ink } as CSSProperties}
+    >
       {/* ========================================================================= */}
       {/* 1. HERO URL INSERTION BAR (High-Priority Primary Control)                */}
       {/* ========================================================================= */}
       {urlKey && (
-        <div data-param-key={urlKey} className="relative rounded-2xl border-2 border-brand-caramel/50 bg-brand-cream p-4 shadow-sm ring-1 ring-brand-caramel/20 transition-all focus-within:border-brand-caramel focus-within:ring-2 focus-within:ring-brand-caramel/30">
+        <div data-param-key={urlKey} className="tool-panel relative rounded-2xl border-2 p-4 transition-all">
           <div className="flex items-center justify-between mb-2">
-            <label className="flex items-center gap-2 font-bold text-brand-espresso text-xs">
-              <span className="flex size-5 items-center justify-center rounded-md bg-brand-caramel text-brand-cream-light">
+            <label className="flex items-center gap-2 text-xs font-bold">
+              <span className="tool-on-accent flex size-5 items-center justify-center rounded-md">
                 <Link2 className="size-3" />
               </span>
               <span>{schema[urlKey]?.title ? String(schema[urlKey].title) : 'Target Media URL'}</span>
-              <span className="font-mono text-xs font-bold text-brand-espresso px-2 py-0.5 rounded-full bg-brand-sage/40 border border-brand-sage">
+              <span className="tool-accent-chip font-mono text-xs font-bold px-2 py-0.5 rounded-full">
                 REQUIRED
               </span>
             </label>
@@ -198,7 +211,7 @@ export default function DynamicForm({
               <button
                 type="button"
                 onClick={() => setField(urlKey, undefined)}
-                className="flex items-center gap-1 font-mono text-xs text-brand-caramel-text hover:text-accent-contrast transition-colors"
+                className="tool-quiet-action flex items-center gap-1 font-mono text-xs"
               >
                 <X className="size-3" /> clear
               </button>
@@ -214,24 +227,24 @@ export default function DynamicForm({
               placeholder={
                 schema[urlKey]?.placeholder
                   ? String(schema[urlKey].placeholder)
-                  : 'https://www.youtube.com/watch?v=... or media link'
+                  : 'https://www.youtube.com/watch?v=… or media link'
               }
-              className="w-full rounded-xl border border-brand-sage bg-surface-white pl-3.5 pr-20 py-2.5 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 shadow-inner focus:border-brand-caramel focus:outline-none focus:ring-1 focus:ring-brand-caramel/40 font-medium"
+              className="tool-well w-full rounded-xl pl-3.5 pr-20 py-2.5 font-mono font-medium"
             />
             <button
               type="button"
               onClick={() => handlePasteUrl(urlKey)}
-              className="absolute right-1.5 top-1.5 inline-flex items-center gap-1.5 rounded-lg bg-brand-cream-dark px-3 py-1.5 text-xs font-semibold text-brand-espresso hover:bg-brand-sage/40 border border-brand-sage active:scale-95 transition-all"
+              className="tool-panel-quiet absolute right-1.5 top-1.5 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold active:scale-95 transition-all"
               title="Paste URL from clipboard"
             >
-              <Clipboard className="size-3 text-brand-caramel" />
+              <Clipboard className="size-3 tool-accent-text" />
               <span>Paste</span>
             </button>
           </div>
 
           {schema[urlKey]?.description && (
-            <p className="mt-2 text-xs text-brand-caramel-text flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-brand-caramel inline-block" />
+            <p className="mt-2 text-xs tool-muted flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full tool-accent-text inline-block" />
               {String(schema[urlKey].description)}
             </p>
           )}
@@ -242,13 +255,13 @@ export default function DynamicForm({
       {/* 2. DOWNLOAD MODE SELECTOR (Video + Audio / Audio Only / Video Only)        */}
       {/* ========================================================================= */}
       {hasDownloadMode && (
-        <div data-param-key="download_mode" className="rounded-2xl border border-brand-sage bg-brand-cream-dark/50 p-3.5 space-y-2.5 shadow-2xs">
+        <div data-param-key="download_mode" className="tool-panel-quiet rounded-2xl border p-3.5 space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs uppercase font-bold tracking-wider text-brand-caramel-text flex items-center gap-1.5">
-              <Sparkles className="size-3 text-brand-caramel" />
+            <span className="font-mono text-xs uppercase font-bold tracking-wider tool-muted flex items-center gap-1.5">
+              <Sparkles className="size-3 tool-accent-text" />
               Download Mode
             </span>
-            <span className="font-mono text-xs font-semibold text-brand-espresso">
+            <span className="font-mono text-xs font-semibold">
               {currentMode === 'audio_only'
                 ? 'Extracting Audio Track'
                 : currentMode === 'video_only'
@@ -261,17 +274,15 @@ export default function DynamicForm({
             <button
               type="button"
               onClick={() => handleModeChange('video_audio')}
-              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all ${
-                currentMode === 'video_audio'
-                  ? 'border-brand-caramel bg-brand-caramel text-brand-cream-light font-bold shadow-xs ring-1 ring-brand-caramel'
-                  : 'border-brand-sage bg-surface-white text-brand-espresso hover:bg-brand-cream-dark hover:border-brand-caramel'
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all font-bold ${
+                currentMode === 'video_audio' ? 'tool-on-accent' : 'tool-choice'
               }`}
             >
               <div className="flex items-center gap-1 text-xs font-bold">
                 <Video className="size-3.5" />
                 <span>Video + Audio</span>
               </div>
-              <span className={`text-xs ${currentMode === 'video_audio' ? 'text-brand-cream-light/80' : 'text-brand-caramel-text'}`}>
+              <span className={`text-xs ${currentMode === 'video_audio' ? 'opacity-80' : 'tool-muted'}`}>
                 Full Merged Video
               </span>
             </button>
@@ -279,17 +290,15 @@ export default function DynamicForm({
             <button
               type="button"
               onClick={() => handleModeChange('audio_only')}
-              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all ${
-                currentMode === 'audio_only'
-                  ? 'border-brand-caramel bg-brand-caramel text-brand-cream-light font-bold shadow-xs ring-1 ring-brand-caramel'
-                  : 'border-brand-sage bg-surface-white text-brand-espresso hover:bg-brand-cream-dark hover:border-brand-caramel'
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all font-bold ${
+                currentMode === 'audio_only' ? 'tool-on-accent' : 'tool-choice'
               }`}
             >
               <div className="flex items-center gap-1 text-xs font-bold">
                 <Music className="size-3.5" />
                 <span>Audio Only</span>
               </div>
-              <span className={`text-xs ${currentMode === 'audio_only' ? 'text-brand-cream-light/80' : 'text-brand-caramel-text'}`}>
+              <span className={`text-xs ${currentMode === 'audio_only' ? 'opacity-80' : 'tool-muted'}`}>
                 MP3 / FLAC / WAV
               </span>
             </button>
@@ -297,17 +306,15 @@ export default function DynamicForm({
             <button
               type="button"
               onClick={() => handleModeChange('video_only')}
-              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all ${
-                currentMode === 'video_only'
-                  ? 'border-brand-caramel bg-brand-caramel text-brand-cream-light font-bold shadow-xs ring-1 ring-brand-caramel'
-                  : 'border-brand-sage bg-surface-white text-brand-espresso hover:bg-brand-cream-dark hover:border-brand-caramel'
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all font-bold ${
+                currentMode === 'video_only' ? 'tool-on-accent' : 'tool-choice'
               }`}
             >
               <div className="flex items-center gap-1 text-xs font-bold">
                 <Film className="size-3.5" />
                 <span>Video Only</span>
               </div>
-              <span className={`text-xs ${currentMode === 'video_only' ? 'text-brand-cream-light/80' : 'text-brand-caramel-text'}`}>
+              <span className={`text-xs ${currentMode === 'video_only' ? 'opacity-80' : 'tool-muted'}`}>
                 No Audio Track
               </span>
             </button>
@@ -319,16 +326,14 @@ export default function DynamicForm({
       {/* 3. STRUCTURED CATEGORY TABS & SEARCH BAR                                  */}
       {/* ========================================================================= */}
       {availableGroups.length > 1 && (
-        <div className="space-y-2 pt-1 border-t border-brand-sage/60">
+        <div className="space-y-2 pt-1 border-t tool-rule">
           <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-none">
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setActiveTab('all')}
                 className={`rounded-xl px-3 py-1 text-xs font-semibold transition-all ${
-                  activeTab === 'all'
-                    ? 'bg-brand-caramel text-brand-cream-light shadow-xs font-bold'
-                    : 'bg-brand-cream-dark/70 text-brand-espresso hover:bg-brand-cream-dark border border-brand-sage/60'
+                  activeTab === 'all' ? 'tool-on-accent font-bold' : 'tool-panel-quiet border'
                 }`}
               >
                 All ({Object.keys(schema).length - (urlKey ? 1 : 0) - (hasDownloadMode ? 1 : 0)})
@@ -342,14 +347,12 @@ export default function DynamicForm({
                     type="button"
                     onClick={() => setActiveTab(g.id)}
                     className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-1 text-xs font-semibold transition-all ${
-                      isActive
-                        ? 'bg-brand-caramel text-brand-cream-light shadow-xs font-bold'
-                        : 'bg-brand-cream-dark/70 text-brand-espresso hover:bg-brand-cream-dark border border-brand-sage/60'
+                      isActive ? 'tool-on-accent font-bold' : 'tool-panel-quiet border'
                     }`}
                   >
                     <Icon className="size-3" />
                     <span>{g.label}</span>
-                    <span className="font-mono text-xs px-1.5 py-0.2 rounded-full bg-brand-sage/40 font-bold">
+                    <span className="tool-accent-chip font-mono text-xs px-1.5 py-0.2 rounded-full font-bold">
                       {g.count}
                     </span>
                   </button>
@@ -363,18 +366,18 @@ export default function DynamicForm({
       {/* Search parameter bar */}
       {Object.keys(schema).length > 5 && (
         <div className="relative">
-          <Search className="absolute left-3 top-2.5 size-3.5 text-brand-caramel-text" />
+          <Search className="absolute left-3 top-2.5 size-3.5 tool-muted" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search parameter names, descriptions..."
-            className="w-full rounded-xl border border-brand-sage bg-surface-white pl-9 pr-8 py-2 text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none focus:ring-1 focus:ring-brand-caramel/30 font-medium"
+            placeholder="Search parameter names, descriptions…"
+            className="tool-well w-full rounded-xl pl-9 pr-8 py-2 font-medium"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-2.5 top-2.5 text-brand-caramel-text hover:text-brand-espresso"
+              className="tool-quiet-action absolute right-2.5 top-2.5"
             >
               <X className="size-3.5" />
             </button>
@@ -385,7 +388,13 @@ export default function DynamicForm({
       {/* ========================================================================= */}
       {/* 4. PARAMETER FORM GRID WITH DUAL FILE INGESTION                           */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {/* The grid splits on its own width, not the viewport's. Several hosts mount
+        this form in a rail far narrower than the window, where a viewport
+        breakpoint would still ask for two columns and squeeze a field until its
+        label and placeholder were cut off mid-word. The query container is the
+        form root: putting it on the grid itself makes its track sizing depend on
+        the very query it is answering, which collapses the columns. */}
+      <div className="grid grid-cols-1 gap-3 @min-[26rem]:grid-cols-2">
         {entries.map(([key, rawField]) => {
           const field = rawField as SchemaField
           const type = field.type || 'string'
@@ -414,18 +423,18 @@ export default function DynamicForm({
           return parts.join(' · ')
         })()
         return (
-          <div key={key} data-param-key={key} className={`space-y-2 rounded-2xl border border-brand-sage bg-surface-white p-3.5 transition-all hover:border-brand-caramel/70 shadow-xs ${
-            isFullWidth ? 'sm:col-span-2' : ''
+          <div key={key} data-param-key={key} className={`tool-card space-y-2 rounded-2xl border p-3.5 ${
+            isFullWidth ? '@min-[26rem]:col-span-2' : ''
           }`}>
             <div className="flex items-center justify-between">
-              <label className="font-bold text-brand-espresso text-xs flex items-center gap-1.5">
+              <label className="text-xs font-bold flex items-center gap-1.5">
                 {field.title || key}
               </label>
               {val !== undefined && (
                 <button
                   type="button"
                   onClick={() => setField(key, undefined)}
-                  className="flex items-center gap-1 font-mono text-xs text-brand-caramel-text hover:text-accent-contrast transition-colors"
+                  className="tool-quiet-action flex items-center gap-1 font-mono text-xs"
                 >
                   <RotateCcw className="size-2.5" /> reset
                 </button>
@@ -433,10 +442,10 @@ export default function DynamicForm({
             </div>
 
 {field.description && (
-              <p className="text-xs text-brand-caramel-text leading-relaxed">{field.description}</p>
+              <p className="text-xs leading-relaxed tool-muted">{field.description}</p>
             )}
             {fieldHelper && (
-              <p className="text-xs font-mono text-brand-caramel-text/80 leading-tight">
+              <p className="text-xs font-mono leading-tight tool-faint">
                 {fieldHelper}
               </p>
             )}
@@ -457,7 +466,7 @@ export default function DynamicForm({
                 <select
                   value={String(val ?? field.default ?? '')}
                   onChange={(e) => setField(key, e.target.value || undefined)}
-                  className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 px-3 py-2 text-xs text-brand-espresso font-mono font-medium focus:border-brand-caramel focus:bg-surface-white focus:outline-none"
+                  className="tool-well w-full rounded-xl px-3 py-2 text-xs font-mono font-medium"
                 >
                   <option value="">— select option —</option>
                   {field.enum.map((opt) => (
@@ -473,9 +482,9 @@ export default function DynamicForm({
                     id={`field-${key}`}
                     checked={Boolean(val ?? field.default ?? false)}
                     onChange={(e) => setField(key, e.target.checked)}
-                    className="size-4 rounded border-brand-sage bg-brand-cream accent-brand-caramel cursor-pointer"
+                    className="tool-checkbox size-4 rounded cursor-pointer"
                   />
-                  <label htmlFor={`field-${key}`} className="text-xs font-semibold text-brand-espresso select-none cursor-pointer">
+                  <label htmlFor={`field-${key}`} className="text-xs font-semibold select-none cursor-pointer">
                     {Boolean(val ?? field.default ?? false) ? 'Enabled' : 'Disabled'}
                   </label>
                 </div>
@@ -486,12 +495,12 @@ export default function DynamicForm({
                     value={String(val ?? '')}
                     onChange={(e) => setField(key, e.target.value)}
                     placeholder="Enter secret key..."
-                    className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 pl-3 pr-8 py-2 font-mono text-xs text-brand-espresso focus:border-brand-caramel focus:bg-surface-white focus:outline-none"
+                    className="tool-well w-full rounded-xl pl-3 pr-8 py-2 font-mono text-xs"
                   />
                   <button
                     type="button"
                     onClick={() => setShowSecrets((p) => ({ ...p, [key]: !p[key] }))}
-                    className="absolute right-2.5 top-2.5 text-brand-caramel-text hover:text-brand-espresso"
+                    className="tool-quiet-action absolute right-2.5 top-2.5"
                   >
                     {showSecrets[key] ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                   </button>
@@ -502,11 +511,11 @@ export default function DynamicForm({
                     rows={key === 'raw_args' ? 2 : 4}
                     value={String(val ?? field.default ?? '')}
                     onChange={(e) => setField(key, e.target.value)}
-                    placeholder={field.placeholder || 'Enter code or command arguments...'}
-                    className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 px-3 py-2 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:bg-surface-white focus:outline-none leading-relaxed"
+                    placeholder={field.placeholder || 'Enter code or command arguments…'}
+                    className="tool-well w-full rounded-xl px-3 py-2 font-mono text-xs leading-relaxed"
                   />
                   {key === 'raw_args' && (
-                    <FileCode className="absolute right-2.5 bottom-2.5 size-3.5 text-brand-caramel-text pointer-events-none" />
+                    <FileCode className="absolute right-2.5 bottom-2.5 size-3.5 tool-muted pointer-events-none" />
                   )}
                 </div>
               ) : (
@@ -525,8 +534,8 @@ export default function DynamicForm({
                         : e.target.value,
                     )
                   }
-                  placeholder={field.placeholder || `Enter ${key}...`}
-                  className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 px-3 py-2 text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:bg-surface-white focus:outline-none font-mono font-medium"
+                  placeholder={field.placeholder || `Enter ${key}…`}
+                  className="tool-well w-full rounded-xl px-3 py-2 text-xs font-mono font-medium"
                 />
               )}
             </div>
