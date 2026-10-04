@@ -96,3 +96,105 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-brand-caramel);
 }
+
+/* ---------------------------------------------------------------------------
+   Dependency gate (.dep-gate)
+
+   The gate is rendered inside 22 tool pages that each have their own palette,
+   so it borrows the host instead of imposing one: every surface, border and
+   secondary tint below is a mix of `currentColor`, which the host page already
+   picked to be readable. Only the four status hues are its own, and they are
+   used on dots, icons, borders and washes -- never on body text, so text
+   contrast is whatever the host page guarantees.
+   --------------------------------------------------------------------------- */
+.dep-gate {
+  --dep-ok: oklch(0.62 0.17 152);
+  --dep-active: oklch(0.66 0.15 243);
+  --dep-warn: oklch(0.75 0.15 75);
+  --dep-bad: oklch(0.6 0.2 25);
+
+  /*
+   * Text variants are the pure hue pulled halfway back toward `currentColor`.
+   * The raw hues are tuned for the dark tool faceplates and only reach 2.0:1 on
+   * the cream shell; at a 50/50 mix every one of the four measures 4.5:1 or
+   * better against both a light (#F7F1DE on #4E220F) and a dark (#241D1A on
+   * #EFE4D8) host, so status colour can never cost legibility. The pure hues
+   * stay in use for icons, borders and washes, which are not text.
+   */
+  --dep-ok-text: color-mix(in oklab, oklch(0.62 0.17 152) 50%, currentColor);
+  --dep-active-text: color-mix(in oklab, oklch(0.66 0.15 243) 50%, currentColor);
+  --dep-warn-text: color-mix(in oklab, oklch(0.75 0.15 75) 50%, currentColor);
+  --dep-bad-text: color-mix(in oklab, oklch(0.6 0.2 25) 50%, currentColor);
+}
+
+.dep-gate ::selection {
+  background-color: color-mix(in oklab, currentColor 24%, transparent);
+}
+
+.dep-gate__panel {
+  border-radius: 16px;
+  border: 1px solid color-mix(in oklab, currentColor 22%, transparent);
+  background-color: color-mix(in oklab, currentColor 4%, transparent);
+  /* Offset plus soft blur: a lifted edge, never a hard drop shadow. */
+  box-shadow:
+    0 1px 2px -1px color-mix(in oklab, currentColor 16%, transparent),
+    0 12px 28px -16px color-mix(in oklab, currentColor 55%, transparent);
+}
+
+.dep-gate__row + .dep-gate__row {
+  border-top: 1px solid color-mix(in oklab, currentColor 14%, transparent);
+}
+
+/* A hairline that reads on both the cream shell and the dark tool faceplates. */
+.dep-gate__hairline {
+  background-color: color-mix(in oklab, currentColor 14%, transparent);
+}
+
+.dep-gate__bar {
+  transition: width 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/*
+ * The one authored motion moment: install progress. The fill glides to each new
+ * byte total on an exponential ease-out, and while a dep is mid-flight an
+ * indeterminate sheen sweeps the same track so an unknown-progress download
+ * still reads as alive.
+ */
+.dep-gate__track {
+  position: relative;
+  overflow: hidden;
+}
+
+.dep-gate__track--active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, currentColor 60%, transparent),
+    transparent
+  );
+  animation: dep-gate-sweep 1.7s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes dep-gate-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dep-gate__bar,
+  .dep-gate__track--active::after {
+    transition: none;
+    animation: none;
+  }
+  .dep-gate .animate-spin {
+    animation: none;
+  }
+}
+
