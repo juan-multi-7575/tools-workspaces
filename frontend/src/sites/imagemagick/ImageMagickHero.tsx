@@ -149,8 +149,7 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
             <p className="im-panel__label">Geometry string</p>
             <p className="im-geo">{GEOMETRY_EXAMPLE.geometry}</p>
             <p className="im-panel__foot">
-              on a {GEOMETRY_EXAMPLE.from} source that comes back {GEOMETRY_EXAMPLE.to} — the
-              ratio is kept, not squeezed
+              a {GEOMETRY_EXAMPLE.from} source comes back {GEOMETRY_EXAMPLE.to} — ratio kept
             </p>
           </div>
         </div>
