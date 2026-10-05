@@ -66,8 +66,8 @@ test('the hero states what the tool does and offers its two ways in', () => {
   assert.doesNotMatch(html, /<form/, 'the hero is not a form')
 })
 
-test('the hero gives the workspace a home affordance back to the index', () => {
-  assert.match(renderHero(), /All tools/)
+test('the workspace carries the home affordance back to the index', () => {
+  assert.match(renderWorkspace(), /All tools/)
 })
 
 test('the workspace renders a control for all four manifest keys with data-param-key', () => {
@@ -131,22 +131,68 @@ test('the empty canvas is a designed state that says what to do — never a text
  * virtue and the backend's internals instead of helping someone use the tool.
  */
 const SELF_NARRATION =
-  /not this page|on purpose|nothing is drawn|manifest declares|backend reads|not a stub|the encoder|already been handed|no placeholder/i
+  /not this page|on purpose|nothing is drawn|manifest declares|backend reads|not a stub|the encoder|already been handed|no placeholder|is a placeholder|its own rule/i
+
+function renderHome() {
+  return renderToStaticMarkup(
+    <MemoryRouter>
+      <HomeSite />
+    </MemoryRouter>,
+  )
+}
 
 test('no site copy explains the page’s own honesty or the backend’s internals', () => {
   const surfaces: [string, string][] = [
     ['hero', renderHero()],
     ['workspace', renderWorkspace()],
-    ['home', renderToStaticMarkup(
-      <MemoryRouter>
-        <HomeSite />
-      </MemoryRouter>,
-    )],
+    ['home', renderHome()],
   ]
   for (const [name, html] of surfaces) {
     const text = html.replace(/<[^>]+>/g, ' ').replace(/&[a-z]+;/g, ' ')
     assert.doesNotMatch(text, SELF_NARRATION, `the ${name} site narrates itself`)
   }
+})
+
+/**
+ * A key with no default is a thing the user supplies, not a thing to print. The
+ * hero used to render `(empty)` beside two of them, once at display size.
+ */
+test('no surface prints "(empty)" where a value is the user’s to supply', () => {
+  for (const [name, html] of [
+    ['hero', renderHero()],
+    ['workspace', renderWorkspace()],
+  ] as const) {
+    assert.doesNotMatch(html, /\(empty\)/, `the ${name} prints an (empty) placeholder`)
+  }
+})
+
+/**
+ * The reference hero (`../image-to-pdf-standalone/src/components/HeroPage.tsx`)
+ * is a full-viewport shell with a title, a short description and exactly two
+ * actions. This is the structure every tool site inherits.
+ */
+test('the hero is the reference’s shape: a title, a lede, and exactly two actions', () => {
+  const html = renderHero()
+  assert.equal(html.match(/<button/g)?.length, 2, 'the hero must offer exactly two actions')
+  assert.match(html, /<h1 class="im-hero__title">/, 'the hero needs a real title')
+  assert.match(html, /class="im-hero__lede"/, 'the hero needs a description')
+  // One file in, one file out: the backend writes exactly one artifact per run.
+  const lede = html.match(/class="im-hero__lede">([\s\S]*?)<\/p>/)?.[1].replace(/<[^>]+>/g, ' ') ?? ''
+  assert.doesNotMatch(lede, /artifact index/i, 'the lede must not name backend plumbing')
+})
+
+test('the geometry key lists every real operator, with its measured behaviour', () => {
+  const html = renderWorkspace()
+  // All four operators, including the `!` that drops the aspect ratio — the one
+  // the field accepts and the key used to leave out.
+  for (const operator of ['800x600&gt;', '800x600^', '800x600!']) {
+    assert.ok(html.includes(operator), `the geometry key is missing "${operator}"`)
+  }
+  // Verified against the live endpoint on a 640x400 PNG: `800x600` came back
+  // 800x500, so it scales up as well as down. "may be smaller" was wrong.
+  assert.doesNotMatch(html, /fit inside 800×600; may be smaller/, 'the 800x600 entry is factually wrong')
+  // The one correction worth keeping, stated as a fact about geometry.
+  assert.match(html, /240x160<\/code> on a 640x400 source comes back 240x150/)
 })
 
 test('a label carries the human title, never the bare manifest key beside it', () => {

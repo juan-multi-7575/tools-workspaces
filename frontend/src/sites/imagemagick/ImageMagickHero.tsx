@@ -59,20 +59,11 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
       }}
       onDrop={dropped}
     >
-      <header className="im-bar">
-        <button type="button" className="im-bar__home" onClick={() => navigate('/')}>
-          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-            <path d="M8.5 2.5 4 7l4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          All tools
-        </button>
-        <span className="im-bar__mark">
-          <span className="im-bar__dot" aria-hidden="true" />
-          {manifest.name}
-        </span>
-        <span className="im-bar__id">{manifest.id}</span>
-      </header>
-
+      {/*
+        No identity strip and no home button here, exactly as the reference hero
+        has none: its two actions are the whole of the page. The way back to the
+        index lives in the workspace, which is where the brief puts it.
+      */}
       <main className="im-hero">
         <div>
           <h1 className="im-hero__title">
