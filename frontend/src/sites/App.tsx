@@ -1,25 +1,17 @@
-import { Suspense, lazy, type ComponentType } from 'react'
+import { Suspense, lazy } from 'react'
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
-import { BUILT_SITES } from './registry'
+import { BUILT_SITE_IDS, SITE_COMPONENTS } from './siteModules'
+import type { SiteState } from './types'
 import ErrorBoundary from '../components/common/ErrorBoundary'
 import AppShell from './AppShell'
 
 const HomeSite = lazy(() => import('./home/HomeSite'))
 
-/**
- * Every standalone tool site is its own route bundle, so a tool's code and CSS
- * only ship when someone opens that tool (D7). Adding tool #2 to the rebuild is
- * adding one entry to `registry.ts` and one lazy import here.
- */
-const SITE_COMPONENTS: Record<string, ComponentType<{ siteState: 'hero' | 'workspace'; initialInputPath?: string }>> = {
-  imagemagick: lazy(() => import('./imagemagick/ImageMagickSite')),
-}
-
 interface CarriedState {
   inputPath?: string
 }
 
-function ToolSiteRoute({ siteState }: { siteState: 'hero' | 'workspace' }) {
+function ToolSiteRoute({ siteState }: { siteState: SiteState }) {
   const { toolId = '' } = useParams()
   const location = useLocation()
   const Site = SITE_COMPONENTS[toolId]
@@ -27,11 +19,9 @@ function ToolSiteRoute({ siteState }: { siteState: 'hero' | 'workspace' }) {
 
   // An unregistered id is a dead route, so it goes to the index rather than
   // rendering an empty page.
-  if (!BUILT_SITES[toolId] || !Site) return <Navigate to="/" replace />
+  if (!Site) return <Navigate to="/" replace />
 
-  return (
-    <Site siteState={siteState} initialInputPath={carried} />
-  )
+  return <Site siteState={siteState} initialInputPath={carried} />
 }
 
 /**
@@ -46,7 +36,7 @@ export default function App() {
           path="/"
           element={
             <Suspense fallback={<SiteLoading label="Loading the tool index…" />}>
-              <HomeSite />
+              <HomeSite built={BUILT_SITE_IDS} />
             </Suspense>
           }
         />

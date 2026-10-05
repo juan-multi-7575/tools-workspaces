@@ -5,7 +5,8 @@ import { MemoryRouter } from 'react-router-dom'
 import ImageMagickHero from '../sites/imagemagick/ImageMagickHero'
 import ImageMagickWorkspace from '../sites/imagemagick/ImageMagickWorkspace'
 import HomeSite from '../sites/home/HomeSite'
-import { BUILT_SITES, describeSite } from '../sites/registry'
+import { discoverSiteIdsOnDisk } from './siteParity'
+import { describeSite } from '../sites/registry'
 import type { ToolManifest } from '../lib/api'
 
 /**
@@ -251,19 +252,24 @@ test('neither site carries any Tools Garage chrome', () => {
   }
 })
 
-test('the home index links only to sites that exist, and says so about the rest', () => {
-  assert.deepEqual(Object.keys(BUILT_SITES), ['imagemagick'])
-  assert.equal(describeSite('imagemagick').availability, 'built')
+test('the home index links only to sites that exist, and says so about the rest', async () => {
+  // Site discovery in the browser is an `import.meta.glob` over `src/sites/*/site.ts`,
+  // which does not exist under node:test — so parity is asserted off the filesystem
+  // instead. The browser reads exactly these directories; see `siteModules.ts`.
+  assert.deepEqual(await discoverSiteIdsOnDisk(), ['imagemagick'])
+  const built = new Set(['imagemagick'])
+  assert.equal(describeSite('imagemagick', built).availability, 'built')
+  assert.equal(describeSite('imagemagick', built).path, 'imagemagick')
   // A tool with no brief-covered site must not borrow a link to a dead route.
   for (const id of ['trimmer', 'some.tool.nobody.briefed']) {
-    const site = describeSite(id)
+    const site = describeSite(id, built)
     assert.equal(site.availability, 'planned')
     assert.equal(site.path, undefined, `${id} must not advertise a path it does not have`)
   }
   // Legacy and hosted ids are named for what they actually are.
-  assert.equal(describeSite('downloader').availability, 'alias')
-  assert.equal(describeSite('downloader').owner, 'media.download.yt-dlp')
-  assert.equal(describeSite('media.thumbnail.get').availability, 'hosted')
+  assert.equal(describeSite('downloader', built).availability, 'alias')
+  assert.equal(describeSite('downloader', built).owner, 'media.download.yt-dlp')
+  assert.equal(describeSite('media.thumbnail.get', built).availability, 'hosted')
 })
 
 test('the home index reads the registry from the backend, not from a hardcoded list', async () => {

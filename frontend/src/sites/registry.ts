@@ -2,11 +2,16 @@
  * Which tools have a standalone site, and what each one looks like.
  *
  * This is design metadata, not backend data: the tool list itself always comes
- * from `api.listTools()`. This table only answers three questions the API cannot
- * — does this tool have a site yet, where does it live, and which accent does
- * that site wear. The accent is declared here so the home index can show the
- * variety of the set *before* you enter any of it, rather than every entry
- * inheriting one colour.
+ * from `api.listTools()`. This table answers the questions the API cannot — what
+ * should this entry's accent be, and is it an old id or a hosted helper.
+ *
+ * **This module is pure and imports nothing.** Site discovery lives in
+ * `siteModules.ts` because `import.meta.glob` is a Vite transform that does not
+ * exist under `node:test`; keeping it out of here is what lets the parity tests
+ * import this table directly. Whether a site is *built* is passed in by the
+ * caller from `siteModules.ts` — so building a tool is still a single-directory
+ * change that this table picks up automatically, and parallel agents still
+ * never edit a shared registry.
  */
 
 export interface SiteDescriptor {
@@ -78,9 +83,12 @@ const HOSTED: Record<string, string> = {
 
 const NEUTRAL: SiteDescriptor = { accent: '#A3A3A3', availability: 'planned' }
 
-export function describeSite(toolId: string): SiteDescriptor {
+export function describeSite(toolId: string, built: ReadonlySet<string> = EMPTY): SiteDescriptor {
   const canonical = CANONICAL[toolId]
-  if (canonical) return canonical
+  const isBuilt = built.has(toolId)
+  if (canonical) {
+    return { ...canonical, availability: isBuilt ? 'built' : canonical.availability }
+  }
   const aliasOwner = ALIASES[toolId]
   if (aliasOwner) {
     return { accent: CANONICAL[aliasOwner].accent, availability: 'alias', owner: aliasOwner }
@@ -93,6 +101,8 @@ export function describeSite(toolId: string): SiteDescriptor {
   // listed; it just has no site and does not borrow somebody else's identity.
   return NEUTRAL
 }
+
+const EMPTY: ReadonlySet<string> = new Set()
 
 /**
  * Short, because this text sits on all 28 rows. The index carries one legend
@@ -114,9 +124,3 @@ export const AVAILABILITY_LEGEND: [SiteDescriptor['availability'], string][] = [
   ['hosted', 'a helper the backend registers with no page of its own'],
 ]
 
-/** Tool ids whose site is built, so the router knows what to serve. */
-export const BUILT_SITES: Record<string, string> = Object.fromEntries(
-  Object.entries(CANONICAL)
-    .filter(([, descriptor]) => descriptor.availability === 'built')
-    .map(([toolId, descriptor]) => [toolId, descriptor.path as string]),
-)

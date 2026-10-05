@@ -4,13 +4,21 @@ import { api, errorMessage, type ToolManifest } from '../../lib/api'
 import { AVAILABILITY_LABEL, AVAILABILITY_LEGEND, describeSite } from '../registry'
 import './home.css'
 
+const NO_SITES: ReadonlySet<string> = new Set()
+
 /**
  * The entry point: a strict grid of every tool the backend registers, each row
  * wearing its own site's accent. A tool with no site yet is stated as having
  * none and is not a link, because a link to a route that does not exist is a
  * lie about what this app can do.
+ *
+ * `built` arrives as a prop rather than an import so that this component stays
+ * free of `siteModules.ts`, whose `import.meta.glob` is a Vite transform that
+ * does not exist under `node:test`. `App` owns the glob and passes the result
+ * in; the default keeps a bare render honest — nothing claims to be built that
+ * the caller did not say was.
  */
-export default function HomeSite() {
+export default function HomeSite({ built = NO_SITES }: { built?: ReadonlySet<string> } = {}) {
   const [tools, setTools] = useState<ToolManifest[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -27,7 +35,7 @@ export default function HomeSite() {
     return () => controller.abort()
   }, [])
 
-  const built = tools?.filter((tool) => describeSite(tool.id).availability === 'built').length ?? 0
+  const builtCount = tools?.filter((tool) => describeSite(tool.id, built).availability === 'built').length ?? 0
 
   return (
     <div className="hs-root">
@@ -62,7 +70,7 @@ export default function HomeSite() {
         {tools !== null && (
           <>
             <p className="hs-section">
-              {tools.length} registered · {built} with a standalone site
+              {tools.length} registered · {builtCount} with a standalone site
             </p>
             <ul className="hs-legend">
               {AVAILABILITY_LEGEND.map(([state, meaning]) => (
@@ -74,7 +82,7 @@ export default function HomeSite() {
             </ul>
             <ol className="hs-grid">
               {tools.map((tool, index) => {
-                const site = describeSite(tool.id)
+                const site = describeSite(tool.id, built)
                 const live = site.availability === 'built'
                 const swatch = (
                   <span className="hs-row__accent" aria-hidden="true" />
