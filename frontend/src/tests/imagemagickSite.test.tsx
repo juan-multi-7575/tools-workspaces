@@ -256,8 +256,15 @@ test('the home index links only to sites that exist, and says so about the rest'
   // Site discovery in the browser is an `import.meta.glob` over `src/sites/*/site.ts`,
   // which does not exist under node:test — so parity is asserted off the filesystem
   // instead. The browser reads exactly these directories; see `siteModules.ts`.
-  assert.deepEqual(await discoverSiteIdsOnDisk(), ['imagemagick'])
-  const built = new Set(['imagemagick'])
+  //
+  // This asserts *membership*, not the whole set. Each site carries its own parity
+  // test, so this file must keep passing as sites are added one at a time — an exact
+  // list here would make every batch patch this line, and five agents patching one
+  // line differently is a merge conflict plus five duplicate fixes. "Does every
+  // briefed tool have a site?" is the final audit's job, once, at the end.
+  const onDisk = await discoverSiteIdsOnDisk()
+  assert.ok(onDisk.includes('imagemagick'), `imagemagick must have a site.ts, found: ${onDisk}`)
+  const built = new Set(onDisk)
   assert.equal(describeSite('imagemagick', built).availability, 'built')
   assert.equal(describeSite('imagemagick', built).path, 'imagemagick')
   // A tool with no brief-covered site must not borrow a link to a dead route.
