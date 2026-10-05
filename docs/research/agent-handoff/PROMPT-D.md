@@ -1,3 +1,10 @@
+> **Batch D — port `5177` — worktree `../wt-batch-D`**
+>
+> You are one of five agents running in parallel. Do the setup in
+> `SHARED-PREAMBLE.md` § *BEFORE YOU WRITE ANY CODE* first: your own git worktree,
+> your own `npm install`, and your dev server on **port 5177** (not 5173 — four
+> other agents have the others).
+
 # BATCH D — exif_scrubber, codec_tool, script_runner, sys.health.check
 
 Read `SHARED-PREAMBLE.md` in this directory first and follow it exactly. Then build **four**

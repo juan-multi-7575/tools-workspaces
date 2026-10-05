@@ -9,6 +9,78 @@ Repo root: `tools-workspaces/`
 Frontend: `tools-workspaces/frontend/`
 Backend: `tools-workspaces/backend/` (FastAPI, running on `:8000` — **do not modify it**)
 
+---
+
+## BEFORE YOU WRITE ANY CODE — set yourself up
+
+**Several of these prompts are meant to run in parallel.** Running them in one shared checkout
+does not work, for three concrete reasons:
+
+1. **`git index.lock` contention.** Two agents committing at once — one gets
+   `fatal: Unable to create '.git/index.lock'`. Commits fail at random.
+2. **Port collision.** `npm run dev` defaults to `:5173`. The second agent gets "Port 5173 is
+   already in use" and silently moves on, then screenshots the wrong server.
+3. **Shared `tsc` cache.** `tsc -b` writes `node_modules/.tmp/*.tsbuildinfo`. If several
+   worktrees share one `node_modules`, they overwrite each other's incremental build state and
+   produce spurious type errors that are not real.
+
+So each agent gets its own git worktree, its own port, and its own `node_modules`.
+
+### Step 1 — check whether you are already in a worktree
+
+```bash
+git rev-parse --show-toplevel            # your frontend/frontend root
+git worktree list | grep "$(pwd)"        # non-empty => already isolated, skip to Step 3
+```
+
+### Step 2 — if you share the main checkout, create one
+
+Your batch letter is given in your own prompt. Substitute it below.
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+BATCH=A   # <-- your batch letter
+MAIN="$(pwd)"
+
+# A full checkout. Do NOT symlink node_modules: the shared tsc build cache is a
+# real source of cross-agent corruption (see the note above).
+git worktree add "../wt-batch-$BATCH" -b "sites/batch-$BATCH" HEAD
+cd "../wt-batch-$BATCH/frontend" && npm install
+```
+
+Then **work from that directory for the rest of the session.** Every `cd` in the steps below
+means the worktree's `frontend/`, not the main checkout's.
+
+### Step 3 — start your dev server on YOUR port
+
+Use the port from your own prompt. Do not use the default 5173 — another agent has it.
+
+```bash
+npm run dev -- --port 5174     # A: 5174 · B: 5175 · C: 5176 · D: 5177 · E: 5178
+```
+
+Verify it is the server you think it is before you trust any screenshot:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:5174/t/<yourtool>
+```
+
+### Step 4 — the backend is shared
+
+One backend on `:8000` serves every agent, because the backend is not being changed. If it is not
+running, start it once from the **main** checkout:
+
+```bash
+cd "$(git rev-parse --show-toplevel)/../tools-workspaces/backend"  # or your main checkout
+../.venv/bin/python -m uvicorn app.main:app --port 8000
+```
+
+### If you were *not* given a worktree and cannot create one
+
+Work in the checkout you have, but **do not commit**. Report your changed file paths instead and
+let a human commit. Concurrent `git add` from several agents in one checkout will stage each
+other's half-finished work.
+
 ## Read these first, in this order
 
 1. `tools-workspaces/docs/research/design-briefs.md` — the brief for **your** tools, plus the
@@ -109,32 +181,62 @@ From `imagemagick-workflow-audit.md`:
 6. **The largest visible target must accept the drop.**
 7. Paste support where a path/URL makes sense.
 
-## Verifying in a browser — required, and there are two traps
+## Verifying in a browser — required, and there are three traps
 
-Chrome 136+ blocks remote debugging on the default profile. Launch a dedicated instance:
+**Trap 0 — you need your OWN Chrome.** Five agents sharing one browser is the worst failure mode
+here, because it is *silent*: `activate_tab` picks the first tab it sees, so if another agent has
+a tab open you will screenshot and measure **their page** and report numbers for a site you never
+opened. Two agents cannot share a `--user-data-dir` either — the second Chrome refuses to start.
+
+Your batch letter gives you your own debugging port and profile:
+
+| Batch | CDP port | profile dir | dev server port |
+|---|---|---|---|
+| A | 9222 | `/tmp/opencode/chrome-batch-A` | 5174 |
+| B | 9223 | `/tmp/opencode/chrome-batch-B` | 5175 |
+| C | 9224 | `/tmp/opencode/chrome-batch-C` | 5176 |
+| D | 9225 | `/tmp/opencode/chrome-batch-D` | 5177 |
+| E | 9226 | `/tmp/opencode/chrome-batch-E` | 5178 |
+
+Launch yours (substituting your own values — Chrome 136+ blocks remote debugging on the default
+profile, so a dedicated `--user-data-dir` is mandatory):
 
 ```bash
-pgrep -c chrome >/dev/null || (setsid /opt/google/chrome/chrome \
-  --remote-debugging-port=9222 --user-data-dir=/tmp/opencode/chrome-<yourname> \
+setsid /opt/google/chrome/chrome \
+  --remote-debugging-port=9222 --user-data-dir=/tmp/opencode/chrome-batch-A \
   --no-first-run --disable-dev-shm-usage --disable-gpu about:blank \
-  < /dev/null > /tmp/opencode/chrome-<yourname>.log 2>&1 & disown)
+  < /dev/null > /tmp/opencode/chrome-batch-A.log 2>&1 & disown
+sleep 8
+curl -s http://127.0.0.1:9222/json/version | head -2   # must print your Browser line
 ```
 
-**Trap 1 — always pass `BU_CDP_URL`**, or the harness fails with `chrome-not-running`:
+**Trap 1 — always pass `BU_CDP_URL` with YOUR port**, or the harness fails with
+`chrome-not-running` (it only auto-discovers standard profile dirs):
+
 ```bash
 BU_CDP_URL=http://127.0.0.1:9222 browser-harness <<'PY'
 ```
 
-**Trap 2 — activate the tab after every navigation**, or screenshots hang for 60s and time out:
+**Trap 2 — activate the tab after every navigation**, or screenshots hang for 60s and time out.
+And after `goto_url`, activate **the tab you are on** — not blindly index 0:
+
 ```python
-def act():
+def act(target_id=None):
     ps=[t for t in cdp("Target.getTargets")["targetInfos"] if t["type"]=="page"]
-    if ps: activate_tab(ps[0]["targetId"])
-goto_url(url); wait_for_load(); act(); time.sleep(2.5)
-p = capture_screenshot(path=f"{out}/{name}.png", max_dim=1600)
+    if ps:
+        pick = next((t for t in ps if t.get("targetId")==target_id), ps[0])
+        activate_tab(pick["targetId"])
 ```
 
-Check hero **and** workspace at **1440×900 and 390×844**. Assert:
+Always `new_tab(url)` for your **first** navigation in a session, then `goto_url` after that.
+Confirm you are on the right page before trusting anything:
+
+```python
+assert "localhost:5174" in js("location.host")   # your dev server port
+```
+
+Check **hero and workspace** at **1440×900 and 390×844** (add **768×1024** if your layout has
+any multi-column region). Assert:
 
 ```python
 # zero horizontal overflow

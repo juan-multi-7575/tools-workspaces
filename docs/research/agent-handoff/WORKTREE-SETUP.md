@@ -24,26 +24,52 @@ done
 git worktree list
 ```
 
-Each worktree is a full checkout, so it needs its own `node_modules` and its own dev server.
-Symlinking `node_modules` is faster and works fine:
+Each worktree is a full checkout and needs its own `node_modules`.
+
+> **Do not symlink `node_modules`.** It looks like a harmless speed-up, but `tsc -b` writes its
+> incremental cache to `node_modules/.tmp/*.tsbuildinfo`. Five worktrees sharing one
+> `node_modules` overwrite each other's build state and produce type errors that are not real —
+> the worst kind of failure, because it sends agents chasing bugs in their own code.
 
 ```bash
 for B in A B C D E; do
-  ln -s "$(pwd)/frontend/node_modules" "../wt-batch-$B/frontend/node_modules"
+  (cd "../wt-batch-$B/frontend" && npm install)
 done
 ```
 
 ## Ports — one per worktree, so all five can run at once
 
-The backend is shared (one instance on `:8000` for everyone). Only vite needs separating:
+The backend is shared (one instance on `:8000` for everyone). Vite needs separating, and so does
+**Chrome** — five agents sharing one browser is a silent failure, because `activate_tab` picks the
+first tab it sees and you will measure another agent's page.
+
+| Batch | worktree | dev server | Chrome CDP port | Chrome profile |
+|---|---|---|---|---|
+| A | `../wt-batch-A` | 5174 | 9222 | `/tmp/opencode/chrome-batch-A` |
+| B | `../wt-batch-B` | 5175 | 9223 | `/tmp/opencode/chrome-batch-B` |
+| C | `../wt-batch-C` | 5176 | 9224 | `/tmp/opencode/chrome-batch-C` |
+| D | `../wt-batch-D` | 5177 | 9225 | `/tmp/opencode/chrome-batch-D` |
+| E | `../wt-batch-E` | 5178 | 9226 | `/tmp/opencode/chrome-batch-E` |
 
 ```bash
-cd ../wt-batch-A/frontend && npm run dev -- --port 5174   # A
-cd ../wt-batch-B/frontend && npm run dev -- --port 5175   # B
-cd ../wt-batch-C/frontend && npm run dev -- --port 5176   # C
-cd ../wt-batch-D/frontend && npm run dev -- --port 5177   # D
-cd ../wt-batch-E/frontend && npm run dev -- --port 5178   # E
+# one dev server per worktree
+for pair in "A:5174" "B:5175" "C:5176" "D:5177" "E:5178"; do
+  B="${pair%%:*}"; PORT="${pair##*:}"
+  (cd "../wt-batch-$B/frontend" && nohup npm run dev -- --port "$PORT" > "/tmp/opencode/vite-$B.log" 2>&1 &)
+done
+
+# one Chrome per worktree — a shared --user-data-dir makes the second Chrome refuse to start
+for pair in "A:9222" "B:9223" "C:9224" "D:9225" "E:9226"; do
+  B="${pair%%:*}"; CDP="${pair##*:}"
+  setsid /opt/google/chrome/chrome --remote-debugging-port="$CDP" \
+    --user-data-dir="/tmp/opencode/chrome-batch-$B" --no-first-run \
+    --disable-dev-shm-usage --disable-gpu about:blank \
+    < /dev/null > "/tmp/opencode/chrome-batch-$B.log" 2>&1 &
+  disown
+done
 ```
+
+Each agent then invokes the browser as `BU_CDP_URL=http://127.0.0.1:<its CDP port> browser-harness`.
 
 ## Backend
 

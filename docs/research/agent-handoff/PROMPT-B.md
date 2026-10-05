@@ -1,3 +1,10 @@
+> **Batch B — port `5175` — worktree `../wt-batch-B`**
+>
+> You are one of five agents running in parallel. Do the setup in
+> `SHARED-PREAMBLE.md` § *BEFORE YOU WRITE ANY CODE* first: your own git worktree,
+> your own `npm install`, and your dev server on **port 5175** (not 5173 — four
+> other agents have the others).
+
 # BATCH B — trimmer, audio_processor, transcriber, demucs
 
 Read `SHARED-PREAMBLE.md` in this directory first and follow it exactly. Then build **four**

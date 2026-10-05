@@ -1,3 +1,10 @@
+> **Batch A — port `5174` — worktree `../wt-batch-A`**
+>
+> You are one of five agents running in parallel. Do the setup in
+> `SHARED-PREAMBLE.md` § *BEFORE YOU WRITE ANY CODE* first: your own git worktree,
+> your own `npm install`, and your dev server on **port 5174** (not 5173 — four
+> other agents have the others).
+
 # BATCH A — sox, mediainfo, streamlink, gallery-dl
 
 Read `SHARED-PREAMBLE.md` in this directory first and follow it exactly. Then build **four**
