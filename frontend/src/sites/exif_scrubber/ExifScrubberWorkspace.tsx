@@ -4,6 +4,7 @@ import { api, resolveUrl, type ToolManifest } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
 import { useToolDeps } from '../../hooks/useToolDeps'
 import DependencyGate from '../../components/deps/DependencyGate'
+import { createRunGeneration } from './runGeneration'
 
 type FieldMap = Record<string, unknown>
 type Capture = { label: string; path: string; fields: FieldMap }
@@ -25,6 +26,7 @@ export default function ExifScrubberWorkspace({ manifest, initialInputPath }: { 
   const inspect = useToolExecute('exif_scrubber')
   const deps = useToolDeps('exif_scrubber')
   const fileRef = useRef<HTMLInputElement>(null)
+  const runGeneration = useRef(createRunGeneration())
   const [params, setParams] = useState<Record<string, unknown>>({
     input_path: initialInputPath ?? schema.input_path?.default ?? '',
     action: schema.action?.default ?? 'scrub',
@@ -35,45 +37,67 @@ export default function ExifScrubberWorkspace({ manifest, initialInputPath }: { 
   const [filter, setFilter] = useState('')
   const [flaggedOnly, setFlaggedOnly] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  const [runError, setRunError] = useState('')
   const inputPath = String(params.input_path ?? '')
   const action = String(params.action ?? 'scrub')
   const setKey = (key: string, value: unknown) => setParams((current) => ({ ...current, [key]: value }))
-  const clearExecution = () => { execute.reset(); inspect.reset() }
+  const invalidateRun = () => {
+    runGeneration.current.invalidate()
+    if (execute.busy) execute.cancel()
+    else execute.reset()
+    if (inspect.busy) inspect.cancel()
+    else inspect.reset()
+    setBefore(null); setAfter(null); setCleanPath(''); setRunError(''); setUploadError('')
+  }
   const options = schema.action?.enum?.map(String) ?? ['scrub', 'inspect']
   const busy = execute.busy || inspect.busy
 
   const upload = async (file?: File) => {
     if (!file) return
+    invalidateRun()
     setUploadError('')
+    const uploadGeneration = runGeneration.current.start()
     try {
       const uploaded = await api.uploadFile(file)
-      clearExecution()
+      if (!runGeneration.current.isCurrent(uploadGeneration)) return
       setKey('input_path', uploaded.path)
-      setBefore(null); setAfter(null); setCleanPath('')
-    } catch (cause) { setUploadError(cause instanceof Error ? cause.message : String(cause)) }
+    } catch (cause) {
+      if (runGeneration.current.isCurrent(uploadGeneration)) setUploadError(cause instanceof Error ? cause.message : String(cause))
+    }
   }
-  const capture = async (path: string, label: string) => {
+  const capture = async (path: string, label: string, generation: number) => {
     const result = await inspect.run({ ...params, input_path: path, action: 'inspect' })
-    if (!result || result.status !== 'completed') return null
+    if (!runGeneration.current.isCurrent(generation)) return null
+    if (!result || result.status !== 'completed') {
+      setRunError(result?.error ?? '')
+      return null
+    }
     return { label, path, fields: fieldsFrom(result.data) } satisfies Capture
   }
   const run = async () => {
+    const generation = runGeneration.current.start()
+    setRunError('')
     setBefore(null); setAfter(null); setCleanPath('')
     if (action === 'inspect') {
-      const original = await capture(inputPath, 'Original')
-      if (original) setBefore(original)
+      const original = await capture(inputPath, 'Original', generation)
+      if (original && runGeneration.current.isCurrent(generation)) setBefore(original)
       return
     }
-    const original = await capture(inputPath, 'Original')
+    const original = await capture(inputPath, 'Original', generation)
+    if (!runGeneration.current.isCurrent(generation)) return
     if (!original) return
     setBefore(original)
     const scrubResult = await execute.run({ ...params, input_path: inputPath, action: 'scrub' })
-    if (!scrubResult || scrubResult.status !== 'completed') return
+    if (!runGeneration.current.isCurrent(generation)) return
+    if (!scrubResult || scrubResult.status !== 'completed') {
+      setRunError(scrubResult?.error ?? '')
+      return
+    }
     const output = scrubResult.artifacts[0]?.path
     if (!output) return
     setCleanPath(output)
-    const cleaned = await capture(output, 'Scrubbed copy')
-    if (cleaned) setAfter(cleaned)
+    const cleaned = await capture(output, 'Scrubbed copy', generation)
+    if (cleaned && runGeneration.current.isCurrent(generation)) setAfter(cleaned)
   }
   const rows = useMemo(() => {
     const keys = new Set([...Object.keys(before?.fields ?? {}), ...Object.keys(after?.fields ?? {})])
@@ -87,7 +111,7 @@ export default function ExifScrubberWorkspace({ manifest, initialInputPath }: { 
       .filter((row) => !query || `${row.key} ${textValue(row.before ?? '')} ${textValue(row.after ?? '')}`.toLowerCase().includes(query))
       .sort((a, b) => a.key.localeCompare(b.key))
   }, [before, after, filter, flaggedOnly])
-  const error = execute.state.error ?? inspect.state.error ?? uploadError
+  const error = runError || uploadError
   const artifactUrl = cleanPath ? resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(cleanPath)}`) : ''
 
   return (
@@ -101,14 +125,14 @@ export default function ExifScrubberWorkspace({ manifest, initialInputPath }: { 
             <label htmlFor="exif-path">{schema.input_path?.title ?? 'Input file'}</label>
             {schema.input_path?.description && <p>{schema.input_path.description}</p>}
             <div className="exif-file-line" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); void upload(event.dataTransfer.files?.[0]) }}>
-              <input id="exif-path" type="text" value={inputPath} onPaste={(event) => { const pasted = event.clipboardData.getData('text'); if (pasted) { clearExecution(); setKey('input_path', pasted); setBefore(null); setAfter(null); setCleanPath('') } }} onChange={(event) => { clearExecution(); setKey('input_path', event.target.value); setBefore(null); setAfter(null); setCleanPath('') }} placeholder="/path/to/image.jpg" />
+              <input id="exif-path" type="text" value={inputPath} onPaste={(event) => { const pasted = event.clipboardData.getData('text'); if (pasted) { invalidateRun(); setKey('input_path', pasted) } }} onChange={(event) => { invalidateRun(); setKey('input_path', event.target.value) }} placeholder="/path/to/image.jpg" />
               <button type="button" onClick={() => fileRef.current?.click()}>Browse…</button>
               <input ref={fileRef} className="exif-sr" type="file" accept="image/*,video/*" aria-label="Upload input media" onChange={(event) => { void upload(event.target.files?.[0]); event.target.value = '' }} />
             </div>
           </div>
           <fieldset data-param-key="action" className="exif-action">
             <legend>{schema.action?.title ?? 'Operation'}</legend>
-            {options.map((option) => <label key={option}><input type="radio" name="exif-action" value={option} checked={action === option} onChange={() => { clearExecution(); setKey('action', option); setBefore(null); setAfter(null); setCleanPath('') }} /> {option}</label>)}
+            {options.map((option) => <label key={option}><input type="radio" name="exif-action" value={option} checked={action === option} onChange={() => { invalidateRun(); setKey('action', option) }} /> {option}</label>)}
           </fieldset>
           <button type="button" onClick={() => void run()} disabled={busy || !deps.ready}>{busy ? 'Working…' : `Run ${action}`}</button>
           {busy && <span>{(execute.busy ? execute.state.elapsedSeconds : inspect.state.elapsedSeconds).toFixed(1)}s measured</span>}

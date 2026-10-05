@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import ExifScrubberHero from '../sites/exif_scrubber/ExifScrubberHero'
 import ExifScrubberWorkspace from '../sites/exif_scrubber/ExifScrubberWorkspace'
+import { createRunGeneration } from '../sites/exif_scrubber/runGeneration'
 import type { ToolManifest } from '../lib/api'
 
 const MANIFEST: ToolManifest = {
@@ -52,4 +53,13 @@ test('the site uses the plain CERN palette and contains no platform chrome', () 
   const html = render(<ExifScrubberHero manifest={MANIFEST} />) + render(<ExifScrubberWorkspace manifest={MANIFEST} />)
   assert.match(html, /exif-site/)
   assert.doesNotMatch(html, /Tools Garage|Workspaces|ENGINE STATUS/)
+})
+
+test('a run generation cannot apply a response after input or action changes', () => {
+  const runs = createRunGeneration()
+  const pending = runs.start()
+  runs.invalidate()
+  assert.equal(runs.isCurrent(pending), false)
+  const replacement = runs.start()
+  assert.equal(runs.isCurrent(replacement), true)
 })
