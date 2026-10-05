@@ -6,7 +6,8 @@ import type { ReactNode } from 'react'
 import type { ToolManifest } from '../lib/api'
 import HealthCheckHero from '../sites/sys_health_check/HealthCheckHero'
 import HealthCheckWorkspace from '../sites/sys_health_check/HealthCheckWorkspace'
-import { healthRowError } from '../sites/sys_health_check/healthCheckData'
+import HealthCheckStatus from '../sites/sys_health_check/HealthCheckStatus'
+import { healthRowDetail, healthStatusClass } from '../sites/sys_health_check/healthCheckData'
 
 const MANIFEST: ToolManifest = {
   id: 'sys.health.check', name: 'AI Model Health Check & Latency Probe', description: 'Probe configured AI providers and inspect the returned model health and latency.', input_kinds: ['any'], output_kinds: ['json'],
@@ -48,6 +49,20 @@ test('workspace has a real response table surface and a dependency gate', () => 
   assert.match(html, /data-dep-gate="sys\.health\.check"/)
 })
 
-test('structured provider errors are rendered as their real message text', () => {
-  assert.equal(healthRowError({ code: 'TOOL_EXECUTION_FAILED', message: 'No API key detected.' }), 'No API key detected.')
+test('AUTH_ERROR uses the failure status token', () => {
+  assert.equal(healthStatusClass('AUTH_ERROR'), 'mh-status-bad')
+})
+
+test('status SSR includes the complete status in its title', () => {
+  const html = render(<HealthCheckStatus status="AUTH_ERROR" />)
+  assert.match(html, /title="AUTH_ERROR"/)
+  assert.match(html, />AUTH_ERROR<\/span>/)
+})
+
+test('result detail keeps backend error and every real test name', () => {
+  assert.equal(healthRowDetail({
+    error: { code: 'TOOL_EXECUTION_FAILED', message: 'No API key detected.' },
+    tests_passed: ['Model selected'],
+    tests_failed: ['Credential Found'],
+  }), 'error: No API key detected. · passed: Model selected · failed: Credential Found')
 })

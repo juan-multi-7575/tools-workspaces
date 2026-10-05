@@ -4,18 +4,11 @@ import { useToolExecute } from '../../hooks/useToolExecute'
 import { useToolDeps } from '../../hooks/useToolDeps'
 import DependencyGate from '../../components/deps/DependencyGate'
 import type { ToolManifest } from '../../lib/api'
-import { healthRowError } from './healthCheckData'
+import { healthRowDetail, healthStatusClass } from './healthCheckData'
+import HealthCheckStatus from './HealthCheckStatus'
 
 interface FieldSpec { type?: string; title?: string; description?: string; enum?: (string | number)[]; enumLabels?: Record<string, string>; default?: unknown; placeholder?: string; widget?: string }
 type HealthRow = Record<string, unknown> & { model?: string; provider?: string; provider_id?: string; provider_name?: string; status?: string; latency_ms?: number; tests_passed?: string[]; tests_failed?: string[]; error?: unknown }
-
-function statusClass(status: unknown) {
-  const normalized = String(status ?? '').toLowerCase()
-  if (['healthy', 'ok', 'passed', 'success'].includes(normalized)) return 'mh-status-good'
-  if (['unconfigured', 'skipped', 'unknown'].includes(normalized)) return 'mh-status-muted'
-  if (['failed', 'error', 'unhealthy', 'timeout'].includes(normalized)) return 'mh-status-bad'
-  return 'mh-status-neutral'
-}
 
 export default function HealthCheckWorkspace({ manifest }: { manifest: ToolManifest }) {
   const navigate = useNavigate()
@@ -68,13 +61,13 @@ export default function HealthCheckWorkspace({ manifest }: { manifest: ToolManif
               const status = String(row.status ?? 'UNKNOWN')
               const passed = Array.isArray(row.tests_passed) ? row.tests_passed : []
               const failed = Array.isArray(row.tests_failed) ? row.tests_failed : []
-              const detail = healthRowError(row.error) || [passed.length ? `passed: ${passed.join(', ')}` : '', failed.length ? `failed: ${failed.join(', ')}` : ''].filter(Boolean).join(' · ')
+              const detail = healthRowDetail(row)
               const latency = Number(row.latency_ms) || 0
               const hasLatency = row.latency_ms !== null && row.latency_ms !== undefined && Number.isFinite(Number(row.latency_ms))
-              const tone = statusClass(status)
+              const tone = healthStatusClass(status)
               return <tr key={`${row.provider_id ?? row.provider ?? 'provider'}-${row.model ?? 'model'}-${index}`} className={tone}>
                 <td className="mh-model" title={String(row.model ?? '')}>{row.model ?? '—'}</td><td className="mh-provider" title={String(row.provider_name ?? row.provider_id ?? row.provider ?? '')}><span className="mh-provider-dot" />{row.provider_name ?? row.provider_id ?? row.provider ?? '—'}</td>
-                <td><span className="mh-status">{status}</span></td><td className="mh-number">{passed.length}</td><td className="mh-number">{failed.length}</td>
+                <td><HealthCheckStatus status={status} /></td><td className="mh-number">{passed.length}</td><td className="mh-number">{failed.length}</td>
                 <td><div className="mh-latency"><span>{hasLatency ? `${latency.toFixed(1)}ms` : '—'}</span><i><b style={{ width: `${maxLatency ? Math.max(2, (latency / maxLatency) * 100) : 0}%` }} /></i></div></td><td className="mh-detail" title={detail}>{detail || '—'}</td>
               </tr>
             })}</tbody></table></div> : <div className="mh-empty">{execute.state.phase === 'executing' ? `Probe in progress · ${execute.state.elapsedSeconds.toFixed(1)}s measured` : execute.state.phase === 'completed' ? 'The response contains no results rows.' : execute.state.phase === 'failed' ? 'The request failed before a result table was returned.' : 'Run a probe to populate the response table.'}</div>}
