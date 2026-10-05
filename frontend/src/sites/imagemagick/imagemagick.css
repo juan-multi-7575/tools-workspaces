@@ -399,10 +399,6 @@
   overflow-wrap: anywhere;
 }
 
-.im-geo--empty {
-  color: rgba(0, 0, 0, 0.45);
-}
-
 /* Two miniature panes, stacked to fit the tall narrow panel. */
 .im-stack__pair {
   display: grid;
@@ -457,13 +453,17 @@
  * On a wide viewport the canvas reserves a column for it, so the rail sits on
  * open ground and the panes start beside it — the way a canvas app parks its
  * toolbar and gives the artboard the rest of the screen.
+ *
+ * The column is 360px for the rail's 320px width plus its 20px page inset. It is
+ * sized by the geometry key: at 320px each of its rows fits on one line, so the
+ * key is readable rather than a column of wrapped fragments.
  */
 .im-canvas {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   overflow: auto;
-  padding: 20px 20px 20px 304px;
+  padding: 20px 20px 20px 360px;
 }
 
 .im-canvas__grid {
@@ -614,13 +614,52 @@
  * `.im-pane__foot`, which is a flex strip: flex would reflow dt/dd around each
  * other and scramble the pairs.
  */
+.im-keyfold {
+  border: 1px solid var(--im-hair);
+  border-radius: 8px;
+  background-color: var(--im-panel);
+}
+
+.im-keyfold__summary {
+  padding: 7px 10px;
+  font-family: var(--im-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--im-ink-52);
+  cursor: pointer;
+  list-style: none;
+}
+
+.im-keyfold__summary::-webkit-details-marker {
+  display: none;
+}
+
+.im-keyfold__summary::after {
+  content: '+';
+  float: right;
+  color: var(--im-ink-40);
+}
+
+.im-keyfold[open] .im-keyfold__summary::after {
+  content: '−';
+}
+
+.im-keyfold__summary:hover {
+  color: var(--im-ink);
+}
+
+.im-keyfold .im-keylist {
+  padding: 0 10px 10px;
+}
+
 .im-keylist {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  gap: 4px 12px;
+  gap: 3px 12px;
   margin: 0;
   font-family: var(--im-mono);
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.5;
 }
 
@@ -646,7 +685,7 @@
   bottom: 20px;
   left: 20px;
   z-index: 2;
-  width: 264px;
+  width: 320px;
   max-width: calc(100% - 40px);
   display: flex;
   flex-direction: column;
@@ -707,8 +746,8 @@
   min-height: 0;
   display: grid;
   align-content: start;
-  gap: 18px;
-  padding: 14px;
+  gap: 14px;
+  padding: 12px 14px;
   overflow-y: auto;
   overscroll-behavior: contain;
   min-width: 0;
@@ -716,7 +755,7 @@
 
 .im-field {
   display: grid;
-  gap: 7px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -829,7 +868,7 @@ select.im-input {
 .im-drop {
   display: grid;
   gap: 6px;
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px dashed var(--im-hair-strong);
   border-radius: 10px;
   background-color: var(--im-panel);

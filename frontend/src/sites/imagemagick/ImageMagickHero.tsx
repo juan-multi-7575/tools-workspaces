@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Loader2, Upload } from 'lucide-react'
 import { api, errorMessage } from '../../lib/api'
 import type { ToolManifest } from '../../lib/api'
-import type { FieldSpec } from './imagemagickManifest'
+import { GEOMETRY_EXAMPLE, type FieldSpec } from './imagemagickManifest'
 
 export interface ImageMagickHeroProps {
   manifest: ToolManifest
@@ -22,18 +22,13 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
   const schema = (manifest.parameters_schema ?? {}) as Record<string, FieldSpec>
 
   /*
-   * The manifest's own defaults, labelled with the manifest's own titles. A
-   * default that is the empty string is shown as `(empty)` rather than replaced
-   * with a plausible-looking value — the geometry really does start unset.
+   * Only the keys the manifest really presets, so the panel says what a first run
+   * will do rather than printing `(empty)` beside two of them. The two that have
+   * no default are described in the panel's own foot, in plain words.
    */
-  const resize = String(schema.resize?.default ?? '')
-  const defaults: [string, string][] = (Object.keys(schema) as (keyof typeof schema)[]).map((key) => {
-    const value = schema[key]?.default
-    return [
-      schema[key]?.title ?? key,
-      value === undefined || value === '' ? '(empty)' : String(value),
-    ]
-  })
+  const preset = (Object.keys(schema) as (keyof typeof schema)[])
+    .map((key) => [schema[key]?.title ?? key, schema[key]?.default] as const)
+    .filter(([, value]) => value !== undefined && value !== '')
 
   const chooseImage = async (file: File | undefined) => {
     if (!file) return
@@ -88,8 +83,8 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
             and sizes.
           </h1>
           <p className="im-hero__lede">
-            {manifest.description} Point it at an image on this machine, choose a target format, a
-            quality and a geometry, and it writes the converted file to the artifact index.
+            {manifest.description} Pick a format, a quality and a size, then convert one file at
+            a time.
           </p>
 
           <div className="im-hero__actions">
@@ -135,15 +130,18 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
 
         <div className="im-stack" aria-hidden="true">
           <div className="im-panel im-panel--back">
-            <p className="im-panel__label">Default settings</p>
+            <p className="im-panel__label">Out of the box</p>
             <div className="im-panel__rows">
-              {defaults.map(([key, value]) => (
-                <p className="im-panel__row" key={key}>
-                  <span>{key}</span>
-                  <span>{value}</span>
+              {preset.map(([title, value]) => (
+                <p className="im-panel__row" key={title}>
+                  <span>{title}</span>
+                  <span>{String(value)}</span>
                 </p>
               ))}
             </div>
+            <p className="im-panel__foot">
+              You pick the file. With no geometry the output keeps the source size.
+            </p>
           </div>
 
           <div className="im-panel im-panel--mid">
@@ -157,17 +155,12 @@ export default function ImageMagickHero({ manifest }: ImageMagickHeroProps) {
           </div>
 
           <div className="im-panel im-panel--front">
-            <p className="im-panel__label">Resize geometry</p>
-            {resize ? (
-              <p className="im-geo">{resize}</p>
-            ) : (
-              <>
-                <p className="im-geo im-geo--empty">(empty)</p>
-                <p className="im-panel__foot">
-                  starts unset, so a run keeps the source dimensions — type one in the workspace
-                </p>
-              </>
-            )}
+            <p className="im-panel__label">Geometry string</p>
+            <p className="im-geo">{GEOMETRY_EXAMPLE.geometry}</p>
+            <p className="im-panel__foot">
+              on a {GEOMETRY_EXAMPLE.from} source that comes back {GEOMETRY_EXAMPLE.to} — the
+              ratio is kept, not squeezed
+            </p>
           </div>
         </div>
       </main>
