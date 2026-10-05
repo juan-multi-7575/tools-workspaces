@@ -25,9 +25,9 @@ export function PandocHero({manifest}:{manifest:ToolManifest}) {
 export function PandocWork({manifest,initialInputPath}:{manifest:ToolManifest;initialInputPath?:string}) {
  const nav=useNavigate(), exec=useToolExecute('pandoc'), deps=useToolDeps('pandoc'), schema=manifest.parameters_schema as Record<string,Spec>
  const [params,setParams]=useState<Record<string,unknown>>(()=>({input_path:initialInputPath??schema.input_path?.default??'',to:schema.to?.default??'html'})), [src,setSrc]=useState(''),[output,setOutput]=useState(''),[name,setName]=useState(''),[path,setPath]=useState(''),[error,setError]=useState(''),[ranInput,setRanInput]=useState(''),[ranTarget,setRanTarget]=useState('')
- const sourcePath=String(params.input_path??''), target=String(params.to??'html'), artifact=exec.state.result?.artifacts[0]
+ const sourcePath=String(params.input_path??''), target=String(params.to??'html'), artifact=exec.state.result?.artifacts[0], artifactPath=artifact?.path
  useEffect(()=>{if(!sourcePath){setSrc('');return}api.getArtifactContent(sourcePath).then(r=>setSrc(r.content)).catch(e=>setSrc(errorMessage(e)))},[sourcePath])
- useEffect(()=>{if(exec.state.phase==='completed'&&artifact){api.getArtifactContent(artifact.path).then(r=>{setOutput(r.content);setName(r.name);setPath(artifact.path)}).catch(e=>setError(errorMessage(e))) }else if(exec.state.phase==='executing'){setOutput('');setPath('')}},[exec.state.phase,artifact?.path])
+ useEffect(()=>{if(exec.state.phase==='completed'&&artifactPath){api.getArtifactContent(artifactPath).then(r=>{setOutput(r.content);setName(r.name);setPath(artifactPath)}).catch(e=>setError(errorMessage(e))) }else if(exec.state.phase==='executing'){setOutput('');setPath('')}},[exec.state.phase,artifactPath])
  const set=(key:string,val:unknown)=>setParams(p=>({...p,[key]:val}))
  const run=async()=>{setError('');setOutput('');setPath('');setName('');const result=await exec.run(params);if(result?.status==='completed'){setRanInput(sourcePath);setRanTarget(target)}}
  const copy=()=>navigator.clipboard.writeText(output).catch(e=>setError(errorMessage(e)))
