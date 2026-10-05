@@ -1,0 +1,1031 @@
+/*
+ * AI Audio Stem Separator (Demucs) — design brief #8 in
+ * docs/research/design-briefs.md, after the `vam` reference.
+ *
+ * The V&A is a white page: docs/research/design-references/vam/meta.json
+ * measures the ground at rgb(255,255,255) and the ink at rgb(29,30,32), and the
+ * screenshots read as image-led with nothing competing for the eye. So this
+ * sheet is almost entirely white space, hairline rules, and type. The one
+ * accent is the registry's #7A6A53 — a dry ochre rather than a museum red —
+ * and it is spent on rules, small caps, and the focus ring, never on a fill big
+ * enough to read as a brand block.
+ *
+ * The signature is the wall label: a caption set beneath the object it
+ * describes, in small caps and italic Newsreader, the way a printed catalogue
+ * entry hangs under a plate. Every row in the ledger is set as one of those.
+ *
+ * `.dep-gate` is app-level and shared, so it is only re-skinned at the bottom.
+ *
+ * Newsreader and Libre Franklin are free (SIL OFL) and stand in for the
+ * reference's proprietary Spiller and its grotesque UI face; both fall back to
+ * a real system face if the request never lands.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Libre+Franklin:wght@400;500;600&display=swap');
+
+.dm-root {
+  /* The reference's own measured values. */
+  --dm-ground: #ffffff;
+  --dm-ink: #1d1e20;
+  --dm-ink-80: #3a3b3e;
+  /* 6.5:1 on the ground, 6.0:1 on the sunk rail — both clear of 4.5. */
+  --dm-ink-60: #5c5e62;
+  --dm-accent: #7a6a53;
+  --dm-accent-deep: #5c4f3d;
+  --dm-rule: #dedcd8;
+  --dm-rule-soft: #ebe9e5;
+  --dm-sunk: #f7f6f4;
+  --dm-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --dm-sans: 'Libre Franklin', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --dm-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--dm-ground);
+  color: var(--dm-ink);
+  font-family: var(--dm-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dm-root *,
+.dm-root *::before,
+.dm-root *::after {
+  box-sizing: border-box;
+}
+
+.dm-root ::selection {
+  background: color-mix(in oklab, var(--dm-accent) 22%, transparent);
+}
+
+.dm-root :focus-visible {
+  outline: 2px solid var(--dm-accent);
+  outline-offset: 3px;
+}
+
+.dm-root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.dm-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dm-root ::-webkit-scrollbar-thumb {
+  background: var(--dm-rule);
+  border: 3px solid var(--dm-ground);
+  border-radius: 999px;
+}
+
+.dm-mono,
+.dm-root .dm-mono,
+.dm-root .ap-mono {
+  font-family: var(--dm-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.dm-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ------------------------------------------------------------------- type */
+
+.dm-eyebrow {
+  margin: 0 0 26px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--dm-accent);
+}
+
+.dm-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dm-accent);
+  margin-bottom: 9px;
+}
+
+.dm-lede {
+  margin: 0;
+  font-family: var(--dm-serif);
+  font-size: clamp(17px, 1.45vw, 20px);
+  font-weight: 300;
+  line-height: 1.52;
+  color: var(--dm-ink-80);
+  max-width: 58ch;
+  text-wrap: pretty;
+}
+
+.dm-hint {
+  margin: 9px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--dm-ink-60);
+  text-wrap: pretty;
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+.dm-btn {
+  font-family: var(--dm-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  padding: 13px 22px;
+  border-radius: 0;
+  border: 1px solid var(--dm-ink);
+  background: transparent;
+  color: var(--dm-ink);
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.dm-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.dm-btn--solid:not(:disabled):hover {
+  background: var(--dm-ink);
+  color: var(--dm-ground);
+}
+
+.dm-btn--line {
+  border-color: var(--dm-rule);
+}
+
+.dm-btn--line:not(:disabled):hover {
+  border-color: var(--dm-ink);
+  background: var(--dm-sunk);
+}
+
+.dm-btn--accent {
+  background: var(--dm-accent);
+  border-color: var(--dm-accent);
+  color: var(--dm-ground);
+}
+
+.dm-btn--accent:not(:disabled):hover {
+  background: var(--dm-accent-deep);
+  border-color: var(--dm-accent-deep);
+}
+
+.dm-btn--small {
+  font-size: 11.5px;
+  padding: 8px 14px;
+  border-color: var(--dm-rule);
+}
+
+.dm-btn--small:not(:disabled):hover {
+  border-color: var(--dm-ink);
+  background: var(--dm-sunk);
+}
+
+.dm-btn--run {
+  min-width: 168px;
+}
+
+/* -------------------------------------------------------------- top of page */
+
+.dm-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 30px;
+  height: 54px;
+  border-bottom: 1px solid var(--dm-rule-soft);
+  background: var(--dm-ground);
+}
+
+.dm-bar__home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--dm-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dm-ink-60);
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.dm-bar__home:hover {
+  color: var(--dm-accent);
+}
+
+.dm-bar__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  margin: 0 auto;
+  padding: 0;
+  min-width: 0;
+  font-family: var(--dm-serif);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  color: var(--dm-ink);
+}
+
+/* A single hairline, the way a printed page carries its running head. */
+.dm-bar__rule {
+  width: 26px;
+  height: 1px;
+  background: var(--dm-accent);
+  flex: 0 0 auto;
+}
+
+.dm-bar__id {
+  font-family: var(--dm-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--dm-ink-60);
+}
+
+/* -------------------------------------------------------------------- hero */
+
+.dm-hero-page {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.dm-hero {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 44px 30px 30px;
+}
+
+.dm-hero--flat {
+  justify-content: center;
+}
+
+.dm-hero__inner {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  /* Wall label on the left, the object it describes on the right. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  column-gap: 76px;
+  align-items: start;
+}
+
+.dm-hero__lead {
+  min-width: 0;
+}
+
+.dm-hero--flat .dm-hero__inner {
+  display: block;
+  max-width: 74ch;
+}
+
+.dm-hero__title {
+  margin: 0 0 26px;
+  font-family: var(--dm-serif);
+  font-weight: 300;
+  /* The reference sets its headings at 15px on a 1600px page and lets the
+     images carry the screen; this scales from that rather than shouting. */
+  font-size: clamp(38px, 5.4vw, 76px);
+  line-height: 1.02;
+  letter-spacing: -0.022em;
+  color: var(--dm-ink);
+  max-width: 15ch;
+}
+
+.dm-hero__title em {
+  font-style: italic;
+  font-weight: 300;
+  color: var(--dm-accent);
+}
+
+.dm-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 34px;
+}
+
+.dm-error {
+  margin: 20px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--dm-accent-deep);
+  max-width: 58ch;
+}
+
+.dm-error__text {
+  font-family: var(--dm-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--dm-ink-80);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 76ch;
+  margin: 0 0 22px;
+}
+
+/* ------------------------------------------------------- the catalogue plate */
+
+/*
+ * The hero's right column is a printed catalogue plate: a rule, a short list of
+ * the stems the tool's own description names, and the file the backend actually
+ * returns. The list is captioned as what the tool separates in general; the one
+ * file below it is what a completed run gives back.
+ */
+.dm-plate {
+  margin: 0;
+  padding: 26px 0 0;
+  border-top: 1px solid var(--dm-rule);
+}
+
+.dm-plate__caption {
+  margin: 0 0 20px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dm-accent);
+}
+
+.dm-plate__stems {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--dm-rule-soft);
+}
+
+.dm-plate__stem {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--dm-rule-soft);
+}
+
+.dm-plate__stem-index {
+  font-family: var(--dm-mono);
+  font-size: 10.5px;
+  color: var(--dm-ink-60);
+  flex: 0 0 auto;
+}
+
+.dm-plate__stem-name {
+  font-family: var(--dm-serif);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--dm-ink);
+}
+
+.dm-plate__note {
+  margin: 16px 0 0;
+  font-size: 12.5px;
+  line-height: 1.58;
+  color: var(--dm-ink-60);
+  text-wrap: pretty;
+}
+
+.dm-plate__command {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--dm-rule-soft);
+  font-family: var(--dm-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--dm-ink-80);
+  overflow-wrap: anywhere;
+}
+
+.dm-plate__command-label {
+  display: block;
+  font-family: var(--dm-sans);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--dm-accent);
+  margin-bottom: 7px;
+}
+
+.dm-hero__foot {
+  width: 100%;
+  max-width: 1120px;
+  margin: 46px auto 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--dm-rule-soft);
+}
+
+.dm-hero__foot p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--dm-ink-60);
+  max-width: 84ch;
+  text-wrap: pretty;
+}
+
+.dm-hero__foot-label {
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  color: var(--dm-accent);
+  margin-right: 8px;
+}
+
+/* ------------------------------------------------------------------- stage */
+
+.dm-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+.dm-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 40px 44px 48px;
+}
+
+/* One alignment axis, so the ledger and the plate below it share a margin. */
+.dm-main > * {
+  max-width: 840px;
+  margin-inline: auto;
+}
+
+.dm-section + .dm-section {
+  margin-top: 44px;
+}
+
+.dm-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px 24px;
+  padding-bottom: 12px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--dm-rule);
+}
+
+.dm-section__title {
+  margin: 0;
+  font-family: var(--dm-serif);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.008em;
+  color: var(--dm-ink);
+}
+
+.dm-section__meta {
+  font-family: var(--dm-mono);
+  font-size: 11px;
+  color: var(--dm-ink-60);
+}
+
+/* ------------------------------------------------------------------ source */
+
+.dm-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--dm-rule-soft);
+  margin-bottom: 34px;
+}
+
+.dm-source__id {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 260px;
+}
+
+.dm-source__name {
+  font-family: var(--dm-serif);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--dm-ink);
+  overflow-wrap: anywhere;
+}
+
+.dm-source__size {
+  font-family: var(--dm-mono);
+  font-size: 11.5px;
+  color: var(--dm-ink-60);
+  white-space: nowrap;
+}
+
+.dm-source__transport {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dm-source__clock {
+  font-family: var(--dm-mono);
+  font-size: 11.5px;
+  color: var(--dm-ink-60);
+  min-width: 58px;
+}
+
+/* ------------------------------------------------------------------ ledger */
+
+/*
+ * The ledger. Each row is a catalogue entry: a rule, the object's own name at
+ * reading size, its size in tabular mono, and the wall label beneath it in
+ * italic Newsreader — the reference's caption treatment, spent on the thing
+ * being captioned.
+ */
+.dm-ledger {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--dm-rule);
+}
+
+.dm-entry {
+  display: block;
+  padding: 20px 0 22px;
+  border-bottom: 1px solid var(--dm-rule-soft);
+}
+
+.dm-entry__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+}
+
+.dm-entry__no {
+  font-family: var(--dm-mono);
+  font-size: 11px;
+  color: var(--dm-accent);
+  flex: 0 0 auto;
+  min-width: 26px;
+}
+
+.dm-entry__name {
+  font-family: var(--dm-serif);
+  font-size: 21px;
+  font-weight: 400;
+  color: var(--dm-ink);
+  overflow-wrap: anywhere;
+  margin: 0;
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.dm-entry__size {
+  font-family: var(--dm-mono);
+  font-size: 11.5px;
+  color: var(--dm-ink-60);
+  white-space: nowrap;
+}
+
+.dm-entry__caption {
+  margin: 9px 0 0 42px;
+  font-family: var(--dm-serif);
+  font-style: italic;
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.5;
+  color: var(--dm-ink-60);
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+
+.dm-entry__acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 0 42px;
+}
+
+.dm-entry__act {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--dm-sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--dm-ink);
+  text-decoration: none;
+  border: 1px solid var(--dm-rule);
+  padding: 8px 14px;
+  cursor: pointer;
+  background: transparent;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.dm-entry__act:hover {
+  border-color: var(--dm-ink);
+  background: var(--dm-sunk);
+}
+
+.dm-entry__note {
+  margin: 10px 0 0 42px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--dm-ink-60);
+  max-width: 66ch;
+}
+
+/* ------------------------------------------------------------------ states */
+
+.dm-empty {
+  max-width: 62ch;
+}
+
+.dm-empty__title {
+  margin: 0 0 12px;
+  font-family: var(--dm-serif);
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1.24;
+  color: var(--dm-ink);
+}
+
+.dm-empty__body {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.62;
+  color: var(--dm-ink-80);
+  text-wrap: pretty;
+}
+
+.dm-failure {
+  padding: 22px 0 4px;
+  border-top: 1px solid var(--dm-accent);
+}
+
+.dm-failure__title {
+  margin: 0 0 10px;
+  font-family: var(--dm-serif);
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1.22;
+  color: var(--dm-ink);
+}
+
+.dm-failure__headline {
+  margin: 0 0 14px;
+  font-family: var(--dm-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--dm-accent-deep);
+  overflow-wrap: anywhere;
+}
+
+.dm-failure__body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.62;
+  color: var(--dm-ink-80);
+  max-width: 66ch;
+  text-wrap: pretty;
+}
+
+/*
+ * The backend's own words, unbroken. A Python traceback is only useful if the
+ * last line is the line that failed, so nothing here wraps mid-message and
+ * nothing here is truncated.
+ */
+.dm-failure__trace {
+  margin: 16px 0 0;
+  padding: 15px 17px;
+  background: var(--dm-sunk);
+  border-left: 2px solid var(--dm-accent);
+  font-family: var(--dm-mono);
+  font-size: 11.5px;
+  line-height: 1.72;
+  color: var(--dm-ink-80);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.dm-notice {
+  margin: 0 0 26px;
+  padding: 13px 16px;
+  max-width: 68ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--dm-accent-deep);
+  border-left: 2px solid var(--dm-accent);
+  background: color-mix(in oklab, var(--dm-accent) 7%, transparent);
+  text-wrap: pretty;
+}
+
+.dm-report {
+  margin-top: 40px;
+}
+
+/* -------------------------------------------------------------------- rail */
+
+.dm-rail {
+  flex: 0 0 322px;
+  width: 322px;
+  border-left: 1px solid var(--dm-rule-soft);
+  overflow-y: auto;
+  padding: 32px 26px 38px;
+  background: var(--dm-sunk);
+}
+
+.dm-field {
+  margin-bottom: 28px;
+}
+
+.dm-input {
+  display: block;
+  width: 100%;
+  font-family: var(--dm-mono);
+  font-size: 12px;
+  color: var(--dm-ink);
+  background: var(--dm-ground);
+  border: 1px solid var(--dm-rule);
+  border-radius: 0;
+  padding: 11px 12px;
+}
+
+.dm-input::placeholder {
+  color: var(--dm-ink-60);
+}
+
+.dm-drop {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 62px;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dm-ink-60);
+  background: var(--dm-ground);
+  border: 1px dashed var(--dm-rule);
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.dm-drop:hover,
+.dm-drop:focus-visible {
+  border-color: var(--dm-accent);
+  color: var(--dm-ink);
+}
+
+.dm-select {
+  margin-top: 10px;
+  width: 100%;
+  font-family: var(--dm-sans);
+  font-size: 12px;
+  color: var(--dm-ink);
+  background: var(--dm-ground);
+  border: 1px solid var(--dm-rule);
+  border-radius: 0;
+  padding: 10px 11px;
+  cursor: pointer;
+}
+
+.dm-field__meta {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--dm-ink-60);
+  text-wrap: pretty;
+}
+
+/* -------------------------------------------------------------------- dock */
+
+.dm-dock {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 30px;
+  border-top: 1px solid var(--dm-rule);
+  background: var(--dm-ground);
+}
+
+.dm-dock__note {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--dm-ink-60);
+  text-wrap: pretty;
+}
+
+.dm-dock__gate {
+  /* Shrinkable as well as capped: the shared gate is free to lay its rows out
+     wider than the cap, and a flex item that cannot shrink pushes the dock past
+     the viewport instead of wrapping inside it. */
+  flex: 0 1 470px;
+  min-width: 0;
+  max-width: 470px;
+}
+
+/* ------------------------------------------------------- the shared dep gate */
+
+/*
+ * `.dep-gate` ships app-level and reads from `currentColor`, which the ground
+ * above has already made legible. Only the panel's shape is borrowed here: the
+ * rounded app card becomes a square-edged plate with a hairline, so the gate
+ * sits inside this page rather than on it.
+ */
+.dm-root .dep-gate__panel {
+  border-radius: 0;
+  border-color: var(--dm-rule);
+  background-color: var(--dm-ground);
+  box-shadow: none;
+}
+
+.dm-root .dep-gate__scroll {
+  max-height: 8rem;
+}
+
+.dm-root .dep-gate button {
+  border-radius: 0;
+  font-family: var(--dm-sans);
+}
+
+/* ------------------------------------------------------------- breakpoints */
+
+@media (max-width: 1100px) {
+  .dm-hero__inner {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 40px;
+    column-gap: 0;
+  }
+
+  .dm-stage {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .dm-main {
+    overflow: visible;
+    padding: 30px 28px 34px;
+  }
+
+  .dm-rail {
+    flex: 0 0 auto;
+    width: 100%;
+    border-left: 0;
+    border-top: 1px solid var(--dm-rule-soft);
+    padding: 28px;
+  }
+
+  /*
+   * Below the two-column width the run controls, the note and the gate no
+   * longer fit on one line, and a dock that cannot fit must wrap rather than
+   * widen the page. The gate takes its own full row so the install control is
+   * never pushed off the right edge.
+   */
+  .dm-dock {
+    flex-wrap: wrap;
+  }
+
+  .dm-dock__note {
+    flex: 1 1 100%;
+    order: 3;
+  }
+
+  .dm-dock__gate {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .dm-root {
+    font-size: 14.5px;
+  }
+
+  /*
+   * Stacked, the wall label and the plate it describes cannot both fit a phone
+   * at reading size, so the page is allowed to scroll here rather than crop the
+   * caption off the bottom. The desktop hero is still a fixed, single-screen
+   * page because there is room for it.
+   */
+  .dm-hero-page {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .dm-hero {
+    justify-content: flex-start;
+    padding: 26px 20px 22px;
+  }
+
+  .dm-bar {
+    padding: 0 18px;
+    gap: 12px;
+  }
+
+  .dm-bar__mark {
+    margin: 0;
+    font-size: 13px;
+  }
+
+  .dm-bar__id {
+    display: none;
+  }
+
+  .dm-hero__title {
+    max-width: 100%;
+    font-size: clamp(32px, 10.5vw, 46px);
+  }
+
+  .dm-hero__actions {
+    margin-top: 26px;
+  }
+
+  .dm-hero__actions .dm-btn {
+    flex: 1 1 auto;
+  }
+
+  .dm-hero__foot {
+    margin-top: 26px;
+  }
+
+  .dm-plate {
+    padding-top: 20px;
+  }
+
+  .dm-plate__stem {
+    padding: 9px 0;
+  }
+
+  .dm-main {
+    padding: 26px 20px 30px;
+  }
+
+  .dm-section + .dm-section {
+    margin-top: 34px;
+  }
+
+  .dm-entry__caption,
+  .dm-entry__acts,
+  .dm-entry__note {
+    margin-left: 0;
+  }
+
+  .dm-failure__trace {
+    font-size: 11px;
+  }
+
+  .dm-dock {
+    flex-wrap: wrap;
+    padding: 12px 18px;
+    gap: 10px 12px;
+  }
+
+  .dm-btn--run {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .dm-dock__note {
+    flex: 1 1 100%;
+    order: 3;
+  }
+
+  .dm-dock__gate {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}
