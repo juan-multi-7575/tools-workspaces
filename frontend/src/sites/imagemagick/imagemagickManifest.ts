@@ -60,19 +60,28 @@ export const GEOMETRY_PRESETS: { label: string; value: string }[] = [
 ]
 
 /**
- * What the geometry syntax actually means, so the string is not a black box.
+ * The one geometry string this site's own copy leans on, and what it really
+ * produces. Checked against a real run of this backend, not recalled: a 640x400
+ * PNG sent through `240x160` came back 240x150, because a geometry with no
+ * operator is a box the image is fitted inside, not a pair of target sizes.
+ */
+export const GEOMETRY_EXAMPLE = { geometry: '240x160', from: '640x400', to: '240x150' } as const
+
+/**
+ * What each geometry operator does, so the string is not a black box.
  *
- * These descriptions were checked against a real run rather than recalled: a
- * 640x400 source sent through `-resize 240x160` came back 240x150. A geometry
- * without an operator is a *bound* the aspect ratio is fitted inside, not a pair
- * of target dimensions — only an explicit `!` overrides that, and this tool
- * exposes no flag to add one.
+ * Every line was read off a real run of this backend against a 640x400 PNG:
+ * `800x600` came back 800x500 (it scales up as well as down), `800x600>` left
+ * the source alone, `800x600^` came back 960x600 rather than exactly 800x600,
+ * and `800x600!` came back 800x600 with the ratio dropped. Phrased short
+ * enough to sit on one line of the rail's key.
  */
 export const GEOMETRY_KEY = [
-  ['1200x', 'width 1200; height follows from the aspect ratio'],
-  ['x1200', 'height 1200; width follows from the aspect ratio'],
-  ['800x600', 'fit inside 800×600 — the result may be smaller than the box'],
-  ['800x600>', 'the same fit, but only ever shrinks; a small image is left alone'],
-  ['800x600^', 'scale to *cover* 800×600, so the box is filled'],
-  ['50%', 'scale by this percentage of the original'],
+  ['1200x', 'width 1200, height follows'],
+  ['x1200', 'height 1200, width follows'],
+  ['800x600', 'fit inside, up or down'],
+  ['800x600>', 'the same fit, never enlarges'],
+  ['800x600^', 'cover 800x600, may be larger'],
+  ['800x600!', 'exact size, ratio dropped'],
+  ['50%', 'scale by this percentage'],
 ]

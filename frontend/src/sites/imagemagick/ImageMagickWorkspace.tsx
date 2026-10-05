@@ -9,6 +9,7 @@ import DependencyGate from '../../components/deps/DependencyGate'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import { formatBytes } from '../../lib/depsApi'
 import {
+  GEOMETRY_EXAMPLE,
   GEOMETRY_KEY,
   GEOMETRY_PRESETS,
   IMAGEMAGICK_ID,
@@ -195,7 +196,11 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
                 value={Number.isFinite(quality) ? quality : 85}
                 onChange={(event) => setKey('quality', Number(event.target.value))}
               />
-              <p className="im-field__hint">Applies to JPEG and WebP; PNG ignores it.</p>
+              {/* Checked against real runs: PNG output tracks quality too, but
+                  backwards, because magick reads it as zlib strength. */}
+              <p className="im-field__hint">
+                JPEG and WebP: higher is a bigger file. PNG: higher is a smaller one.
+              </p>
             </div>
 
             <div className="im-field" data-param-key="input_path">
@@ -275,21 +280,28 @@ export default function ImageMagickWorkspace({ manifest, initialInputPath }: Ima
             </div>
 
             <div className="im-field">
-              <span className="im-field__label">
-                <span>What the geometry string means</span>
-              </span>
+              <span className="im-field__label">What the geometry string means</span>
               <p className="im-field__hint">
-                Without an operator a geometry is a box the image fits inside, so{' '}
-                <code>240x160</code> on a 640×400 source comes back 240×150.
+                With no operator the geometry is a box the image fits inside, so{' '}
+                <code>{GEOMETRY_EXAMPLE.geometry}</code> on a {GEOMETRY_EXAMPLE.from} source comes
+                back {GEOMETRY_EXAMPLE.to}.
               </p>
-              <dl className="im-keylist">
-                {GEOMETRY_KEY.map(([token, meaning]) => (
-                  <div key={token} style={{ display: 'contents' }}>
-                    <dt>{token}</dt>
-                    <dd>{meaning}</dd>
-                  </div>
-                ))}
-              </dl>
+              {/*
+                A disclosure rather than a wall: the rail has a finite height, and a
+                table standing open runs past its bottom edge and reads as clipped
+                content rather than as a control that opens.
+              */}
+              <details className="im-keyfold">
+                <summary className="im-keyfold__summary">All geometries</summary>
+                <dl className="im-keylist">
+                  {GEOMETRY_KEY.map(([token, meaning]) => (
+                    <div key={token} style={{ display: 'contents' }}>
+                      <dt>{token}</dt>
+                      <dd>{meaning}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
             </div>
           </div>
         </aside>
