@@ -130,7 +130,6 @@ export default function HomeSite() {
             A tool&apos;s accent comes from its own design brief, so the variety of the set is
             visible before you enter any of it.
           </span>
-          <span>Nothing on this page is a placeholder: a tool without a site says so.</span>
         </footer>
       </div>
     </div>
