@@ -38,3 +38,7 @@
 .om-gate .dep-gate__scroll + p { margin-top:3px !important; }
 .om-gate .dep-gate > div:last-child { margin-top:4px !important; }
 @media(max-width:700px) { .om-gates { grid-template-columns:1fr; max-height:43vh; padding:6px 10px; } .om-gate>span { margin-bottom:2px; } }
+.om-hero__exhibit { min-width:0; max-width:100%; }
+.om-exhibit-caption { max-width:100%; text-align:center; letter-spacing:.08em; }
+.om-exhibit-caption { display:block; width:100%; overflow-wrap:anywhere; }
+@media (min-width:701px) and (max-width:820px) { .om-paper { transform:none; } }
