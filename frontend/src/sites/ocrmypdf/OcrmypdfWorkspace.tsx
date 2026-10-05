@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useToolExecute } from '../../hooks/useToolExecute'
 import { useToolDeps } from '../../hooks/useToolDeps'
 import DependencyGate from '../../components/deps/DependencyGate'
@@ -7,7 +7,6 @@ import type { ToolManifest } from '../../lib/api'
 
 export default function OcrmypdfWorkspace({ manifest, initialInputPath }: { manifest: ToolManifest; initialInputPath?: string }) {
   const location = useLocation()
-  const navigate = useNavigate()
   const [inputPdf, setInputPdf] = useState(initialInputPath ?? (location.state as { inputPath?: string } | null)?.inputPath ?? '')
   const ocrDeps = useToolDeps('ocrmypdf')
   const textDeps = useToolDeps('pdf_tools')
