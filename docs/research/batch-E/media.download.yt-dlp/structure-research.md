@@ -22,16 +22,25 @@ How can the downloader make the first successful save obvious while preserving y
 - **Bandcamp** — Prior browser research showed the item itself (artist/album/track identity and context) leads the page. The useful transfer is to foreground verified media identity during review, rather than making a first-time user parse format names first.
   - https://bandcamp.com/
 
-## Design decision
+## Implemented design decision
 
-Replace the old simultaneous intake + 25-field form + queue composition with three distinct destinations:
+The new download path is a **one-stage-at-a-time workflow** inside an independent Downloader site:
 
-1. **New download** — one URL field and an Inspect action. A successful inspect advances to a review state that contains only real returned metadata; an empty workspace begins here.
-2. **Choose output** — show plain-language intent choices first, then the few common controls relevant to that intent. Keep remaining parameters in a searchable, purpose-grouped Advanced options disclosure; preserve each manifest binding and `data-param-key`.
-3. **Downloads** — a separate full-width activity view grouped by actual queued/running, completed, and failed/cancelled states. Show backend-reported bytes/status and state-appropriate cancel, remove, retry (only if supported), and actual artifact links. Keep New download reachable.
+1. **Inspect** — one URL field and one Inspect media action. A successful response moves to a separate screen; empty workspaces start here.
+2. **Review** — show the real title, thumbnail, publisher, duration, provider, and URL returned by the probe. Back to URL preserves the source and allows edits; continuing advances to output selection.
+3. **Choose output** — ask in plain language whether the saved file should contain video and audio, audio only, or video only. Show only common settings for that choice, with the remaining manifest controls searchable inside purpose-grouped Advanced settings.
+4. **Downloads** — a distinct activity screen for actual task states, byte progress, cancellation/removal and returned artifact links. Queue concurrency is managed here.
+5. **Utilities** — keep the four hosted helper tools out of the primary download path.
 
-Put all four hosted helpers in a separate **Utilities** destination so they do not compete with the downloader's primary path. Preserve queue settings in Downloads or a compact settings disclosure. Keep the dependency gate pinned to the viewport.
+The shared manifest form adapter is intentionally given a non-canonical manifest identifier by `DownloaderParameterControls`, so it falls back to `DynamicForm` and cannot render the legacy DownloaderForm (which contains its own URL and mode controls). Downloader-scoped CSS tokens recolor that generic renderer to the new mist-and-teal palette. This retains the manifest schema bindings while replacing both the former structure and the inherited cream/brown appearance.
 
-## Original synthesis
+## Synthesis and original ideation
 
-The interaction model is **identify → decide → track**. It borrows the useful pacing of media catalogues and file converters without copying a brand. It intentionally avoids a universal form-first dashboard: the user first confirms which media the URL resolves to, then chooses an understandable outcome, and only then sees queue management. The 25 advanced manifest controls remain available for power users but do not block the default path.
+The reference products informed pacing, not a copied visual system: one obvious intake like Stacher/Cobalt, an explicit inspect-and-select transition like JDownloader's LinkGrabber, and a visible source-to-result decision like CloudConvert. Bandcamp's identity-forward media presentation informed the review screen. The resulting product-specific pattern is **inspect → verify → choose → track**: a single focused task per screen with a persistent site navigation for New download, Downloads, and Utilities. The result uses an editorial catalog header, quiet mist background, teal action color, plain-language options, and a sticky installation gate. This deliberately gives a first-time user less simultaneous information while leaving the full manifest power surface available on demand.
+
+## Live implementation review
+
+- Successful computer-use probe: `https://www.youtube.com/watch?v=aqz-KE-bpKQ` returned “Big Buck Bunny 60fps 4K - Official Blender Foundation Short Film”, publisher `Blender`, provider `YouTube`, and a real thumbnail. Review displays those backend values.
+- 390×844: inspect and review stages have no horizontal overflow; output remains operable with a sticky add action and install gate.
+- 768×1024: output controls use the available width and remain in a two-column common-settings layout; no horizontal overflow.
+- Enqueue/download was not run because the backend advertises two missing dependencies (`conda.media`, 660,000,000-byte catalog estimate). The install gate is live and blocks the download path until installed; no download byte event was claimed.

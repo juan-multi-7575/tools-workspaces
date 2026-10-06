@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowDownToLine, ArrowLeft, ArrowRight, RefreshCw, X } from 'lucide-react'
 import { api, errorMessage, resolveUrl, type DownloadTask, type ToolManifest } from '../../lib/api'
@@ -23,6 +23,49 @@ export const DOWNLOADER_HELPERS = [
 
 type ProbeResult = Awaited<ReturnType<typeof api.getVideoInfo>>
 type WorkspaceEntry = { url?: string; probe?: ProbeResult }
+type FlowStep = 'source' | 'review' | 'output'
+type FlowEvent = 'probe-succeeded' | 'continue' | 'edit-url' | 'back-to-review'
+
+export function nextDownloaderFlowStep(step: FlowStep, event: FlowEvent): FlowStep {
+  if (event === 'probe-succeeded' && step === 'source') return 'review'
+  if (event === 'continue' && step === 'review') return 'output'
+  if (event === 'back-to-review' && step === 'output') return 'review'
+  if (event === 'edit-url') return 'source'
+  return step
+}
+
+export function paramsAfterOutputMode(params: Record<string, unknown>, mode: string) {
+  const audioOnly = mode === 'audio_only'
+  const next = { ...params, download_mode: mode, extract_audio: audioOnly }
+  if (audioOnly) return { ...next, format_preset: 'audio' }
+  return { ...next, format_preset: params.format_preset === 'audio' ? 'best' : params.format_preset }
+}
+
+const ADVANCED_GROUPS = [
+  { title: 'Captions and metadata', keys: ['writesubtitles', 'writeautomaticsub', 'subtitleslangs', 'embed_subs', 'embed_thumbnail', 'write_thumbnail', 'embed_metadata'] },
+  { title: 'Playlist and batching', keys: ['playlist_items', 'no_playlist', 'max_downloads'] },
+  { title: 'Network and session', keys: ['limit_rate', 'concurrent_fragments', 'cookies_from_browser', 'cookies_file', 'extractor_args'] },
+  { title: 'File naming and flags', keys: ['output_template', 'restrict_filenames', 'raw_args', 'extract_audio', 'keep_video'] },
+]
+
+export function groupAdvancedSchema(schema: Record<string, unknown>, query: string) {
+  const excluded = new Set(['url', 'download_mode'])
+  const entries = Object.entries(schema).filter(([key]) => !excluded.has(key))
+  const grouped = ADVANCED_GROUPS.map(({ title, keys }) => ({
+    title,
+    schema: Object.fromEntries(entries.filter(([key]) => keys.includes(key) && matchesSearch(key, schema[key], query))),
+  })).filter((group) => Object.keys(group.schema).length > 0)
+  const known = new Set(ADVANCED_GROUPS.flatMap((group) => group.keys))
+  const other = Object.fromEntries(entries.filter(([key]) => !known.has(key) && matchesSearch(key, schema[key], query)))
+  if (Object.keys(other).length) grouped.push({ title: 'Other options', schema: other })
+  return grouped
+}
+
+function matchesSearch(key: string, spec: unknown, query: string) {
+  if (!query.trim()) return true
+  const details = spec && typeof spec === 'object' ? Object.values(spec).filter((value) => typeof value === 'string').join(' ') : ''
+  return `${key} ${details}`.toLowerCase().includes(query.trim().toLowerCase())
+}
 
 export function createProbeWorkspaceEntry(url: string, probe: ProbeResult): WorkspaceEntry {
   return { url: url.trim(), probe }
@@ -194,10 +237,82 @@ export function DownloaderUrlProbe({ value, onChange, onProbe, probing = false, 
   onContinue?: () => void
 }) {
   const facts = result ? probeFacts(result).filter((fact) => fact !== result.title) : []
-  return <div className="dl-probe" data-param-key="url"><label htmlFor="dl-url-probe">Media URL</label><div className="dl-probe__line"><input id="dl-url-probe" type="url" value={value} placeholder="https://…" onChange={(event) => onChange(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && value.trim() && !probing) onProbe() }}/><button onClick={onProbe} disabled={!value.trim() || probing}>{probing ? 'Checking…' : 'Probe'}</button></div>
+  return <div className="dl-probe" data-param-key="url"><label htmlFor="dl-url-probe">Media URL</label><div className="dl-probe__line"><input id="dl-url-probe" type="url" value={value} placeholder="Paste a media link" onChange={(event) => onChange(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && value.trim() && !probing) onProbe() }}/><button onClick={onProbe} disabled={!value.trim() || probing}>{probing ? 'Checking…' : 'Inspect media'}</button></div>
     {error && <p className="dl-error" role="alert">{error}</p>}
     {result && <div className="dl-metadata">{result.thumbnail_url && <img src={result.thumbnail_url} alt=""/>}<div><strong>{result.title || 'Title unavailable'}</strong>{facts.length > 0 && <span>{facts.join(' · ')}</span>}</div>{onContinue && <button className="dl-continue" onClick={onContinue}>Continue with this item <ArrowRight size={13}/></button>}</div>}
   </div>
+}
+
+export function DownloaderSourceStage({ url, onUrlChange, onProbe, probing, probeError, onReturnToReview }: {
+  url: string
+  onUrlChange: (url: string) => void
+  onProbe: () => void
+  probing: boolean
+  probeError: string | null
+  onReturnToReview?: () => void
+}) {
+  return <section className="dl-stage-screen dl-source-screen" aria-labelledby="dl-stage-title">
+    <header className="dl-page-heading"><p className="dl-kicker">NEW DOWNLOAD <i>·</i> INSPECT</p><h1 id="dl-stage-title">Inspect media</h1><p>Start with one link. Review what it points to before choosing the file.</p></header>
+    <div className="dl-source-intake"><DownloaderUrlProbe value={url} onChange={onUrlChange} onProbe={onProbe} probing={probing} error={probeError} result={null}/>{onReturnToReview && <button className="dl-text-button dl-return-item" onClick={onReturnToReview}><ArrowLeft size={13}/> Back to inspected item</button>}</div>
+  </section>
+}
+
+export function DownloaderReviewStage({ url, probe, onEditUrl, onContinue }: {
+  url: string
+  probe: ProbeResult
+  onEditUrl: () => void
+  onContinue: () => void
+}) {
+  const facts = [
+    typeof probe.author_name === 'string' && probe.author_name ? ['Publisher', probe.author_name] : null,
+    typeof probe.duration === 'number' && Number.isFinite(probe.duration) ? ['Duration', `${Math.round(probe.duration)} sec`] : null,
+    typeof probe.provider_name === 'string' && probe.provider_name ? ['Source', probe.provider_name] : null,
+  ].filter((fact): fact is [string, string] => Boolean(fact))
+  return <section className="dl-stage-screen dl-review-screen" aria-labelledby="dl-stage-title">
+    <header className="dl-page-heading"><p className="dl-kicker">NEW DOWNLOAD <i>·</i> REVIEW</p><h1 id="dl-stage-title">Does this look right?</h1><p>Confirm the item returned for this link.</p></header>
+    <p className="dl-review-url" title={url}>{url}</p>
+    <div className="dl-review-card">{probe.thumbnail_url && <img src={probe.thumbnail_url} alt=""/>}<div>{typeof probe.title === 'string' && probe.title && <strong>{probe.title}</strong>}{facts.length > 0 && <dl>{facts.map(([label, fact]) => <Fragment key={`${label}-${fact}`}><dt>{label}</dt><dd>{fact}</dd></Fragment>)}</dl>}{!probeFacts(probe).length && <p>No metadata was returned for this link.</p>}</div></div>
+    <div className="dl-stage-actions"><button className="dl-text-button" onClick={onEditUrl}><ArrowLeft size={14}/> Back to URL</button><button className="dl-button" onClick={onContinue}>Continue to output <ArrowRight size={14}/></button></div>
+  </section>
+}
+
+export function DownloaderOutputStage({ url, schema, commonSchema, params, onParamsChange, onBackToReview, onEditUrl, onEnqueue, enqueuePending, advancedSearch, onAdvancedSearch }: {
+  url: string
+  schema: Record<string, unknown>
+  commonSchema: Record<string, unknown>
+  params: Record<string, unknown>
+  onParamsChange: (next: Record<string, unknown>) => void
+  onBackToReview: () => void
+  onEditUrl: () => void
+  onEnqueue: () => void
+  enqueuePending: boolean
+  advancedSearch: string
+  onAdvancedSearch: (query: string) => void
+}) {
+  const modeField = schema.download_mode && typeof schema.download_mode === 'object' ? schema.download_mode as { title?: string; description?: string; enum?: unknown[] } : {}
+  const modes = modeField.enum ?? []
+  const selectedMode = String(params.download_mode ?? 'video_audio')
+  const advancedSchema = Object.fromEntries(Object.entries(schema).filter(([key]) => key !== 'url' && key !== 'download_mode' && !Object.hasOwn(commonSchema, key)))
+  const advancedGroups = groupAdvancedSchema(advancedSchema, advancedSearch)
+  const modeNames: Record<string, string> = { video_audio: 'Video + audio', audio_only: 'Audio only', video_only: 'Video only' }
+  return <section className="dl-stage-screen dl-output-screen" aria-labelledby="dl-stage-title">
+    <header className="dl-page-heading"><p className="dl-kicker">NEW DOWNLOAD <i>·</i> CHOOSE OUTPUT</p><h1 id="dl-stage-title">Choose the file you need.</h1><p>Pick an outcome, then adjust the few settings that shape it.</p></header>
+    <div className="dl-output-context"><span title={url}>{url}</span><div><button className="dl-text-button" onClick={onBackToReview}><ArrowLeft size={13}/> Back to item</button><button className="dl-text-button" onClick={onEditUrl}>Edit URL</button></div></div>
+    <section className="dl-intent-control" data-param-key="download_mode" aria-labelledby="dl-intent-title">
+      <div><h2 id="dl-intent-title">What should the saved file contain?</h2><p>{modeField.description}</p></div>
+      <div className="dl-intent-options" role="radiogroup" aria-label={modeField.title ?? 'Download mode'}>{modes.map((rawMode) => {
+        const option = String(rawMode)
+        return <button type="button" key={option} role="radio" aria-checked={selectedMode === option} className={selectedMode === option ? 'is-selected' : ''} onClick={() => onParamsChange(paramsAfterOutputMode(params, option))}><span>{modeNames[option] ?? option}</span><small>{option === 'audio_only' ? 'An audio track' : option === 'video_only' ? 'A silent video' : 'Picture and sound'}</small></button>
+      })}</div>
+    </section>
+    <section className="dl-common-options"><header><div><p className="dl-kicker">FILE OPTIONS</p><h2>{selectedMode === 'audio_only' ? 'Audio format and quality' : 'Quality and container'}</h2></div><span>Optional</span></header><DownloaderParameterControls schema={commonSchema} value={params} onChange={onParamsChange}/></section>
+    <details className="dl-advanced"><summary><span>Advanced settings</span><small>{Object.keys(advancedSchema).length} controls</small></summary>
+      <div className="dl-advanced__body"><label className="dl-advanced-search"><span>Find a setting</span><input type="search" value={advancedSearch} onChange={(event) => onAdvancedSearch(event.target.value)} placeholder="Search names and descriptions"/></label>
+        {advancedGroups.length ? advancedGroups.map((group) => <section className="dl-advanced-group" key={group.title}><h3>{group.title}</h3><DownloaderParameterControls schema={group.schema} value={params} onChange={onParamsChange}/></section>) : <p className="dl-advanced-empty">No settings match that search.</p>}
+      </div>
+    </details>
+    <footer className="dl-submit-bar"><div><strong>Add this item to Downloads</strong><span>{url}</span></div><button className="dl-button" onClick={onEnqueue} disabled={!url.trim() || enqueuePending}>{enqueuePending ? 'Adding…' : <><ArrowDownToLine size={15}/> Add to downloads <ArrowRight size={15}/></>}</button></footer>
+  </section>
 }
 
 export function taskIsStale(task: DownloadTask, value: Record<string, unknown>, schema: Record<string, unknown>, submittedParams?: Record<string, unknown>) {
@@ -255,7 +370,8 @@ export default function DownloaderSite({ siteState }: { siteState: 'hero' | 'wor
   const deps = useToolDeps(ID)
   const [params, setParams] = useState<Record<string, unknown>>(() => entry.url ? { url: entry.url } : {})
   const [probe, setProbe] = useState<ProbeResult | null>(() => entry.probe ?? null)
-  const [flowStep, setFlowStep] = useState<'source' | 'review' | 'output'>(() => entry.probe ? 'review' : 'source')
+  const [flowStep, setFlowStep] = useState<FlowStep>(() => entry.probe ? 'review' : 'source')
+  const [advancedSearch, setAdvancedSearch] = useState('')
   const [probeError, setProbeError] = useState<string | null>(null)
   const [probing, setProbing] = useState(false)
   const probeSequence = useRef(0)
@@ -276,6 +392,7 @@ export default function DownloaderSite({ siteState }: { siteState: 'hero' | 'wor
   const activeTasks = queue.filter((task) => task.status === 'queued' || task.status === 'running')
   const readyTasks = queue.filter((task) => task.status === 'completed')
   const attentionTasks = queue.filter((task) => task.status === 'failed' || task.status === 'cancelled')
+  const moveFlow = (event: FlowEvent) => setFlowStep((current) => nextDownloaderFlowStep(current, event))
 
   useEffect(() => { if (manifest) setParams((old) => ({ ...defaults(manifest.parameters_schema ?? {}), ...old })) }, [manifest])
   useEffect(() => {
@@ -321,29 +438,28 @@ export default function DownloaderSite({ siteState }: { siteState: 'hero' | 'wor
   const changeUrl = (url: string) => {
     draftRevision.current += 1
     probeSequence.current += 1
-    setParams((old) => ({ ...old, url })); setProbe(null); setProbeError(null); setProbing(false); setFlowStep('source')
+    setParams((old) => ({ ...old, url })); setProbe(null); setProbeError(null); setProbing(false); moveFlow('edit-url')
   }
   const probeUrl = async () => {
     const url = String(params.url ?? '').trim()
     const sequence = ++probeSequence.current
     setProbe(null); setProbeError(null); setProbing(true)
-    try { const result = await api.getVideoInfo(url); if (sequence === probeSequence.current) { setProbe(result); setFlowStep('review') } }
+    try { const result = await api.getVideoInfo(url); if (sequence === probeSequence.current) { setProbe(result); moveFlow('probe-succeeded') } }
     catch (cause) { if (sequence === probeSequence.current) setProbeError(errorMessage(cause)) }
     finally { if (sequence === probeSequence.current) setProbing(false) }
   }
   const editSource = () => {
-    draftRevision.current += 1
-    setProbe(null); setProbeError(null); setFlowStep('source')
+    setProbeError(null); moveFlow('edit-url')
   }
   const resetDraft = () => {
     draftRevision.current += 1
     setParams(paramsAfterEnqueue(schema))
-    setProbe(null); setProbeError(null); setProbing(false); setFlowStep('source')
+    setProbe(null); setProbeError(null); setProbing(false); setFlowStep('source'); setAdvancedSearch('')
   }
   const clearAcceptedSource = (submittedParams: Record<string, unknown>) => {
     draftRevision.current += 1
     setParams(paramsAfterAcceptedSource(submittedParams))
-    setProbe(null); setProbeError(null); setProbing(false); setFlowStep('source')
+    setProbe(null); setProbeError(null); setProbing(false); setFlowStep('source'); setAdvancedSearch('')
   }
   const enqueue = async () => {
     if (enqueueGuard.current || !String(params.url ?? '').trim()) return
@@ -384,7 +500,6 @@ export default function DownloaderSite({ siteState }: { siteState: 'hero' | 'wor
       ? ['format_preset', 'merge_output_format']
       : ['format_preset', 'merge_output_format']
   const commonSchema = Object.fromEntries(commonKeys.filter((key) => key in schema).map((key) => [key, schema[key]]))
-  const advancedSchema = Object.fromEntries(Object.entries(schema).filter(([key]) => key !== 'url' && key !== 'download_mode' && !commonKeys.includes(key)))
   const renderRows = (tasks: DownloadTask[]) => tasks.map((task) => <DownloaderTaskRow key={task.id} task={task} stale={taskIsStale(task, params, schema, submittedParamsByTask[task.id])} onCancel={() => void cancel(task.id)} onRemove={() => void remove(task.id)}/> )
   const queueSection = (label: string, note: string, tasks: DownloadTask[], empty: string) => <section className="dl-download-group" key={label}>
     <header><h2>{label}</h2><span>{String(tasks.length).padStart(2, '0')}</span></header>
@@ -394,39 +509,19 @@ export default function DownloaderSite({ siteState }: { siteState: 'hero' | 'wor
   return <main className="dl-root dl-workspace">
     <header className="dl-header"><Link to="/" className="dl-home"><ArrowLeft size={15}/> Index</Link><div className="dl-header__title"><span className="dl-mark"/><strong>Media desk</strong><span>{ID}</span></div><button className="dl-refresh" onClick={() => void refresh()}><RefreshCw size={14}/> Refresh queue</button></header>
     <nav className="dl-nav" aria-label="Downloader sections">
-      <button className={view === 'new' ? 'is-active' : ''} aria-current={view === 'new' ? 'page' : undefined} onClick={() => setView('new')}><span>01</span> New download</button>
-      <button className={view === 'downloads' ? 'is-active' : ''} aria-current={view === 'downloads' ? 'page' : undefined} onClick={() => setView('downloads')}><span>02</span> Downloads <b>{queue.length}</b></button>
-      <button className={view === 'utilities' ? 'is-active' : ''} aria-current={view === 'utilities' ? 'page' : undefined} onClick={() => setView('utilities')}><span>03</span> Utilities</button>
+      <button className={view === 'new' ? 'is-active' : ''} aria-current={view === 'new' ? 'page' : undefined} onClick={() => setView('new')}>New download</button>
+      <button className={view === 'downloads' ? 'is-active' : ''} aria-current={view === 'downloads' ? 'page' : undefined} onClick={() => setView('downloads')}>Downloads <b>{queue.length}</b></button>
+      <button className={view === 'utilities' ? 'is-active' : ''} aria-current={view === 'utilities' ? 'page' : undefined} onClick={() => setView('utilities')}>Utilities</button>
     </nav>
     {queueError && <p role="alert" className="dl-error dl-queue-error dl-global-error">{queueError}</p>}
     <div className="dl-view-scroll">
       {view === 'new' && <section className="dl-new-view" aria-labelledby="dl-new-title">
-        <header className="dl-page-heading"><p className="dl-kicker">NEW DOWNLOAD <i>·</i> ONE ITEM AT A TIME</p><h1 id="dl-new-title">What do you want to bring in?</h1><p>Inspect the link first. Then choose the file you need.</p></header>
-        <div className="dl-flow">
-          <section className="dl-flow-step dl-source-step"><div className="dl-step-number">01</div><div className="dl-step-content"><header><div><p className="dl-kicker">Source</p><h2>Paste one media link</h2></div><span className={probe ? 'dl-step-state is-ready' : 'dl-step-state'}>{probe ? 'INSPECTED' : 'WAITING'}</span></header>
-            <DownloaderUrlProbe value={String(params.url ?? '')} onChange={changeUrl} onProbe={() => void probeUrl()} probing={probing} error={probeError} result={probe}/>
-          </div></section>
-          {probe && flowStep === 'review' && <section className="dl-flow-step dl-reviewed-step"><div className="dl-step-number">02</div><div className="dl-step-content"><header><div><p className="dl-kicker">Review returned details</p><h2>The item yt-dlp identified</h2></div><span className="dl-step-state is-ready">FROM PROBE</span></header>
-              <p className="dl-review-url" title={String(params.url ?? '')}>{String(params.url ?? '')}</p>
-              <div className="dl-review-card">{probe.thumbnail_url && <img src={probe.thumbnail_url} alt=""/>}<div><strong>{probe.title || 'Title not returned'}</strong><dl>{typeof probe.author_name === 'string' && probe.author_name && <><dt>Publisher</dt><dd>{probe.author_name}</dd></>}{typeof probe.duration === 'number' && Number.isFinite(probe.duration) && <><dt>Duration</dt><dd>{Math.round(probe.duration)} sec</dd></>}{probe.provider_name && <><dt>Source</dt><dd>{probe.provider_name}</dd></>}</dl>{!probeFacts(probe).length && <p>No additional metadata was returned for this link.</p>}</div></div>
-              <div className="dl-step-actions"><button className="dl-text-button" onClick={editSource}><ArrowLeft size={13}/> Change URL</button><button className="dl-button" onClick={() => setFlowStep('output')}>Continue to output <ArrowRight size={14}/></button></div>
-            </div></section>}
-          {probe && flowStep === 'output' && <>
-            <div className="dl-output-source"><button className="dl-text-button" onClick={editSource}><ArrowLeft size={13}/> Edit URL</button><span title={String(params.url ?? '')}>{String(params.url ?? '')}</span><button className="dl-text-button" onClick={() => setFlowStep('review')}>Review item</button></div>
-            <section className="dl-flow-step dl-output-step"><div className="dl-step-number">03</div><div className="dl-step-content"><header><div><p className="dl-kicker">Output intent</p><h2>What should the saved file contain?</h2></div><span className="dl-step-state">CHOOSE ONE</span></header>
-              <DownloaderParameterControls schema={{ download_mode: schema.download_mode }} value={params} onChange={changeParams}/>
-            </div></section>
-            <section className="dl-flow-step dl-common-step"><div className="dl-step-number">04</div><div className="dl-step-content"><header><div><p className="dl-kicker">File choices</p><h2>{mode === 'audio_only' ? 'Choose an audio format' : 'Choose quality and container'}</h2></div><span className="dl-step-state">COMMON</span></header>
-              <DownloaderParameterControls schema={commonSchema} value={params} onChange={changeParams}/>
-            </div></section>
-            <details className="dl-advanced"><summary><span>Advanced options</span><small>{Object.keys(advancedSchema).length} additional controls · searchable and grouped</small></summary>
-              <p>Optional download behavior, playlist selection, subtitles, filenames, and network controls.</p>
-              <DownloaderParameterControls schema={advancedSchema} value={params} onChange={changeParams}/>
-            </details>
-            <footer className="dl-submit-bar"><div><strong>Ready to add this item?</strong><span>{String(params.url ?? '')}</span></div><button className="dl-button" onClick={() => void enqueue()} disabled={!String(params.url ?? '').trim() || enqueuePending}>{enqueuePending ? 'Adding…' : <><ArrowDownToLine size={15}/> Add to downloads <ArrowRight size={15}/></>}</button></footer>
-          </>}
-          {flowStep === 'source' && !probe && !probing && <p className="dl-next-hint">After inspection, review the returned details before choosing an output.</p>}
-        </div>
+        {flowStep === 'review' && probe
+          ? <DownloaderReviewStage url={String(params.url ?? '')} probe={probe} onEditUrl={editSource} onContinue={() => moveFlow('continue')}/>
+          : flowStep === 'output' && probe
+            ? <DownloaderOutputStage url={String(params.url ?? '')} schema={schema} commonSchema={commonSchema} params={params} onParamsChange={changeParams} onBackToReview={() => moveFlow('back-to-review')} onEditUrl={editSource} onEnqueue={() => void enqueue()} enqueuePending={enqueuePending} advancedSearch={advancedSearch} onAdvancedSearch={setAdvancedSearch}/>
+            : <DownloaderSourceStage url={String(params.url ?? '')} onUrlChange={changeUrl} onProbe={() => void probeUrl()} probing={probing} probeError={probeError} onReturnToReview={probe ? () => moveFlow('probe-succeeded') : undefined}/>
+        }
       </section>}
       {view === 'downloads' && <section className="dl-downloads-view" aria-labelledby="dl-downloads-title">
         <header className="dl-page-heading dl-downloads-heading"><div><p className="dl-kicker">DOWNLOADS <i>·</i> LIVE TASKS</p><h1 id="dl-downloads-title">Your downloads</h1><p>Track each item from the queue to the file on disk.</p></div><button className="dl-button" onClick={startNewDraft}><ArrowLeft size={14}/> New download</button></header>

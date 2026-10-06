@@ -25,6 +25,8 @@ const MANIFEST = JSON.parse(
   readFileSync(new URL('./fixtures/downloaderManifest.json', import.meta.url), 'utf8'),
 ) as ToolManifest
 const SITE_SOURCE = readFileSync(new URL('../sites/downloader/DownloaderSite.tsx', import.meta.url), 'utf8')
+const SITE_STYLES = readFileSync(new URL('../sites/downloader/downloader.css', import.meta.url), 'utf8')
+const flowModule = await import('../sites/downloader/DownloaderSite')
 
 test('the hero has two entry paths after probe and links home without platform chrome', () => {
   const hero = renderToStaticMarkup(<MemoryRouter><DownloaderHero manifest={MANIFEST}/></MemoryRouter>)
@@ -60,11 +62,71 @@ test('workspace retains probe facts and continues from the probed URL into optio
   assert.match(html, /34 sec/)
   assert.match(html, /Continue with this item/)
   assert.match(SITE_SOURCE, /enqueueDownload\(submittedParams\)/, 'the options form is sent to the real queue API')
-  assert.match(SITE_SOURCE, /probe && flowStep === 'review'/, 'the metadata review is its own step')
+  assert.match(SITE_SOURCE, /flowStep === 'review'[\s\S]*DownloaderReviewStage/, 'the metadata review is its own screen')
   assert.match(SITE_SOURCE, /Continue to output/, 'the review step has a deliberate continue action')
-  assert.match(SITE_SOURCE, /probe && flowStep === 'output'/, 'output controls wait for the continue action')
-  assert.match(SITE_SOURCE, /flowStep === 'output'[\s\S]*?dl-submit-bar/, 'the enqueue action appears only in the output step')
+  assert.match(SITE_SOURCE, /flowStep === 'output'[\s\S]*DownloaderOutputStage/, 'output controls wait for the continue action')
+  assert.match(SITE_SOURCE, /DownloaderOutputStage[\s\S]*dl-submit-bar/, 'the enqueue action appears only in the output step')
   assert.match(SITE_SOURCE, /What should the saved file contain\?/, 'probe results lead into a plain-language output intent')
+})
+
+test('downloader stage transitions move through inspect, review, output, and back without skipping identity review', () => {
+  assert.equal(typeof flowModule.nextDownloaderFlowStep, 'function', 'the staged flow transition is explicit and testable')
+  const next = flowModule.nextDownloaderFlowStep as (step: 'source' | 'review' | 'output', event: string) => string
+  assert.equal(next('source', 'probe-succeeded'), 'review')
+  assert.equal(next('review', 'continue'), 'output')
+  assert.equal(next('review', 'edit-url'), 'source')
+  assert.equal(next('output', 'back-to-review'), 'review')
+  assert.equal(next('output', 'edit-url'), 'source')
+  assert.deepEqual(flowModule.paramsAfterOutputMode({ download_mode: 'audio_only', extract_audio: true, format_preset: 'audio' }, 'video_audio'), {
+    download_mode: 'video_audio', extract_audio: false, format_preset: 'best',
+  })
+  assert.deepEqual(flowModule.paramsAfterOutputMode({ download_mode: 'video_audio', extract_audio: false, format_preset: 'best' }, 'audio_only'), {
+    download_mode: 'audio_only', extract_audio: true, format_preset: 'audio',
+  })
+  assert.match(SITE_SOURCE, /moveFlow\('probe-succeeded'\)/)
+  assert.match(SITE_SOURCE, /moveFlow\('continue'\)/)
+  assert.match(SITE_SOURCE, /moveFlow\('edit-url'\)/)
+})
+
+test('source, review, and output are separate screens with only their stage actions visible', () => {
+  const Source = flowModule.DownloaderSourceStage as React.ComponentType<Record<string, unknown>> | undefined
+  const Review = flowModule.DownloaderReviewStage as React.ComponentType<Record<string, unknown>> | undefined
+  const Output = flowModule.DownloaderOutputStage as React.ComponentType<Record<string, unknown>> | undefined
+  assert.ok(Source && Review && Output, 'each flow stage has its own renderable component')
+  if (!Source || !Review || !Output) return
+  const props = { url: 'https://media.example/item', schema: MANIFEST.parameters_schema, commonSchema: { format_preset: MANIFEST.parameters_schema.format_preset, merge_output_format: MANIFEST.parameters_schema.merge_output_format }, params: { url: 'https://media.example/item', download_mode: 'video_audio', format_preset: 'best', merge_output_format: 'mp4' }, onUrlChange: () => {}, onProbe: () => {}, probing: false, probeError: null, probe: { title: 'Returned title', author_name: 'Publisher', duration: 22, provider_name: 'Site' }, onEditUrl: () => {}, onContinue: () => {}, onBackToReview: () => {}, onParamsChange: () => {}, onEnqueue: () => {}, enqueuePending: false, advancedSearch: '', onAdvancedSearch: () => {} }
+  const source = renderToStaticMarkup(<Source {...props}/>)
+  const review = renderToStaticMarkup(<Review {...props}/>)
+  const output = renderToStaticMarkup(<Output {...props}/>)
+  assert.match(source, /Inspect media/)
+  assert.match(source, /Paste a media link/)
+  assert.doesNotMatch(source, /Returned title|Add to downloads|Advanced options/)
+  assert.match(review, /Returned title/)
+  assert.match(review, /Back to URL/)
+  assert.match(review, /Continue to output/)
+  assert.doesNotMatch(review, /Paste a media link|Advanced options|Add to downloads/)
+  assert.match(output, /What should the saved file contain\?/)
+  assert.match(output, /Advanced settings/)
+  assert.match(output, /Add to downloads/)
+  assert.doesNotMatch(output, /Paste a media link|Returned title/)
+})
+
+test('advanced downloader controls can be searched and remain purpose-grouped', () => {
+  assert.equal(typeof flowModule.groupAdvancedSchema, 'function', 'advanced controls have a searchable grouping helper')
+  const group = flowModule.groupAdvancedSchema as (schema: Record<string, unknown>, query: string) => Array<{ title: string; schema: Record<string, unknown> }>
+  const groups = group(MANIFEST.parameters_schema, '')
+  const groupedKeys = Object.keys(Object.assign({}, ...groups.map((item) => item.schema))).sort()
+  const expectedAdvancedKeys = Object.keys(MANIFEST.parameters_schema).filter((key) => key !== 'url' && key !== 'download_mode').sort()
+  assert.deepEqual(groupedKeys, expectedAdvancedKeys, 'every non-primary manifest field remains reachable in Advanced settings')
+  assert.ok(groups.some((item) => item.title === 'Captions and metadata'))
+  assert.ok(groups.some((item) => item.title === 'Playlist and batching'))
+  assert.ok(groups.some((item) => item.title === 'Network and session'))
+  const filtered = group(MANIFEST.parameters_schema, 'cookie')
+  assert.ok(filtered.length > 0)
+  assert.deepEqual(Object.keys(Object.assign({}, ...filtered.map((item) => item.schema))), ['cookies_from_browser', 'cookies_file'])
+  const css = readFileSync(new URL('../sites/downloader/downloader.css', import.meta.url), 'utf8')
+  assert.doesNotMatch(css, /font:\s*12px inherit/, 'advanced search uses a valid font declaration')
+  assert.match(css, /\.dl-advanced-search input\s*\{[^}]*font-size:\s*12px/)
 })
 
 test('starting a new draft uses defaults while accepted-source clearing retains output settings', () => {
@@ -80,7 +142,7 @@ test('starting a new draft uses defaults while accepted-source clearing retains 
   assert.match(SITE_SOURCE, /setParams\(paramsAfterEnqueue\(schema\)\)/)
   assert.match(SITE_SOURCE, /enqueueGuard\.current/)
   assert.match(SITE_SOURCE, /enqueuePending/)
-  assert.match(SITE_SOURCE, /disabled=\{!String\(params\.url \?\? ''\)\.trim\(\) \|\| enqueuePending\}/)
+  assert.match(SITE_SOURCE, /disabled=\{!url\.trim\(\) \|\| enqueuePending\}/)
   assert.match(SITE_SOURCE, /const submittedRevision = draftRevision\.current/)
   assert.match(SITE_SOURCE, /if \(shouldResetDraftAfterEnqueue\(draftRevision\.current, submittedRevision\)\)/)
   assert.match(SITE_SOURCE, /persistSubmittedParams\(window\.sessionStorage/)
@@ -131,7 +193,7 @@ test('the guided flow binds one hand-built URL and all other manifest keys throu
   assert.match(SITE_SOURCE, /In progress/)
   assert.match(SITE_SOURCE, /Needs attention/)
   assert.match(SITE_SOURCE, /view === 'utilities'/)
-  assert.match(SITE_SOURCE, /Object\.fromEntries\(Object\.entries\(schema\).*commonKeys/)
+  assert.match(SITE_SOURCE, /Object\.fromEntries\(Object\.entries\(schema\)\.filter\(\(\[key\]\) => key !== 'url' && key !== 'download_mode' && !Object\.hasOwn\(commonSchema, key\)\)\)/)
 })
 
 test('the hosted utility catalogue contains all four independent helper manifests', () => {
@@ -144,6 +206,13 @@ test('the hosted utility catalogue contains all four independent helper manifest
   ])
   for (const [, title] of DOWNLOADER_HELPERS) assert.ok(SITE_SOURCE.includes(title))
   assert.match(SITE_SOURCE, /useToolExecute\(id\)/)
+})
+
+test('shared manifest controls inherit the downloader palette instead of the legacy cream wells', () => {
+  assert.match(SITE_STYLES, /--tool-accent:\s*var\(--dl-accent\)/)
+  assert.match(SITE_STYLES, /\.dl-root \.tool-form\s*\{[^}]*--tool-well:\s*#f3f8f8/)
+  assert.match(SITE_STYLES, /\.dl-root \.tool-form\s*\{[^}]*--tool-edge:\s*var\(--dl-line\)/)
+  assert.doesNotMatch(SITE_STYLES, /--tool-well:\s*#F2EBD9/)
 })
 
 function renderTask(progress: Record<string, unknown>, status: DownloadTask['status'] = 'running') {
