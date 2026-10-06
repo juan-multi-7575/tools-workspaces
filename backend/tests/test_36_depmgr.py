@@ -84,6 +84,10 @@ def test_tool_map_matches_actual_shelled_out_binaries():
     assert set(catalog.get("conda.poppler").provides) == {"pdftotext", "pdfinfo"}
     # script_runner only needs the python it already runs on.
     assert TOOL_DEPENDENCIES["script_runner"] == []
+    # Subtitle translation parses and writes SRT/VTT in Python and calls its LLM
+    # provider directly; its implementation does not invoke ffmpeg or ffprobe.
+    assert TOOL_DEPENDENCIES["subtitle.translate.srt"] == []
+    assert TOOL_DEPENDENCIES["subtitle_translator"] == []
     # The four atomic helpers are pure parameter plumbing.
     for helper in ("media.download.resolve", "media.download.format_select",
                    "media.subtitle.fetch", "media.thumbnail.get"):
@@ -322,8 +326,6 @@ def test_dependents_returns_the_actual_tool_list(tmp_path):
         "downloader",
         "media.download.yt-dlp",
         "mediainfo",
-        "subtitle.translate.srt",
-        "subtitle_translator",
         "transcriber",
         "trimmer",
     ]
