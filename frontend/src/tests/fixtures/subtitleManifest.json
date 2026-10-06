@@ -1,0 +1,15 @@
+{
+  "id": "subtitle.translate.srt",
+  "name": "Subtitle Translator",
+  "description": "Translate subtitle cues while preserving their timing and order.",
+  "input_kinds": ["document"],
+  "output_kinds": ["document"],
+  "parameters_schema": {
+    "input_path": { "type": "string", "title": "Subtitle File", "default": "" },
+    "target_lang": { "type": "string", "title": "Target Language", "enum": ["English", "Korean", "Japanese"], "default": "English" },
+    "source_lang": { "type": "string", "title": "Source Language", "enum": ["auto", "Korean", "Japanese"], "default": "auto" },
+    "provider": { "type": "string", "title": "Provider", "enum": ["auto", "groq", "openai"], "default": "auto" },
+    "model": { "type": "string", "title": "Model", "default": "auto" },
+    "batch_size": { "type": "number", "title": "Batch Size", "default": 50, "minimum": 1, "maximum": 100 }
+  }
+}
