@@ -192,3 +192,24 @@ def test_subtitle_batch_failure_retains_partial_artifacts(client, tmp_path, monk
     assert "Original 32" in content
     assert secret not in result.text
     assert secret not in caplog.text
+
+
+def test_subtitle_missing_later_input_retains_failed_cue_indices(client, tmp_path, monkeypatch):
+    source = tmp_path / "partial.srt"
+    source.write_text("21\n00:00:01,000 --> 00:00:02,000\nOriginal 21\n")
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+
+    async def omitted_chat(self, provider, key, model, system_prompt, user_prompt, timeout=120.0):
+        return ""
+
+    monkeypatch.setattr(SubtitleTranslatorTool, "_call_llm_chat", omitted_chat)
+    result = client.post("/api/tools/subtitle.translate.srt/execute", json={
+        "kind": "standalone", "destination": str(tmp_path / "out"),
+        "params": {"input_paths": [str(source), str(tmp_path / "missing.srt")], "provider": "groq"},
+    })
+    body = result.json()
+    assert body["status"] == "failed"
+    assert body["data"]["failed_cue_indices"] == [21]
+    assert "not found" in body["error"]["message"]
+    assert len(body["artifacts"]) == 3
+    assert "Original 21" in (tmp_path / "out" / "partial.en.srt").read_text()

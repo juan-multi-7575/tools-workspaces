@@ -272,7 +272,10 @@ class SubtitleTranslatorTool(LlmTranslatorTool):
         for p in input_paths:
             resolved = resolve_input_file(p)
             if not resolved or not resolved.exists():
-                return ToolResult(artifacts=artifacts, status="failed", error=f"input file not found: {p}")
+                return ToolResult(
+                    artifacts=artifacts, status="failed", error=f"input file not found: {p}",
+                    data={"failed_cue_indices": failed_cue_indices},
+                )
             src = resolved
 
             text_content = src.read_text(encoding="utf-8", errors="replace")
@@ -322,14 +325,22 @@ class SubtitleTranslatorTool(LlmTranslatorTool):
                 artifacts.append(Artifact(path=str(out_txt), kind=PortKind.text, name=out_txt.name))
 
             else:
-                translated_text = await self._translate_plain_text(
-                    text=text_content,
-                    target_lang=target_lang,
-                    source_lang=source_lang,
-                    provider=resolved_provider,
-                    key=resolved_key,
-                    model=chosen_model,
-                )
+                try:
+                    translated_text = await self._translate_plain_text(
+                        text=text_content,
+                        target_lang=target_lang,
+                        source_lang=source_lang,
+                        provider=resolved_provider,
+                        key=resolved_key,
+                        model=chosen_model,
+                    )
+                except Exception:
+                    return ToolResult(
+                        artifacts=artifacts,
+                        status="failed",
+                        error="AI provider text translation failed. Check provider credentials and availability, then retry.",
+                        data={"failed_cue_indices": failed_cue_indices},
+                    )
                 stem = src.stem
                 out_doc = dest / f"{stem}_{lang_code}.txt"
                 out_doc.write_text(translated_text, encoding="utf-8")

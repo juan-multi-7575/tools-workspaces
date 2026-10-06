@@ -141,14 +141,21 @@ class LlmTranslatorTool(Tool):
             src = resolved
 
             text_content = src.read_text(encoding="utf-8", errors="replace")
-            translated_text = await self._translate_plain_text(
-                text=text_content,
-                target_lang=target_lang,
-                source_lang=source_lang,
-                provider=resolved_provider,
-                key=resolved_key,
-                model=chosen_model,
-            )
+            try:
+                translated_text = await self._translate_plain_text(
+                    text=text_content,
+                    target_lang=target_lang,
+                    source_lang=source_lang,
+                    provider=resolved_provider,
+                    key=resolved_key,
+                    model=chosen_model,
+                )
+            except Exception:
+                return ToolResult(
+                    artifacts=artifacts,
+                    status="failed",
+                    error="AI provider text translation failed. Check provider credentials and availability, then retry.",
+                )
             stem = src.stem
             out_doc = dest / f"{stem}_{lang_code}.txt"
             out_doc.write_text(translated_text, encoding="utf-8")
