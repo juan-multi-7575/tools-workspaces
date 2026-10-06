@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import subprocess
 import time
 from collections import deque
@@ -410,6 +411,10 @@ def execute_ydl(
     outtmpl = str(outdir / "%(title)s.%(ext)s")
     ydl_opts = build_ydl_opts(params, outtmpl)
     cmd = _to_cli(ydl_opts)
+    cmd += [
+        "--progress-template",
+        "download:[download] %(progress._percent_str)s of %(progress.downloaded_bytes)s/%(progress.total_bytes)s at %(progress._speed_str)s ETA %(progress._eta_str)s",
+    ]
     raw = params.get("raw_args")
     if raw:
         ok, err = validate_raw_args(raw)
@@ -508,16 +513,24 @@ def _parse_progress(line: str) -> dict | None:
     line = line.strip()
     if not line.startswith("[download]"):
         return None
-    if "%" not in line:
+    percent_match = re.search(r"([-+]?(?:\d+(?:\.\d*)?|\.\d+))%", line)
+    byte_match = re.search(r"\bof\s+(\d+)/(\d+|NA|None)\b", line, re.IGNORECASE)
+    if percent_match is None and byte_match is None:
         return None
-    try:
-        pct_str = line.split("%")[0].split()[-1]
-        percent = float(pct_str)
-    except (ValueError, IndexError):
-        return None
+    msg: dict[str, Any] = {"status": "downloading"}
+    if percent_match is not None:
+        msg["percent"] = float(percent_match.group(1))
     speed = _extract_field(line, " at ", "ETA")
     eta = _extract_field(line, "ETA ", None)
-    return {"status": "downloading", "percent": percent, "speed": speed, "eta": eta}
+    if speed is not None:
+        msg["speed"] = speed
+    if eta is not None:
+        msg["eta"] = eta
+    if byte_match is not None:
+        msg["downloaded_bytes"] = int(byte_match.group(1))
+        if byte_match.group(2).isdigit():
+            msg["total_bytes"] = int(byte_match.group(2))
+    return msg
 
 
 def _extract_field(line: str, start: str, end: str | None) -> str | None:

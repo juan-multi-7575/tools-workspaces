@@ -11,10 +11,32 @@ from app.tools.downloader import (
     _to_cli,
     build_ydl_opts,
     execute_ydl,
+    _parse_progress,
     validate_raw_args,
     split_raw_args,
 )
 from app.tools.base import ToolRunContext
+
+
+def test_parse_progress_reports_actual_downloaded_and_total_bytes():
+    progress = _parse_progress(
+        "[download]  50.0% of 2000000/4000000 at 1.00MiB/s ETA 00:02"
+    )
+    assert progress == {
+        "status": "downloading",
+        "percent": 50.0,
+        "speed": "1.00MiB/s",
+        "eta": "00:02",
+        "downloaded_bytes": 2000000,
+        "total_bytes": 4000000,
+    }
+
+
+def test_parse_progress_keeps_unknown_total_unknown():
+    progress = _parse_progress("[download]  50.0% of 2000000/NA at 1.00MiB/s ETA 00:02")
+    assert progress is not None
+    assert progress["downloaded_bytes"] == 2000000
+    assert "total_bytes" not in progress
 
 
 def test_format_presets_and_audio_quality_exist():
@@ -383,7 +405,5 @@ def test_execute_ydl_already_downloaded(tmp_path):
         assert produced[0].name == "already_here.mp4"
     finally:
         dl.subprocess.Popen = orig
-
-
 
 
