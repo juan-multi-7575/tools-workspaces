@@ -41,10 +41,16 @@ with a marked-up proof for documents. No external brand identity is copied.
 
 - Visual system: `#ECF3F4` ground, `#222` ink, near-white surfaces, hairline rules, one teal
   accent (`#0a7c7c`), system grotesque only, 13px/1.45 body, tabular numerals.
-- Workspace: asymmetrical URL intake and queue. A real probe result appears as a catalogue
-  entry. A compact download-mode selector precedes a grouped parameter ledger. The queue uses
-  dense catalogue rows with returned metadata, actual state, and a byte-progress rule.
-- Workflow: probe URL → configure → enqueue → monitor, cancel, remove, or download.
+- Workspace structure (user-directed revision, 2026-10-06): a guided, one-task-at-a-time
+  workflow with distinct New download, Downloads, and Utilities views. Do not show intake,
+  the full parameter form, and live queue together as a split dashboard or one long page.
+- Workflow: identify media with a URL probe → review only returned metadata → choose a
+  plain-language output intent and relevant common controls → enqueue into a separate
+  full-width Downloads view. Group items by backend-reported active, ready, and
+  needs-attention states. Make New download easy to reach from every view.
+- Keep every manifest option available behind a collapsed, searchable, purpose-grouped
+  Advanced options disclosure. Every schema-backed value remains controlled by its
+  `data-param-key`.
 - Preserve the four hosted helpers as sections inside this site, each with its own manifest
   form and real execution. They do not get independent pages.
 - Render all downloader manifest parameters. Keep the special `download_mode` control and
@@ -171,7 +177,11 @@ Additional interaction research: [Readwise Reader annotation patterns](https://d
 [Subtitle Edit cue navigation](https://subtitleedit.github.io/subtitleedit/features/main-window.html),
 and [DeepL document translation](https://www.deepl.com/en/features/document-translation).
 These inform interaction ergonomics only; their products, brand styling, and features are not
-being copied.
+being copied. The initial split intake/queue composition resembled the generic tools
+workspace too closely and is superseded by the user-directed identify → decide → track flow.
+This revision follows live computer-use inspection of Stacher, JDownloader, Cobalt, and
+CloudConvert, plus review of Bandcamp's item identity and WeTransfer's documented transfer
+steps. See `docs/research/batch-E/media.download.yt-dlp/structure-research.md` for findings.
 
 ## Scope exclusions
 

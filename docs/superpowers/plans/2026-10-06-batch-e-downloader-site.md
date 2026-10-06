@@ -4,7 +4,7 @@
 
 **Goal:** Deliver the independent catalogue-style downloader hero and workspace with truthful queue events and complete manifest coverage.
 
-**Architecture:** Keep `DownloaderSite` as this tool's route owner but rebuild its visual styling and sharpen its probe/configure/enqueue/monitor flow. Use the existing downloader APIs and helper manifests; no shared visual shell.
+**Architecture:** Keep `DownloaderSite` as this tool's route owner and organize its workspace into distinct New download, Downloads, and Utilities views. The New download view guides users through identify → decide → track without showing the queue beside a long form. Use existing downloader APIs and helper manifests; no shared visual shell.
 
 **Tech Stack:** React, TypeScript, Vite, existing `api`, `ToolForm`, downloader hooks, CSS, node:test, browser-harness.
 
@@ -41,10 +41,11 @@
 
 **Files:** Modify `frontend/src/sites/downloader/DownloaderSite.tsx`, `frontend/src/sites/downloader/downloader.css`, and `frontend/src/tests/downloaderSite.test.tsx`.
 
-- [ ] Add/adjust tests for exactly two hero entry paths (probe a URL then continue to the workspace, or open an empty workspace), probe → options → enqueue flow, home route, 26 manifest keys (1 URL hand-built + 25 ToolForm-bound), and four hosted helper sections.
-- [ ] Replace the brown/cream UI styling with the approved cyan-gray catalogue system; do not import previous tool CSS or shared theme files.
-- [ ] Make the hero's URL path carry the submitted URL and real probe result into the workspace; keep the empty-workspace path independent. Organize workspace options into a compact grouped ledger and mode strip while keeping every schema control visible and correctly bound.
-- [ ] Keep queue settings, errors, remove/cancel and real artifact download actions clearly labeled; mark displayed results stale where applicable.
+- [ ] Add/adjust tests for exactly two hero entry paths; a guided identify → decide → track workflow; home route; 26 manifest keys (1 URL hand-built + 25 ToolForm-bound); separate New download, Downloads, and Utilities views; and four hosted helper forms.
+- [ ] Replace the old workspace composition as well as its brown/cream styling with the approved cyan-gray catalogue system; do not import previous tool CSS or shared theme files.
+- [ ] Make the hero's URL path carry the submitted URL and real probe result into the review step; keep the empty-workspace path independent. Keep default download choices plain-language and contextual; keep all 25 manifest-bound controls accessible in collapsed, searchable, purpose-grouped Advanced options.
+- [ ] Track downloads in a separate full-width view grouped by authoritative backend status; keep settings, errors, remove/cancel and real artifact download actions clearly labeled; mark displayed results stale where applicable.
+- [ ] Place the four helper forms in a separate Utilities view. Do not show the long manifest, queue, and URL intake simultaneously.
 - [ ] Run `cd frontend && npm run verify`; commit component, CSS, and tests.
 
 ### Task 3: Live visual and real-operation review
