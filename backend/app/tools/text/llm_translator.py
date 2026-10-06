@@ -7,6 +7,7 @@ from pathlib import Path
 import httpx
 
 from app.paths import resolve_input_file, run_dir, tool_downloads_dir
+from app.providers import get_key as get_saved_key
 from app.tools.base import Artifact, PortKind, Tool, ToolManifest, ToolResult, ToolRunContext
 from app.tools.model_health_tool import PROVIDER_SPECS, _scan_bashrc_keys
 
@@ -127,7 +128,7 @@ class LlmTranslatorTool(Tool):
             return ToolResult(
                 artifacts=[],
                 status="failed",
-                error="No active AI API key found. Please export GROQ_API_KEY, NVIDIA_API_KEY, or OPENAI_API_KEY in ~/.bashrc.",
+                error="No active AI API key found. Save a provider key in Settings or export GROQ_API_KEY, NVIDIA_API_KEY, or OPENAI_API_KEY in ~/.bashrc.",
             )
 
         artifacts: list[Artifact] = []
@@ -171,28 +172,33 @@ class LlmTranslatorTool(Tool):
         bashrc_keys: dict[str, tuple[str, str]],
     ) -> tuple[str, str, str]:
         """Resolves the best provider, API key, and model for translation."""
-        def get_key(var_names: list[str]) -> str:
+        def get_key(provider_id: str, var_names: list[str]) -> str:
+            saved_key = (get_saved_key(provider_id) or "").strip()
+            if saved_key:
+                return saved_key
             for v in var_names:
-                if os.environ.get(v):
-                    return os.environ[v].strip()
-                if v in bashrc_keys:
+                key = os.environ.get(v, "").strip()
+                if key:
+                    return key
+            for v in var_names:
+                if v in bashrc_keys and bashrc_keys[v][0].strip():
                     return bashrc_keys[v][0].strip()
             return ""
 
         if provider == "auto":
-            groq_key = get_key(["GROQ_API_KEY"])
+            groq_key = get_key("groq", ["GROQ_API_KEY"])
             if groq_key:
                 return "groq", groq_key, "qwen/qwen3.8-27b" if model == "auto" else model
 
-            nvidia_key = get_key(["NVIDIA_API_KEY", "NVAPI_KEY"])
+            nvidia_key = get_key("nvidia", ["NVIDIA_API_KEY", "NVAPI_KEY"])
             if nvidia_key:
                 return "nvidia", nvidia_key, "nvidia/llama-3.1-nemotron-70b-instruct" if model == "auto" else model
 
-            openai_key = get_key(["OPENAI_API_KEY"])
+            openai_key = get_key("openai", ["OPENAI_API_KEY"])
             if openai_key:
                 return "openai", openai_key, "gpt-4o-mini" if model == "auto" else model
 
-            deepseek_key = get_key(["DEEPSEEK_API_KEY"])
+            deepseek_key = get_key("deepseek", ["DEEPSEEK_API_KEY"])
             if deepseek_key:
                 return "deepseek", deepseek_key, "deepseek-chat" if model == "auto" else model
 
@@ -208,7 +214,7 @@ class LlmTranslatorTool(Tool):
         }
 
         spec = PROVIDER_SPECS.get(provider, {})
-        key = get_key(spec.get("env_vars", [f"{provider.upper()}_API_KEY"]))
+        key = get_key(provider, spec.get("env_vars", [f"{provider.upper()}_API_KEY"]))
         default_model = BEST_MODELS.get(provider) or (spec.get("default_models", [""])[0] if spec.get("default_models") else "default")
         chosen_model = default_model if model == "auto" else model
         return provider, key, chosen_model
