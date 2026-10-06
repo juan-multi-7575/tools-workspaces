@@ -41,9 +41,9 @@
 
 **Files:** Modify `frontend/src/sites/downloader/DownloaderSite.tsx`, `frontend/src/sites/downloader/downloader.css`, and `frontend/src/tests/downloaderSite.test.tsx`.
 
-- [ ] Add/adjust tests for probe → options → enqueue flow, home route, 26 manifest keys (1 URL hand-built + 25 ToolForm-bound), and four hosted helper sections.
+- [ ] Add/adjust tests for exactly two hero entry paths (probe a URL then continue to the workspace, or open an empty workspace), probe → options → enqueue flow, home route, 26 manifest keys (1 URL hand-built + 25 ToolForm-bound), and four hosted helper sections.
 - [ ] Replace the brown/cream UI styling with the approved cyan-gray catalogue system; do not import previous tool CSS or shared theme files.
-- [ ] Organize current options into a compact grouped ledger and mode strip while keeping every schema control visible and correctly bound.
+- [ ] Make the hero's URL path carry the submitted URL and real probe result into the workspace; keep the empty-workspace path independent. Organize workspace options into a compact grouped ledger and mode strip while keeping every schema control visible and correctly bound.
 - [ ] Keep queue settings, errors, remove/cancel and real artifact download actions clearly labeled; mark displayed results stale where applicable.
 - [ ] Run `cd frontend && npm run verify`; commit component, CSS, and tests.
 
