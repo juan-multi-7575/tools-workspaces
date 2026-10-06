@@ -89,7 +89,7 @@ export function DownloaderUrlProbe({ value, onChange, onProbe, error, result }: 
   </div>
 }
 
-function TaskRow({ task, onCancel, onRemove }: { task: DownloadTask; onCancel: () => void; onRemove: () => void }) {
+export function DownloaderTaskRow({ task, onCancel, onRemove }: { task: DownloadTask; onCancel: () => void; onRemove: () => void }) {
   const live = task.progress ?? {}
   const percent = typeof live.percent === 'number' && Number.isFinite(live.percent) ? live.percent : null
   const got = byteText(live.downloaded_bytes)
@@ -105,11 +105,12 @@ function TaskRow({ task, onCancel, onRemove }: { task: DownloadTask; onCancel: (
       </div>
     </div>
     {task.error && <p className="dl-error">{task.error}</p>}
-    <div className="dl-progress" aria-label="Download progress">
-      {percent !== null ? <span style={{ width: `${Math.max(0, Math.min(100, percent))}%` }}/> : null}
+    <div className="dl-progress" aria-label="Download progress" data-indeterminate={percent === null ? 'true' : undefined}>
+      {percent !== null ? <span style={{ width: `${Math.max(0, Math.min(100, percent))}%` }}/> : percent === null ? <span className="dl-progress__indeterminate"/> : null}
     </div>
     <div className="dl-row__meta">
       <span>{percent !== null ? `${percent}%` : got || total ? `${got ?? '—'} / ${total ?? '—'}` : 'No byte progress reported'}</span>
+      {percent !== null && (got || total) && <span>{got ?? '—'} / {total ?? '—'}</span>}
       {typeof live.speed === 'string' && <span>{live.speed}</span>}
       {typeof live.eta === 'string' && <span>ETA {live.eta}</span>}
       {task.result?.artifacts?.map((artifact) => <a key={artifact.path} href={resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(artifact.path)}`)}>{artifact.name} <ExternalLink size={11}/></a>)}
@@ -218,7 +219,7 @@ export default function DownloaderSite({ siteState }: { siteState: 'hero' | 'wor
         <div className="dl-enqueue"><button className="dl-button" onClick={() => void enqueue()} disabled={!String(params.url ?? '').trim()}><ArrowDownToLine size={16}/> Add to queue</button><p>Settings are sent with this queue item.</p></div>
       </section>
       <section className="dl-queue"><div className="dl-queue__head"><div><p className="dl-kicker">02 / Now playing</p><h2>Download queue</h2></div><span className="dl-count">{queue.length} items</span></div>
-        <div className="dl-queue__list">{queueError && <p role="alert" className="dl-error">{queueError}</p>}{queue.length ? queue.map((task) => <TaskRow key={task.id} task={task} onCancel={() => void cancel(task.id)} onRemove={() => void remove(task.id)}/>) : <div className="dl-empty"><span>—</span><p>Your queue is empty.</p><small>Items you add will appear here with backend-reported status and byte progress.</small></div>}</div>
+        <div className="dl-queue__list">{queueError && <p role="alert" className="dl-error">{queueError}</p>}{queue.length ? queue.map((task) => <DownloaderTaskRow key={task.id} task={task} onCancel={() => void cancel(task.id)} onRemove={() => void remove(task.id)}/>) : <div className="dl-empty"><span>—</span><p>Your queue is empty.</p><small>Items you add will appear here with backend-reported status and byte progress.</small></div>}</div>
         <div className="dl-settings"><label>Concurrent downloads <span>{settings ? `Current: ${settings.max_concurrent}` : ''}</span></label><div><input aria-label="Maximum concurrent downloads" type="number" min="1" value={settingDraft} onChange={(event) => setSettingDraft(event.target.value)}/><button onClick={() => void saveSettings()}>Save</button></div>{settingsMessage && <small>{settingsMessage}</small>}</div>
         <div className="dl-helpers"><button onClick={() => setHelperOpen((open) => !open)}>Media utilities <span>{helperOpen ? '−' : '+'}</span></button>{helperOpen && <div>{HELPERS.map(([id, title]) => <Helper key={id} id={id} title={title}/>)}</div>}</div>
       </section>

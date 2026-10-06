@@ -3,8 +3,8 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router-dom'
-import { DownloaderHero, DownloaderParameterControls, DownloaderUrlProbe } from '../sites/downloader/DownloaderSite'
-import type { ToolManifest } from '../lib/api'
+import { DownloaderHero, DownloaderParameterControls, DownloaderUrlProbe, DownloaderTaskRow } from '../sites/downloader/DownloaderSite'
+import type { DownloadTask, ToolManifest } from '../lib/api'
 
 const MANIFEST = JSON.parse(
   readFileSync(new URL('./fixtures/downloaderManifest.json', import.meta.url), 'utf8'),
@@ -35,4 +35,31 @@ test('the downloader controls cover every live manifest key exactly through URL 
     assert.ok(html.includes(`data-param-key="${key}"`), `manifest key "${key}" has no labelled control`)
   }
   assert.match(html, /Download Mode/i, 'the manifest-declared special download_mode control is rendered')
+})
+
+function renderTask(progress: Record<string, unknown>) {
+  const task: DownloadTask = { id: 'download-1', status: 'running', progress, params: { url: 'https://example.com/video' } }
+  return renderToStaticMarkup(<DownloaderTaskRow task={task} onCancel={() => {}} onRemove={() => {}}/>)
+}
+
+test('download progress renders actual byte counts without deriving a percentage', () => {
+  const html = renderTask({ downloaded_bytes: 1_572_864, total_bytes: 10_485_760 })
+  assert.match(html, /1\.5 MiB \/ 10\.0 MiB/)
+  assert.match(html, /class="dl-progress"[^>]*data-indeterminate="true"/)
+  assert.match(html, /dl-progress__indeterminate/)
+  assert.doesNotMatch(html, />15%<|width:15%/)
+})
+
+test('download progress renders downloaded bytes when total size is unknown', () => {
+  const html = renderTask({ downloaded_bytes: 2048 })
+  assert.match(html, /2\.0 KiB \/ —/)
+  assert.match(html, /class="dl-progress"[^>]*data-indeterminate="true"/)
+  assert.match(html, /dl-progress__indeterminate/)
+})
+
+test('download progress renders backend percentage when present, with supplied bytes', () => {
+  const html = renderTask({ percent: 37, downloaded_bytes: 3_145_728, total_bytes: 8_388_608 })
+  assert.match(html, /width:37%/)
+  assert.match(html, />37%<\/span>/)
+  assert.match(html, />3\.0 MiB \/ 8\.0 MiB<\/span>/)
 })
