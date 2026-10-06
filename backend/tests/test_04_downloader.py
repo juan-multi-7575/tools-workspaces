@@ -39,6 +39,18 @@ def test_parse_progress_keeps_unknown_total_unknown():
     assert "total_bytes" not in progress
 
 
+def test_parse_progress_keeps_bytes_when_percent_and_total_are_unknown():
+    progress = _parse_progress(
+        "[download] __YTDLP_PROGRESS__   N/A% of 2000000/NA at 1.00MiB/s ETA Unknown"
+    )
+    assert progress == {
+        "status": "downloading",
+        "speed": "1.00MiB/s",
+        "eta": "Unknown",
+        "downloaded_bytes": 2000000,
+    }
+
+
 def test_parse_progress_ignores_percent_in_already_downloaded_filename():
     assert _parse_progress("[download] /tmp/50% off.mp4 has already been downloaded") is None
     assert _parse_progress("[download] 50% off.mp4 has already been downloaded") is None

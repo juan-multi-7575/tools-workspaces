@@ -127,18 +127,18 @@ def parse_vtt_content(content: str) -> list[SubtitleCue]:
 def format_cues_to_srt(cues: list[SubtitleCue]) -> str:
     """Reconstruct an .srt formatted string from cues."""
     blocks = []
-    for i, cue in enumerate(cues, start=1):
+    for cue in cues:
         timing = cue.timing.replace(".", ",")
-        blocks.append(f"{i}\n{timing}\n{cue.text}\n")
+        blocks.append(f"{cue.index}\n{timing}\n{cue.text}\n")
     return "\n".join(blocks).strip() + "\n"
 
 
 def format_cues_to_vtt(cues: list[SubtitleCue]) -> str:
     """Reconstruct a WebVTT formatted string from cues."""
     blocks = ["WEBVTT\n"]
-    for i, cue in enumerate(cues, start=1):
+    for cue in cues:
         timing = cue.timing.replace(",", ".")
-        blocks.append(f"{i}\n{timing}\n{cue.text}\n")
+        blocks.append(f"{cue.index}\n{timing}\n{cue.text}\n")
     return "\n".join(blocks).strip() + "\n"
 
 

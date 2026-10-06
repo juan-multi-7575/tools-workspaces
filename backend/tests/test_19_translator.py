@@ -48,17 +48,16 @@ def test_parse_vtt_content():
     assert cues[0].text == "인터뷰 때 그 얘기했어?"
 
 
-def test_format_cues_to_srt_and_vtt():
+@pytest.mark.parametrize("formatter,expected", [
+    (format_cues_to_srt, "21\n00:00:01,000 --> 00:00:04,500\nHello world\n\n53\n00:00:05,000 --> 00:00:08,000\nSecond cue\n"),
+    (format_cues_to_vtt, "WEBVTT\n\n21\n00:00:01.000 --> 00:00:04.500\nHello world\n\n53\n00:00:05.000 --> 00:00:08.000\nSecond cue\n"),
+])
+def test_format_cues_preserves_source_indices(formatter, expected):
     cues = [
-        SubtitleCue(index=1, timing="00:00:01,000 --> 00:00:04,500", text="Hello world"),
-        SubtitleCue(index=2, timing="00:00:05,000 --> 00:00:08,000", text="Second cue"),
+        SubtitleCue(index=21, timing="00:00:01,000 --> 00:00:04,500", text="Hello world"),
+        SubtitleCue(index=53, timing="00:00:05,000 --> 00:00:08,000", text="Second cue"),
     ]
-    srt = format_cues_to_srt(cues)
-    assert "1\n00:00:01,000 --> 00:00:04,500\nHello world" in srt
-
-    vtt = format_cues_to_vtt(cues)
-    assert "WEBVTT" in vtt
-    assert "00:00:01.000 --> 00:00:04.500\nHello world" in vtt
+    assert formatter(cues) == expected
 
 
 def test_parse_batch_response():
@@ -160,17 +159,17 @@ def test_subtitle_batch_failure_retains_partial_artifacts(client, tmp_path, monk
     source = tmp_path / "partial.srt"
     source.write_text("\n\n".join(
         f"{index}\n00:00:01,000 --> 00:00:02,000\nOriginal {index}"
-        for index in range(21, 33)
+        for index in [*range(21, 31), 41, 53]
     ))
     secret = "translation-secret"
     monkeypatch.setenv("GROQ_API_KEY", secret)
 
     async def fake_chat(self, provider, key, model, system_prompt, user_prompt, timeout=120.0):
-        if "[31]" in user_prompt and failure == "exception":
+        if "[41]" in user_prompt and failure == "exception":
             raise RuntimeError(f"provider rejected key {secret}")
         indexes = [int(line.split("]")[0][1:]) for line in user_prompt.splitlines()]
         return "\n".join(f"[{index}] Translated {index}" for index in indexes
-                         if not (failure == "omitted_id" and index == 32))
+                         if not (failure == "omitted_id" and index == 53))
 
     async def no_sleep(seconds):
         pass
@@ -184,12 +183,17 @@ def test_subtitle_batch_failure_retains_partial_artifacts(client, tmp_path, monk
     body = result.json()
     assert result.status_code == 200
     assert body["status"] == "failed"
-    assert body["data"]["failed_cue_indices"] == ([31, 32] if failure == "exception" else [32])
+    assert body["data"]["failed_cue_indices"] == ([41, 53] if failure == "exception" else [53])
     assert body["error"]
     assert len(body["artifacts"]) == 3
     content = (tmp_path / "out" / "partial.en.srt").read_text()
     assert "Translated 21" in content
-    assert "Original 32" in content
+    assert "Original 53" in content
+    for suffix in ("srt", "vtt"):
+        artifact_content = (tmp_path / "out" / f"partial.en.{suffix}").read_text()
+        cue_ids = [int(line) for line in artifact_content.splitlines() if line.isdigit()]
+        assert cue_ids == [21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 41, 53]
+        assert set(body["data"]["failed_cue_indices"]).issubset(cue_ids)
     assert secret not in result.text
     assert secret not in caplog.text
 

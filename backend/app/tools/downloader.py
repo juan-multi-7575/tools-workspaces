@@ -520,7 +520,7 @@ def _parse_progress(line: str) -> dict | None:
         line,
     )
     byte_match = re.match(
-        r"\[download\]\s+(?:[-+]?(?:\d+(?:\.\d*)?|\.\d+)%|NA)\s+of\s+(\d+)/(\d+|NA|None)\b",
+        r"\[download\]\s+(?:[-+]?(?:\d+(?:\.\d*)?|\.\d+)%|N/A%|NA)\s+of\s+(\d+)/(\d+|NA|None)\b",
         line,
         re.IGNORECASE,
     )
