@@ -413,7 +413,7 @@ def execute_ydl(
     cmd = _to_cli(ydl_opts)
     cmd += [
         "--progress-template",
-        "download:[download] %(progress._percent_str)s of %(progress.downloaded_bytes)s/%(progress.total_bytes)s at %(progress._speed_str)s ETA %(progress._eta_str)s",
+        "download:[download] __YTDLP_PROGRESS__ %(progress._percent_str)s of %(progress.downloaded_bytes)s/%(progress.total_bytes)s at %(progress._speed_str)s ETA %(progress._eta_str)s",
     ]
     raw = params.get("raw_args")
     if raw:
@@ -511,8 +511,10 @@ def execute_ydl(
 
 def _parse_progress(line: str) -> dict | None:
     line = line.strip()
-    if not line.startswith("[download]"):
+    marker = "[download] __YTDLP_PROGRESS__ "
+    if not line.startswith(marker):
         return None
+    line = "[download] " + line[len(marker):]
     percent_match = re.match(
         r"\[download\]\s*([-+]?(?:\d+(?:\.\d*)?|\.\d+))%",
         line,

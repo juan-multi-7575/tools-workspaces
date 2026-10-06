@@ -26,3 +26,11 @@ Only `backend/app/tools/downloader.py` and `backend/tests/test_04_downloader.py`
 - Command: `PYTHONPATH=backend uv run --with pytest --with fastapi --with httpx --with pydantic --with click pytest backend/tests/test_04_downloader.py -q`
 - Output: `23 passed, 1 warning in 1.16s` (the warning is Starlette's httpx deprecation warning).
 - `git diff --check`: passed.
+
+## Reviewer follow-up: distinguish progress from percent-bearing filenames
+
+- Added the explicit `__YTDLP_PROGRESS__` marker to the configured `--progress-template`; `_parse_progress` now requires that marker before interpreting progress fields. This prevents arbitrary yt-dlp `[download]` messages and filenames from becoming progress events.
+- Updated progress-line fixtures to represent the configured output. Parser coverage confirms absolute (`/tmp/50% off.mp4`) and relative (`50% off.mp4`) already-downloaded messages are ignored as progress.
+- Parameterized the already-downloaded integration test over absolute and relative reported paths for `50% off.mp4`, confirming both are still detected and returned.
+- Command: `PYTHONPATH=backend uv run --with pytest --with fastapi --with httpx --with pydantic --with click pytest backend/tests/test_04_downloader.py -q`
+- Output: `24 passed, 1 warning in 0.88s` (the warning is Starlette's httpx deprecation warning).
