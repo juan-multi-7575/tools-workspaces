@@ -513,8 +513,15 @@ def _parse_progress(line: str) -> dict | None:
     line = line.strip()
     if not line.startswith("[download]"):
         return None
-    percent_match = re.search(r"([-+]?(?:\d+(?:\.\d*)?|\.\d+))%", line)
-    byte_match = re.search(r"\bof\s+(\d+)/(\d+|NA|None)\b", line, re.IGNORECASE)
+    percent_match = re.match(
+        r"\[download\]\s*([-+]?(?:\d+(?:\.\d*)?|\.\d+))%",
+        line,
+    )
+    byte_match = re.match(
+        r"\[download\]\s+(?:[-+]?(?:\d+(?:\.\d*)?|\.\d+)%|NA)\s+of\s+(\d+)/(\d+|NA|None)\b",
+        line,
+        re.IGNORECASE,
+    )
     if percent_match is None and byte_match is None:
         return None
     msg: dict[str, Any] = {"status": "downloading"}

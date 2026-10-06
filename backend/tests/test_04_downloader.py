@@ -39,6 +39,10 @@ def test_parse_progress_keeps_unknown_total_unknown():
     assert "total_bytes" not in progress
 
 
+def test_parse_progress_ignores_percent_in_already_downloaded_filename():
+    assert _parse_progress("[download] /tmp/50% off.mp4 has already been downloaded") is None
+
+
 def test_format_presets_and_audio_quality_exist():
     assert "best" in FORMAT_PRESETS
     assert "audio" in FORMAT_PRESETS
@@ -382,7 +386,7 @@ def test_execute_ydl_artifact_isolation(tmp_path):
 
 
 def test_execute_ydl_already_downloaded(tmp_path):
-    existing_file = tmp_path / "already_here.mp4"
+    existing_file = tmp_path / "50% off.mp4"
     existing_file.write_text("existing content")
     import os
     import time
@@ -402,8 +406,6 @@ def test_execute_ydl_already_downloaded(tmp_path):
     try:
         produced = execute_ydl("http://example.com/test", {}, tmp_path)
         assert len(produced) == 1
-        assert produced[0].name == "already_here.mp4"
+        assert produced[0].name == "50% off.mp4"
     finally:
         dl.subprocess.Popen = orig
-
-
