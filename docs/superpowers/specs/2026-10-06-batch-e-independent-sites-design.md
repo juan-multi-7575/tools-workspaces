@@ -1,7 +1,8 @@
 # Batch E Independent Tool Sites — Design Spec
 
 Date: 2026-10-06  
-Status: approved in conversation for spec authoring; awaiting review of this written spec.
+Status: approved in conversation; subtitle key control/failure-result details were clarified
+afterward to preserve the earlier requirement that both translator workflows use UI-saved keys.
 
 ## Intent and success
 
@@ -77,11 +78,15 @@ with a marked-up proof for documents. No external brand identity is copied.
   and timestamp context.
 - Workflow: upload/select subtitle → configure language/provider/model/batch size → translate
   → inspect aligned cue pairs and navigate to a cue.
+- Include a compact, masked provider-key control wired to `api.saveKey`, so a key entered
+  through this site can be used by this translator on its next run.
 - Build the view from actual `.srt`/`.vtt` content retrieved via `api.getArtifactContent`.
   Parse actual cues; do not synthesize timestamps or align by guessed content. Surface all
   inherited manifest keys: `input_path`, `target_lang`, `source_lang`, `provider`, `model`,
   and `batch_size`.
 - If translation batches fail, show that failure distinctly from a legitimate unchanged cue.
+  The backend result carries failed cue indexes and does not report completed status; any
+  partial artifact remains available for inspection with the failed cues identified.
 
 ### 4. `text.translate.llm` — marked-up translation galley
 
