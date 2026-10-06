@@ -51,6 +51,15 @@ test('manifest is file-first and the live proof reads both actual artifact paths
   assert.doesNotMatch(workspace, /api\.executeTool\([^\n]*text\s*:/)
 })
 
+test('provider options use detected providers and retain auto', () => {
+  const workspace = readFileSync(new URL('../sites/text-translator/TextTranslatorWorkspace.tsx', import.meta.url), 'utf8')
+  assert.match(workspace, /providers\.filter\(\(item\) => item\.id !== 'auto'\)\.map/)
+  assert.match(workspace, /<option key=\{item\.id\} value=\{item\.id\}>\{item\.name\}<\/option>/)
+  assert.doesNotMatch(workspace, /schema\.provider\?\.enum\s*\?\?/)
+  assert.match(workspace, /api\.getDetectedModelProviders\(\)/)
+  assert.match(workspace, /value="auto"/)
+})
+
 test('site registration is scoped to the text translator route and its own color system', () => {
   const site = readFileSync(new URL('../sites/text-translator/site.ts', import.meta.url), 'utf8')
   const css = readFileSync(new URL('../sites/text-translator/text-translator.css', import.meta.url), 'utf8')
