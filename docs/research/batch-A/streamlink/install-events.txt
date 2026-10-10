@@ -1,0 +1,78 @@
+data: {"type": "resolving", "dep_id": "conda.streamlink", "message": "streamlink captures live streams from Twitch and other live platforms.", "heavy": false, "approx_bytes": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "micromamba create streamlink into streamlink", "approx_bytes": 90000000, "heavy": false}
+
+data: {"type": "started", "job_id": "depinstall-1680e2816094", "dep_ids": ["conda.streamlink", "conda.ytdlp"]}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Cached Shard Index for conda-forge/linux-64                                                   \u2714 Done", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Cached Shard Index for conda-forge/noarch                                                     \u2714 Done", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Fetching and Parsing Packages' Shards                                                           \u29d6 Starting", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Fetching and Parsing Packages' Shards                                                     \u2714 Done (0.0 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Flat Repodata for conda-forge/linux-64                                                    \u2714 Starting", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Flat Repodata for conda-forge/linux-64                                             \u2714 Done (11.7 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Cached Shard Index for conda-forge/noarch                                                     \u2714 Done", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Cached Shard Index for conda-forge/linux-64                                                   \u2714 Done", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Fetching and Parsing Packages' Shards                                                           \u29d6 Starting", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Fetching and Parsing Packages' Shards                                                     \u2714 Done (0.0 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Flat Repodata for conda-forge/noarch                                                      \u2714 Starting", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Flat Repodata for conda-forge/noarch                                                \u2714 Done (6.5 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Parsing Packages' Records                                                                \u2714 Done (18.3 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Resolving Environment                                                                           \u29d6 Starting", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Resolving Environment                                                                     \u2714 Done (0.3 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Cached Shard Index for conda-forge/linux-64                                                   \u2714 Done", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Cached Shard Index for conda-forge/noarch                                                     \u2714 Done", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Fetching and Parsing Packages' Shards                                                           \u29d6 Starting", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Fetching and Parsing Packages' Shards                                                     \u2714 Done (0.0 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Flat Repodata for conda-forge/linux-64                                                    \u2714 Starting", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Flat Repodata for conda-forge/linux-64                                             \u2714 Done (13.4 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Cached Shard Index for conda-forge/noarch                                                     \u2714 Done", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Cached Shard Index for conda-forge/linux-64                                                   \u2714 Done", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Fetching and Parsing Packages' Shards                                                           \u29d6 Starting", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Fetching and Parsing Packages' Shards                                                     \u2714 Done (0.0 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Flat Repodata for conda-forge/noarch                                                      \u2714 Starting", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Using Flat Repodata for conda-forge/noarch                                                \u2714 Done (3.9 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Parsing Packages' Records                                                                \u2714 Done (17.3 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Resolving Environment                                                                           \u29d6 Starting", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "Resolving Environment                                                                     \u2714 Done (0.2 sec)", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "error    libmamba Could not solve for environment specs", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "    The following package could not be installed", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "    \u2514\u2500 streamlink =* * does not exist (perhaps a typo or a missing channel).", "total": 90000000}
+
+data: {"type": "installing", "dep_id": "conda.streamlink", "message": "critical libmamba Could not solve for environment specs", "total": 90000000}
+
+data: {"type": "failed", "dep_id": "conda.streamlink", "message": "micromamba exited with 1: critical libmamba Could not solve for environment specs"}
+
+data: {"type": "finished", "status": "failed", "job_id": "depinstall-1680e2816094", "result": {"ok": false, "cancelled": false, "installed": [], "failures": [{"dep_id": "conda.streamlink", "error": {"code": "TOOL_EXECUTION_FAILED", "message": "micromamba exited with 1: critical libmamba Could not solve for environment specs"}, "code": "CONDA_INSTALL_FAILED"}], "requested": ["conda.streamlink", "conda.ytdlp"]}}
+

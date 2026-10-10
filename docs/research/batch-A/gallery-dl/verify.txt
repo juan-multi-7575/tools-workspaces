@@ -1,0 +1,874 @@
+
+> tools-garage-frontend@0.0.0 verify
+> npm run test && tsc -b && oxlint
+
+
+> tools-garage-frontend@0.0.0 test
+> node scripts/run-tests.mjs
+
+TAP version 13
+# Subtest: activityStore - progress store subscribes to specific download ID
+ok 1 - activityStore - progress store subscribes to specific download ID
+  ---
+  duration_ms: 5.440051
+  type: 'test'
+  ...
+# Subtest: activityStore - artifacts store caches data with SWR
+ok 2 - activityStore - artifacts store caches data with SWR
+  ---
+  duration_ms: 0.757432
+  type: 'test'
+  ...
+# Subtest: all six tool ids are registered in BESPOKE_PAGES
+ok 3 - all six tool ids are registered in BESPOKE_PAGES
+  ---
+  duration_ms: 1.081399
+  type: 'test'
+  ...
+# Subtest: BESPOKE_PAGES is append-only relative to the pre-existing 15 keys
+ok 4 - BESPOKE_PAGES is append-only relative to the pre-existing 15 keys
+  ---
+  duration_ms: 0.363421
+  type: 'test'
+  ...
+# Subtest: every manifest parameter key renders a labelled control on its own page
+ok 5 - every manifest parameter key renders a labelled control on its own page
+  ---
+  duration_ms: 70.472765
+  type: 'test'
+  ...
+# Subtest: CodecToolPage ships no hardcoded sample payload
+ok 6 - CodecToolPage ships no hardcoded sample payload
+  ---
+  duration_ms: 0.386972
+  type: 'test'
+  ...
+# Subtest: ScriptRunnerPage reads the real execution output fields
+ok 7 - ScriptRunnerPage reads the real execution output fields
+  ---
+  duration_ms: 0.285593
+  type: 'test'
+  ...
+# Subtest: ScriptRunnerPage treats a non-zero exit code as a failure state
+ok 8 - ScriptRunnerPage treats a non-zero exit code as a failure state
+  ---
+  duration_ms: 0.479857
+  type: 'test'
+  ...
+# Subtest: summarizer page reads takeaways only from a verified completed response
+ok 9 - summarizer page reads takeaways only from a verified completed response
+  ---
+  duration_ms: 0.471277
+  type: 'test'
+  ...
+# Subtest: premature SSE closure rejects rather than leaving nodes running
+ok 10 - premature SSE closure rejects rather than leaving nodes running
+  ---
+  duration_ms: 27.804576
+  type: 'test'
+  ...
+# Subtest: SSE consumer failures propagate and reader is cancelled
+ok 11 - SSE consumer failures propagate and reader is cancelled
+  ---
+  duration_ms: 1.27268
+  type: 'test'
+  ...
+# Subtest: HTTP errors preserve status and structured code
+ok 12 - HTTP errors preserve status and structured code
+  ---
+  duration_ms: 1.054009
+  type: 'test'
+  ...
+# Subtest: idle streams time out and clean up their reader
+ok 13 - idle streams time out and clean up their reader
+  ---
+  duration_ms: 16.959176
+  type: 'test'
+  ...
+# Subtest: heartbeats reset idle timeout and multiline terminal event completes
+ok 14 - heartbeats reset idle timeout and multiline terminal event completes
+  ---
+  duration_ms: 43.000441
+  type: 'test'
+  ...
+# Subtest: caller abort interrupts reads even when fetch stream ignores the signal
+ok 15 - caller abort interrupts reads even when fetch stream ignores the signal
+  ---
+  duration_ms: 6.494891
+  type: 'test'
+  ...
+# Subtest: workspace reads forward AbortSignal and catalog consumers share one fetch
+ok 16 - workspace reads forward AbortSignal and catalog consumers share one fetch
+  ---
+  duration_ms: 3.580368
+  type: 'test'
+  ...
+# Subtest: network reader failures are actionable disconnect errors
+ok 17 - network reader failures are actionable disconnect errors
+  ---
+  duration_ms: 3.846643
+  type: 'test'
+  ...
+# Subtest: layout detects two node cycle
+ok 18 - layout detects two node cycle
+  ---
+  duration_ms: 1.547368
+  type: 'test'
+  ...
+# Subtest: layout detects self loop cycle
+ok 19 - layout detects self loop cycle
+  ---
+  duration_ms: 0.308248
+  type: 'test'
+  ...
+# Subtest: layout detects reachable cycle
+ok 20 - layout detects reachable cycle
+  ---
+  duration_ms: 0.374043
+  type: 'test'
+  ...
+# Subtest: diamond DAG levels wait for every parent
+ok 21 - diamond DAG levels wait for every parent
+  ---
+  duration_ms: 0.451235
+  type: 'test'
+  ...
+# Subtest: incompatible connections block Run and identify edge
+ok 22 - incompatible connections block Run and identify edge
+  ---
+  duration_ms: 0.752531
+  type: 'test'
+  ...
+# Subtest: disconnect only interrupts pending/running nodes
+ok 23 - disconnect only interrupts pending/running nodes
+  ---
+  duration_ms: 0.228692
+  type: 'test'
+  ...
+# Subtest: branch uses saved outputs only in downstream input and restores source params
+ok 24 - branch uses saved outputs only in downstream input and restores source params
+  ---
+  duration_ms: 1.075627
+  type: 'test'
+  ...
+# Subtest: selection survives parameter changes, clears on undo/delete, with no mirrored object
+ok 25 - selection survives parameter changes, clears on undo/delete, with no mirrored object
+  ---
+  duration_ms: 0.8839
+  type: 'test'
+  ...
+# Subtest: invalid parameter values gate the graph and run overrides
+ok 26 - invalid parameter values gate the graph and run overrides
+  ---
+  duration_ms: 0.266103
+  type: 'test'
+  ...
+# Subtest: canonical translator starter exposes translation configuration
+ok 27 - canonical translator starter exposes translation configuration
+  ---
+  duration_ms: 0.513004
+  type: 'test'
+  ...
+# Subtest: runtime execution status changes do not create undo history
+ok 28 - runtime execution status changes do not create undo history
+  ---
+  duration_ms: 0.250279
+  type: 'test'
+  ...
+# Subtest: keyboard selection changes reach the one graph selection owner
+ok 29 - keyboard selection changes reach the one graph selection owner
+  ---
+  duration_ms: 0.366612
+  type: 'test'
+  ...
+# Subtest: atomic graph clear undoes both nodes and edges in one step
+ok 30 - atomic graph clear undoes both nodes and edges in one step
+  ---
+  duration_ms: 0.234385
+  type: 'test'
+  ...
+# Subtest: drag frames coalesce into one position edit and undo restores the start
+ok 31 - drag frames coalesce into one position edit and undo restores the start
+  ---
+  duration_ms: 1.364077
+  type: 'test'
+  ...
+# Subtest: undoing parameter edit preserves the completed runtime status
+ok 32 - undoing parameter edit preserves the completed runtime status
+  ---
+  duration_ms: 0.414581
+  type: 'test'
+  ...
+# Subtest: keyboard edge select and Escape update canonical owner without graph history
+ok 33 - keyboard edge select and Escape update canonical owner without graph history
+  ---
+  duration_ms: 0.3222
+  type: 'test'
+  ...
+(node:121724) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: workspace dispose flushes latest debounce to its original workspace only
+ok 34 - workspace dispose flushes latest debounce to its original workspace only
+  ---
+  duration_ms: 2.138825
+  type: 'test'
+  ...
+# Subtest: late write completion cannot report saved in a disposed workspace
+ok 35 - late write completion cannot report saved in a disposed workspace
+  ---
+  duration_ms: 0.585101
+  type: 'test'
+  ...
+# Subtest: autosave serializes slow writes so old snapshots cannot overwrite later edits
+ok 36 - autosave serializes slow writes so old snapshots cannot overwrite later edits
+  ---
+  duration_ms: 0.543196
+  type: 'test'
+  ...
+# Subtest: debounce writes only the final graph after the delay
+ok 37 - debounce writes only the final graph after the delay
+  ---
+  duration_ms: 2.056225
+  type: 'test'
+  ...
+# Subtest: failed older flush never overwrites a queued newer successful save on dispose
+ok 38 - failed older flush never overwrites a queued newer successful save on dispose
+  ---
+  duration_ms: 0.693864
+  type: 'test'
+  ...
+# Subtest: reconnect reports active backend and blocks duplicate Run after renderer recovery
+ok 39 - reconnect reports active backend and blocks duplicate Run after renderer recovery
+  ---
+  duration_ms: 0.824661
+  type: 'test'
+  ...
+# Subtest: Stop reconciles remote cancellation rather than enabling Run before backend ended
+ok 40 - Stop reconciles remote cancellation rather than enabling Run before backend ended
+  ---
+  duration_ms: 0.39272
+  type: 'test'
+  ...
+# Subtest: failed Stop or reconnect keeps controls and blocks Run until status is confirmed
+ok 41 - failed Stop or reconnect keeps controls and blocks Run until status is confirmed
+  ---
+  duration_ms: 0.248059
+  type: 'test'
+  ...
+# Subtest: stale reconnect responses cannot modify another workspace or newer run
+ok 42 - stale reconnect responses cannot modify another workspace or newer run
+  ---
+  duration_ms: 0.167841
+  type: 'test'
+  ...
+# Subtest: catalog no longer owns a run modal or simulated progress
+ok 43 - catalog no longer owns a run modal or simulated progress
+  ---
+  duration_ms: 2.820467
+  type: 'test'
+  ...
+# Subtest: catalog links every tool to its own page route
+ok 44 - catalog links every tool to its own page route
+  ---
+  duration_ms: 1.809384
+  type: 'test'
+  ...
+# Subtest: legacy ?tool= deep link redirects to the page route
+ok 45 - legacy ?tool= deep link redirects to the page route
+  ---
+  duration_ms: 3.483403
+  type: 'test'
+  ...
+# Subtest: a started frame resets the job and records its dep order
+ok 46 - a started frame resets the job and records its dep order
+  ---
+  duration_ms: 2.858505
+  type: 'test'
+  ...
+# Subtest: a per-dep done frame never claims the job succeeded
+ok 47 - a per-dep done frame never claims the job succeeded
+  ---
+  duration_ms: 0.778258
+  type: 'test'
+  ...
+# Subtest: stages are recorded per dep with the backend message kept verbatim
+ok 48 - stages are recorded per dep with the backend message kept verbatim
+  ---
+  duration_ms: 0.356437
+  type: 'test'
+  ...
+# Subtest: a failed frame surfaces the backend message unchanged and names the dep
+ok 49 - a failed frame surfaces the backend message unchanged and names the dep
+  ---
+  duration_ms: 0.318354
+  type: 'test'
+  ...
+# Subtest: the terminal frame wins over a noisy last progress line when reporting failure
+ok 50 - the terminal frame wins over a noisy last progress line when reporting failure
+  ---
+  duration_ms: 0.352861
+  type: 'test'
+  ...
+# Subtest: only a completed terminal frame sets completed status
+ok 51 - only a completed terminal frame sets completed status
+  ---
+  duration_ms: 0.213126
+  type: 'test'
+  ...
+# Subtest: a cancelled terminal frame is not an error and not a success
+ok 52 - a cancelled terminal frame is not an error and not a success
+  ---
+  duration_ms: 0.272331
+  type: 'test'
+  ...
+# Subtest: unknown frames and events without a dep_id are ignored rather than guessed at
+ok 53 - unknown frames and events without a dep_id are ignored rather than guessed at
+  ---
+  duration_ms: 0.6328
+  type: 'test'
+  ...
+# Subtest: deriveDepProgress replays a whole stream to the same state as a fold
+ok 54 - deriveDepProgress replays a whole stream to the same state as a fold
+  ---
+  duration_ms: 0.521436
+  type: 'test'
+  ...
+# Subtest: byte progress counts a dep only once it is done, and never invents a ratio
+ok 55 - byte progress counts a dep only once it is done, and never invents a ratio
+  ---
+  duration_ms: 0.789541
+  type: 'test'
+  ...
+# Subtest: formatBytes reports unknown rather than zero for absent sizes
+ok 56 - formatBytes reports unknown rather than zero for absent sizes
+  ---
+  duration_ms: 0.379199
+  type: 'test'
+  ...
+# Subtest: the gate reports a tool with no external dependencies honestly
+ok 57 - the gate reports a tool with no external dependencies honestly
+  ---
+  duration_ms: 2.576113
+  type: 'test'
+  ...
+# Subtest: the ready chip lists the real dep ids and probed versions
+ok 58 - the ready chip lists the real dep ids and probed versions
+  ---
+  duration_ms: 2.240891
+  type: 'test'
+  ...
+# Subtest: the ready chip shows a trimmed version, and keeps the real build banner as a tooltip
+ok 59 - the ready chip shows a trimmed version, and keeps the real build banner as a tooltip
+  ---
+  duration_ms: 2.187335
+  type: 'test'
+  ...
+# Subtest: a probed version with no version token in it is not invented into one
+ok 60 - a probed version with no version token in it is not invented into one
+  ---
+  duration_ms: 0.165494
+  type: 'test'
+  ...
+# Subtest: the missing panel names each dep, its plain-language purpose, its real size and the install control
+ok 61 - the missing panel names each dep, its plain-language purpose, its real size and the install control
+  ---
+  duration_ms: 3.680544
+  type: 'test'
+  ...
+# Subtest: a heavy dep is never one careless click: the control asks for confirmation first
+ok 62 - a heavy dep is never one careless click: the control asks for confirmation first
+  ---
+  duration_ms: 2.726057
+  type: 'test'
+  ...
+# Subtest: a failed install shows the backend message verbatim next to a retry
+ok 63 - a failed install shows the backend message verbatim next to a retry
+  ---
+  duration_ms: 5.593534
+  type: 'test'
+  ...
+# Subtest: while installing the gate shows real stages, real bytes and a working cancel
+ok 64 - while installing the gate shows real stages, real bytes and a working cancel
+  ---
+  duration_ms: 6.996918
+  type: 'test'
+  ...
+# Subtest: a failed dependency check is reported and offers a retry
+ok 65 - a failed dependency check is reported and offers a retry
+  ---
+  duration_ms: 3.05132
+  type: 'test'
+  ...
+# Subtest: the checking state is announced rather than silently blank
+ok 66 - the checking state is announced rather than silently blank
+  ---
+  duration_ms: 1.659472
+  type: 'test'
+  ...
+# Subtest: every tool page calls useToolDeps, renders the gate, and ORs readiness into Run
+ok 67 - every tool page calls useToolDeps, renders the gate, and ORs readiness into Run
+  ---
+  duration_ms: 32.686458
+  type: 'test'
+  ...
+# Subtest: every tool page pins the gate in the shell instead of burying it in a rail
+ok 68 - every tool page pins the gate in the shell instead of burying it in a rail
+  ---
+  duration_ms: 37.857896
+  type: 'test'
+  ...
+# Subtest: the shell hosts the gate in a sticky region, not in the trailing aside
+ok 69 - the shell hosts the gate in a sticky region, not in the trailing aside
+  ---
+  duration_ms: 4.351621
+  type: 'test'
+  ...
+# Subtest: the manager console renders its own identity and re-probe control
+ok 70 - the manager console renders its own identity and re-probe control
+  ---
+  duration_ms: 5.929865
+  type: 'test'
+  ...
+# Subtest: downloader page is registered under its canonical id
+ok 71 - downloader page is registered under its canonical id
+  ---
+  duration_ms: 0.248476
+  type: 'test'
+  ...
+# Subtest: downloader page offers the url probe instead of a fake submit
+ok 72 - downloader page offers the url probe instead of a fake submit
+  ---
+  duration_ms: 3.017002
+  type: 'test'
+  ...
+# Subtest: downloader page drives the download queue and the four atomic media helpers
+ok 73 - downloader page drives the download queue and the four atomic media helpers
+  ---
+  duration_ms: 1.764746
+  type: 'test'
+  ...
+# Subtest: gallery-dl hero has two entry actions with no platform chrome
+ok 74 - gallery-dl hero has two entry actions with no platform chrome
+  ---
+  duration_ms: 4.129926
+  type: 'test'
+  ...
+# Subtest: gallery-dl exposes all real parameter keys and home navigation
+ok 75 - gallery-dl exposes all real parameter keys and home navigation
+  ---
+  duration_ms: 5.968922
+  type: 'test'
+  ...
+# Subtest: gallery-dl shows a returned zip as a download without inventing thumbnails
+ok 76 - gallery-dl shows a returned zip as a download without inventing thumbnails
+  ---
+  duration_ms: 21.620332
+  type: 'test'
+  ...
+# Subtest: every image and document tool has a bespoke page
+ok 77 - every image and document tool has a bespoke page
+  ---
+  duration_ms: 0.429706
+  type: 'test'
+  ...
+# Subtest: exif scrubber shows a real before/after metadata diff
+ok 78 - exif scrubber shows a real before/after metadata diff
+  ---
+  duration_ms: 1.655768
+  type: 'test'
+  ...
+# Subtest: pdf tools renders both declared actions
+ok 79 - pdf tools renders both declared actions
+  ---
+  duration_ms: 1.026607
+  type: 'test'
+  ...
+# Subtest: the hero states what the tool does and offers its two ways in
+ok 80 - the hero states what the tool does and offers its two ways in
+  ---
+  duration_ms: 5.756194
+  type: 'test'
+  ...
+# Subtest: the workspace carries the home affordance back to the index
+ok 81 - the workspace carries the home affordance back to the index
+  ---
+  duration_ms: 17.601392
+  type: 'test'
+  ...
+# Subtest: the workspace renders a control for all four manifest keys with data-param-key
+ok 82 - the workspace renders a control for all four manifest keys with data-param-key
+  ---
+  duration_ms: 10.370616
+  type: 'test'
+  ...
+# Subtest: the workspace surfaces every manifest parameter, so a new key cannot be dropped silently
+ok 83 - the workspace surfaces every manifest parameter, so a new key cannot be dropped silently
+  ---
+  duration_ms: 8.956816
+  type: 'test'
+  ...
+# Subtest: every manifest control carries the manifest’s own title and key
+ok 84 - every manifest control carries the manifest’s own title and key
+  ---
+  duration_ms: 14.59306
+  type: 'test'
+  ...
+# Subtest: the signature: the resize geometry is editable in place and is the largest input
+ok 85 - the signature: the resize geometry is editable in place and is the largest input
+  ---
+  duration_ms: 9.518747
+  type: 'test'
+  ...
+# Subtest: the empty canvas is a designed state that says what to do — never a texture
+ok 86 - the empty canvas is a designed state that says what to do — never a texture
+  ---
+  duration_ms: 10.435822
+  type: 'test'
+  ...
+# Subtest: no site copy explains the page’s own honesty or the backend’s internals
+ok 87 - no site copy explains the page’s own honesty or the backend’s internals
+  ---
+  duration_ms: 13.533567
+  type: 'test'
+  ...
+# Subtest: no surface prints "(empty)" where a value is the user’s to supply
+ok 88 - no surface prints "(empty)" where a value is the user’s to supply
+  ---
+  duration_ms: 11.708134
+  type: 'test'
+  ...
+# Subtest: the hero is the reference’s shape: a title, a lede, and exactly two actions
+ok 89 - the hero is the reference’s shape: a title, a lede, and exactly two actions
+  ---
+  duration_ms: 2.693777
+  type: 'test'
+  ...
+# Subtest: the geometry key lists every real operator, with its measured behaviour
+ok 90 - the geometry key lists every real operator, with its measured behaviour
+  ---
+  duration_ms: 8.744768
+  type: 'test'
+  ...
+# Subtest: a label carries the human title, never the bare manifest key beside it
+ok 91 - a label carries the human title, never the bare manifest key beside it
+  ---
+  duration_ms: 9.647463
+  type: 'test'
+  ...
+# Subtest: the dependency gate is hosted in the trailing action bar, outside the scrolling canvas
+ok 92 - the dependency gate is hosted in the trailing action bar, outside the scrolling canvas
+  ---
+  duration_ms: 8.885961
+  type: 'test'
+  ...
+# Subtest: neither site carries any Tools Garage chrome
+ok 93 - neither site carries any Tools Garage chrome
+  ---
+  duration_ms: 14.351535
+  type: 'test'
+  ...
+# Subtest: the home index links only to sites that exist, and says so about the rest
+ok 94 - the home index links only to sites that exist, and says so about the rest
+  ---
+  duration_ms: 12.462172
+  type: 'test'
+  ...
+# Subtest: the home index reads the registry from the backend, not from a hardcoded list
+ok 95 - the home index reads the registry from the backend, not from a hardcoded list
+  ---
+  duration_ms: 1.781199
+  type: 'test'
+  ...
+# Subtest: mediaLabels - detects subtitle language without inventing a role
+ok 96 - mediaLabels - detects subtitle language without inventing a role
+  ---
+  duration_ms: 1.036568
+  type: 'test'
+  ...
+# Subtest: mediaLabels - claims translated/original only when the name says so
+ok 97 - mediaLabels - claims translated/original only when the name says so
+  ---
+  duration_ms: 0.356922
+  type: 'test'
+  ...
+# Subtest: mediaLabels - subtitleTrackLabel falls back to filename with size
+ok 98 - mediaLabels - subtitleTrackLabel falls back to filename with size
+  ---
+  duration_ms: 0.491448
+  type: 'test'
+  ...
+# Subtest: mediaLabels - runDisplayName prefers human names over hashes
+ok 99 - mediaLabels - runDisplayName prefers human names over hashes
+  ---
+  duration_ms: 0.157695
+  type: 'test'
+  ...
+# Subtest: the three media processing tools each have a bespoke page
+ok 100 - the three media processing tools each have a bespoke page
+  ---
+  duration_ms: 0.450791
+  type: 'test'
+  ...
+# Subtest: trimmer page builds a real region editor and calls the trim endpoint
+ok 101 - trimmer page builds a real region editor and calls the trim endpoint
+  ---
+  duration_ms: 1.982519
+  type: 'test'
+  ...
+# Subtest: transcriber page renders subtitle output and does not stub the result
+ok 102 - transcriber page renders subtitle output and does not stub the result
+  ---
+  duration_ms: 1.530256
+  type: 'test'
+  ...
+# Subtest: the SoX command preview prints real angle brackets, not escaped entity text
+ok 103 - the SoX command preview prints real angle brackets, not escaped entity text
+  ---
+  duration_ms: 9.868339
+  type: 'test'
+  ...
+# Subtest: the five media utility tools each have a bespoke page
+ok 104 - the five media utility tools each have a bespoke page
+  ---
+  duration_ms: 0.51767
+  type: 'test'
+  ...
+# Subtest: each media utility id maps to the page written for it
+ok 105 - each media utility id maps to the page written for it
+  ---
+  duration_ms: 0.26866
+  type: 'test'
+  ...
+# Subtest: the five pages render server-side without a network call and expose every schema key
+ok 106 - the five pages render server-side without a network call and expose every schema key
+  ---
+  duration_ms: 33.99061
+  type: 'test'
+  ...
+# Subtest: mediainfo hero offers exactly two ways in without platform chrome
+ok 107 - mediainfo hero offers exactly two ways in without platform chrome
+  ---
+  duration_ms: 2.208853
+  type: 'test'
+  ...
+# Subtest: mediainfo workspace exposes every live manifest key and home navigation
+ok 108 - mediainfo workspace exposes every live manifest key and home navigation
+  ---
+  duration_ms: 3.679476
+  type: 'test'
+  ...
+# Subtest: mediainfo shows returned fields without filling missing stream bitrate
+ok 109 - mediainfo shows returned fields without filling missing stream bitrate
+  ---
+  duration_ms: 2.213761
+  type: 'test'
+  ...
+# Subtest: mediainfo renderer includes exactly the leaf keys in a real ffprobe response
+ok 110 - mediainfo renderer includes exactly the leaf keys in a real ffprobe response
+  ---
+  duration_ms: 5.754752
+  type: 'test'
+  ...
+# Subtest: health poller shares requests, detects disconnect and reconnect, and stops after last listener
+ok 111 - health poller shares requests, detects disconnect and reconnect, and stops after last listener
+  ---
+  duration_ms: 26.277689
+  type: 'test'
+  ...
+# Subtest: health timeout becomes offline and old subscriptions cannot overwrite or abort newer polling
+ok 112 - health timeout becomes offline and old subscriptions cannot overwrite or abort newer polling
+  ---
+  duration_ms: 17.230306
+  type: 'test'
+  ...
+# Subtest: host follows API base or same origin deployment
+ok 113 - host follows API base or same origin deployment
+  ---
+  duration_ms: 0.270495
+  type: 'test'
+  ...
+# Subtest: recovery diagnostics retain safe component and error context and remove credentials and locations
+ok 114 - recovery diagnostics retain safe component and error context and remove credentials and locations
+  ---
+  duration_ms: 1.627793
+  type: 'test'
+  ...
+# Subtest: boundary copies captured diagnostics and Reload view remounts its children
+ok 115 - boundary copies captured diagnostics and Reload view remounts its children
+  ---
+  duration_ms: 1.736485
+  type: 'test'
+  ...
+# Subtest: sox hero has exactly two entry actions and no shell
+ok 116 - sox hero has exactly two entry actions and no shell
+  ---
+  duration_ms: 2.166584
+  type: 'test'
+  ...
+# Subtest: sox workspace surfaces every declared parameter and required input path
+ok 117 - sox workspace surfaces every declared parameter and required input path
+  ---
+  duration_ms: 4.926508
+  type: 'test'
+  ...
+# Subtest: streamlink hero offers exactly two entry actions with no shell
+ok 118 - streamlink hero offers exactly two entry actions with no shell
+  ---
+  duration_ms: 2.195806
+  type: 'test'
+  ...
+# Subtest: streamlink workspace binds every manifest parameter and links home
+ok 119 - streamlink workspace binds every manifest parameter and links home
+  ---
+  duration_ms: 4.739447
+  type: 'test'
+  ...
+# Subtest: streamlink cannot say captured without a verified artifact
+ok 120 - streamlink cannot say captured without a verified artifact
+  ---
+  duration_ms: 0.743368
+  type: 'test'
+  ...
+# Subtest: streamlink failure owns the screen with one verbatim error
+ok 121 - streamlink failure owns the screen with one verbatim error
+  ---
+  duration_ms: 0.946062
+  type: 'test'
+  ...
+# Subtest: streamlink OFF AIR displays the actual failed run response verbatim
+ok 122 - streamlink OFF AIR displays the actual failed run response verbatim
+  ---
+  duration_ms: 0.966774
+  type: 'test'
+  ...
+# Subtest: toolCompatibility - detects audio files for transcriber and trimmer
+ok 123 - toolCompatibility - detects audio files for transcriber and trimmer
+  ---
+  duration_ms: 0.739893
+  type: 'test'
+  ...
+# Subtest: toolCompatibility - detects subtitle files for translator
+ok 124 - toolCompatibility - detects subtitle files for translator
+  ---
+  duration_ms: 0.425442
+  type: 'test'
+  ...
+# Subtest: toolCompatibility - detects video files for trimmer
+ok 125 - toolCompatibility - detects video files for trimmer
+  ---
+  duration_ms: 0.231163
+  type: 'test'
+  ...
+# Subtest: no shared form hardcodes the cream palette it used to be built in
+ok 126 - no shared form hardcodes the cream palette it used to be built in
+  ---
+  duration_ms: 1.546486
+  type: 'test'
+  ...
+# Subtest: every shared form roots inside the scope that inherits the host surface
+ok 127 - every shared form roots inside the scope that inherits the host surface
+  ---
+  duration_ms: 21.556173
+  type: 'test'
+  ...
+# Subtest: canonical and legacy IDs resolve to each custom form, including health
+ok 128 - canonical and legacy IDs resolve to each custom form, including health
+  ---
+  duration_ms: 0.454861
+  type: 'test'
+  ...
+# Subtest: unknown tools render their manifest schema and retain parameter values
+ok 129 - unknown tools render their manifest schema and retain parameter values
+  ---
+  duration_ms: 1.218192
+  type: 'test'
+  ...
+# Subtest: generic tool page surfaces every manifest parameter as a labelled control
+ok 130 - generic tool page surfaces every manifest parameter as a labelled control
+  ---
+  duration_ms: 12.477514
+  type: 'test'
+  ...
+# Subtest: initialParamsFromManifest seeds every declared default and applies overrides
+ok 131 - initialParamsFromManifest seeds every declared default and applies overrides
+  ---
+  duration_ms: 0.508793
+  type: 'test'
+  ...
+# Subtest: initialParamsFromManifest leaves keys without a declared default out of the payload
+ok 132 - initialParamsFromManifest leaves keys without a declared default out of the payload
+  ---
+  duration_ms: 0.168507
+  type: 'test'
+  ...
+# Subtest: the registry resolves only real ids and falls back for everything else
+ok 133 - the registry resolves only real ids and falls back for everything else
+  ---
+  duration_ms: 0.229678
+  type: 'test'
+  ...
+# Subtest: tool page shell renders identity, ports and tags without executing anything
+ok 134 - tool page shell renders identity, ports and tags without executing anything
+  ---
+  duration_ms: 3.487736
+  type: 'test'
+  ...
+# Subtest: every tool has a bespoke page and no page is orphaned
+ok 135 - every tool has a bespoke page and no page is orphaned
+  ---
+  duration_ms: 0.529441
+  type: 'test'
+  ...
+# Subtest: the four media helpers are intentionally not standalone pages
+ok 136 - the four media helpers are intentionally not standalone pages
+  ---
+  duration_ms: 0.416376
+  type: 'test'
+  ...
+# Subtest: resolvePipelineFlow exposes root URL entry input and per-node params
+ok 137 - resolvePipelineFlow exposes root URL entry input and per-node params
+  ---
+  duration_ms: 0.718593
+  type: 'test'
+  ...
+# Subtest: resolvePipelineFlow treats translation toggle as a run option, not an override
+ok 138 - resolvePipelineFlow treats translation toggle as a run option, not an override
+  ---
+  duration_ms: 0.579379
+  type: 'test'
+  ...
+# Subtest: resolvePipelineFlow skips piped inputs on downstream nodes
+ok 139 - resolvePipelineFlow skips piped inputs on downstream nodes
+  ---
+  duration_ms: 0.308466
+  type: 'test'
+  ...
+1..139
+# tests 139
+# suites 0
+# pass 139
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3300.184246
+src/components/common/ErrorBoundary.tsx:16:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/components/common/ErrorBoundary.tsx:26:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/components/activity/ActivityContext.tsx:37:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/lib/toolForms.tsx:7:10: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/lib/toolForms.tsx:15:14: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/lib/toolForms.tsx:21:17: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/hooks/useCanvasRun.ts:36:13: warning react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function. help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+src/components/activity/ActivitySidebar.tsx:28:28: warning react(only-export-components): Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.
+src/hooks/useCanvasPersistence.ts:44:13: warning react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function. help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.
+src/components/media/VideoSubtitlePlayerModal.tsx:133:11: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'trackBlobUrl' help: Either include it or remove the dependency array.
+src/components/workspaces/WorkspaceMediaExplorer.tsx:65:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'loadMedia' help: Either include it or remove the dependency array.
+src/components/tools/ModelHealthCheckForm.tsx:93:42: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'fetchedModelsMap', and 'fetchLiveModels' help: Either include it or remove the dependency array.
+src/pages/tools/OcrMyPdfPage.tsx:91:19: warning react-hooks(exhaustive-deps): React Hook useEffect has missing dependencies: 'inputPdf', 'ocr.state.elapsedSeconds', and 'read' help: Either include it or remove the dependency array.
+src/components/pipeline/CanvasRenderers.tsx:34:10: warning react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+src/components/pipeline/CanvasRenderers.tsx:98:12: warning react(only-export-components): Fast refresh only works when a file only exports components. Move your component(s) to a separate file.
+src/components/workspaces/UnifiedMediaRunsHub.tsx:133:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'loadMedia' help: Either include it or remove the dependency array.
+src/components/workspaces/UnifiedMediaRunsHub.tsx:137:5: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'loadMedia' help: Either include it or remove the dependency array.
+src/components/workspaces/UnifiedMediaRunsHub.tsx:199:7: warning react-hooks(exhaustive-deps): React hook useMemo depends on `packages`, which changes every render help: Try memoizing this variable with `useRef` or `useCallback`.
+src/components/common/DynamicForm.tsx:488:22: warning eslint(no-extra-boolean-cast): Redundant Boolean call help: Remove the Boolean call as it will already be coerced to a boolean
+src/pages/WorkspaceDetailPage.tsx:63:60: warning react-hooks(exhaustive-deps): The ref's value `.current` is accessed directly in the effect cleanup function. help: The ref value will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by react, copy it to a variable inside the effect and use that variable in the cleanup function.

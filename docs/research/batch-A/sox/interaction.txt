@@ -1,0 +1,41 @@
+WAV playback switched Play → Pause. Changing gain marked output stale. Second completed run retained saved downloads. Invalid effect surfaced one backend error.
+All tools
+SoX / DSP effect rack
+sox /tmp/tone.wav unknown-effect <output>
+Executed order: sox /tmp/tone.wav <output> unknown-effect
+Signal chain
+Input audio path
+
+input_path is required, although the parameter schema does not list it.
+
+Choose audio or drop it anywhere in the rack
+
+Use WAV input for WAV output. A repeat run replaces the file on disk; saved downloads below last until you leave this page.
+
+Stage 1 / drag to reorder
+Move up
+Remove stage
+Add effect stage
+Output
+FAILED
+0.0s measured
+
+The backend reported:
+
+sox FAIL formats: can't determine type of `unknown-effect'
+tone_sox.wav
+
+/home/hruthvik9487/Downloads/drive-download-20260807T051738Z-1-001/tools-workspaces/downloads/sox/tone_sox.wav
+
+Play
+Download saved audio
+tone_sox.wav
+
+/home/hruthvik9487/Downloads/drive-download-20260807T051738Z-1-001/tools-workspaces/downloads/sox/tone_sox.wav
+
+Download saved audio
+
+Ready —
+conda.sox 14.4.2
+
+Run chain

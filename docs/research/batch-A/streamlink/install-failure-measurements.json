@@ -1,0 +1,32 @@
+[
+  {
+    "width": 1440,
+    "height": 900,
+    "install": [
+      {
+        "bottom": 873,
+        "inViewport": true
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "height": 1024,
+    "install": [
+      {
+        "bottom": 997,
+        "inViewport": true
+      }
+    ]
+  },
+  {
+    "width": 390,
+    "height": 844,
+    "install": [
+      {
+        "bottom": 819,
+        "inViewport": true
+      }
+    ]
+  }
+]
