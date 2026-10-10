@@ -127,18 +127,18 @@ def parse_vtt_content(content: str) -> list[SubtitleCue]:
 def format_cues_to_srt(cues: list[SubtitleCue]) -> str:
     """Reconstruct an .srt formatted string from cues."""
     blocks = []
-    for i, cue in enumerate(cues, start=1):
+    for cue in cues:
         timing = cue.timing.replace(".", ",")
-        blocks.append(f"{i}\n{timing}\n{cue.text}\n")
+        blocks.append(f"{cue.index}\n{timing}\n{cue.text}\n")
     return "\n".join(blocks).strip() + "\n"
 
 
 def format_cues_to_vtt(cues: list[SubtitleCue]) -> str:
     """Reconstruct a WebVTT formatted string from cues."""
     blocks = ["WEBVTT\n"]
-    for i, cue in enumerate(cues, start=1):
+    for cue in cues:
         timing = cue.timing.replace(",", ".")
-        blocks.append(f"{i}\n{timing}\n{cue.text}\n")
+        blocks.append(f"{cue.index}\n{timing}\n{cue.text}\n")
     return "\n".join(blocks).strip() + "\n"
 
 
@@ -262,16 +262,20 @@ class SubtitleTranslatorTool(LlmTranslatorTool):
             return ToolResult(
                 artifacts=[],
                 status="failed",
-                error="No active AI API key found. Please export GROQ_API_KEY, NVIDIA_API_KEY, or OPENAI_API_KEY in ~/.bashrc.",
+                error="No active AI API key found. Save a provider key in Settings or export GROQ_API_KEY, NVIDIA_API_KEY, or OPENAI_API_KEY in ~/.bashrc.",
             )
 
         artifacts: list[Artifact] = []
+        failed_cue_indices: list[int] = []
         lang_code = LANG_CODE_MAP.get(target_lang.lower(), target_lang[:2].lower())
 
         for p in input_paths:
             resolved = resolve_input_file(p)
             if not resolved or not resolved.exists():
-                return ToolResult(artifacts=artifacts, status="failed", error=f"input file not found: {p}")
+                return ToolResult(
+                    artifacts=artifacts, status="failed", error=f"input file not found: {p}",
+                    data={"failed_cue_indices": failed_cue_indices},
+                )
             src = resolved
 
             text_content = src.read_text(encoding="utf-8", errors="replace")
@@ -285,7 +289,7 @@ class SubtitleTranslatorTool(LlmTranslatorTool):
                     is_srt = is_vtt = False
 
             if is_srt or is_vtt:
-                translated_cues = await self._translate_cues(
+                translated_cues, failed_indices = await self._translate_cues(
                     cues=cues,
                     target_lang=target_lang,
                     source_lang=source_lang,
@@ -294,6 +298,8 @@ class SubtitleTranslatorTool(LlmTranslatorTool):
                     model=chosen_model,
                     batch_size=batch_size,
                 )
+
+                failed_cue_indices.extend(failed_indices)
 
                 srt_out_content = format_cues_to_srt(translated_cues)
                 vtt_out_content = format_cues_to_vtt(translated_cues)
@@ -319,14 +325,22 @@ class SubtitleTranslatorTool(LlmTranslatorTool):
                 artifacts.append(Artifact(path=str(out_txt), kind=PortKind.text, name=out_txt.name))
 
             else:
-                translated_text = await self._translate_plain_text(
-                    text=text_content,
-                    target_lang=target_lang,
-                    source_lang=source_lang,
-                    provider=resolved_provider,
-                    key=resolved_key,
-                    model=chosen_model,
-                )
+                try:
+                    translated_text = await self._translate_plain_text(
+                        text=text_content,
+                        target_lang=target_lang,
+                        source_lang=source_lang,
+                        provider=resolved_provider,
+                        key=resolved_key,
+                        model=chosen_model,
+                    )
+                except Exception:
+                    return ToolResult(
+                        artifacts=artifacts,
+                        status="failed",
+                        error="AI provider text translation failed. Check provider credentials and availability, then retry.",
+                        data={"failed_cue_indices": failed_cue_indices},
+                    )
                 stem = src.stem
                 out_doc = dest / f"{stem}_{lang_code}.txt"
                 out_doc.write_text(translated_text, encoding="utf-8")
@@ -334,12 +348,15 @@ class SubtitleTranslatorTool(LlmTranslatorTool):
 
         return ToolResult(
             artifacts=artifacts,
-            status="completed",
+            status="failed" if failed_cue_indices else "completed",
+            error=("Subtitle translation failed for some cues. Partial artifacts retain original text for failed cues."
+                   if failed_cue_indices else None),
             data={
                 "target_lang": target_lang,
                 "provider": resolved_provider,
                 "model": chosen_model,
                 "artifacts_count": len(artifacts),
+                "failed_cue_indices": failed_cue_indices,
             },
         )
 
@@ -352,11 +369,12 @@ class SubtitleTranslatorTool(LlmTranslatorTool):
         key: str,
         model: str,
         batch_size: int,
-    ) -> list[SubtitleCue]:
+    ) -> tuple[list[SubtitleCue], list[int]]:
         """Translate subtitle cues in batches preserving exact cue timing and IDs."""
         import logging
         logger = logging.getLogger("subtitle_translator")
         translated: list[SubtitleCue] = []
+        failed_indices: list[int] = []
 
         for i in range(0, len(cues), batch_size):
             chunk = cues[i : i + batch_size]
@@ -378,17 +396,20 @@ class SubtitleTranslatorTool(LlmTranslatorTool):
                 parsed_translations = self._parse_batch_response(response_text)
 
                 for c in chunk:
+                    if c.index not in parsed_translations:
+                        failed_indices.append(c.index)
                     new_text = parsed_translations.get(c.index, c.text)
                     translated.append(SubtitleCue(index=c.index, timing=c.timing, text=new_text))
             except Exception as e:
-                logger.warning("Subtitle translation batch %d failed (%s): %s", i // batch_size + 1, type(e).__name__, e)
+                logger.warning("Subtitle translation batch %d failed (%s)", i // batch_size + 1, type(e).__name__)
+                failed_indices.extend(c.index for c in chunk)
                 for c in chunk:
                     translated.append(c)
 
             if i + batch_size < len(cues):
                 await asyncio.sleep(1.2)
 
-        return translated
+        return translated, failed_indices
 
     def _parse_batch_response(self, text: str) -> dict[int, str]:
         """Extracts {index: text} mappings from LLM response."""

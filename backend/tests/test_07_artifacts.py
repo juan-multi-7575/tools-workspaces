@@ -157,3 +157,40 @@ def test_get_recent_artifacts(client, workspace_with_run):
     names = [a["name"] for a in data["artifacts"]]
     assert "source.mp3" in names
 
+
+@pytest.mark.parametrize(
+    ("suffix", "content"),
+    [
+        (".srt", "1\n00:00:01,000 --> 00:00:02,000\nHello subtitle\n"),
+        (".vtt", "WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nHello subtitle\n"),
+    ],
+)
+def test_subtitle_artifact_content_returns_text_envelope(client, tmp_path, suffix, content):
+    artifact = tmp_path / f"captions{suffix}"
+    artifact.write_text(content, encoding="utf-8")
+
+    response = client.get("/api/artifacts/content", params={"path": str(artifact)})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "content": content,
+        "name": artifact.name,
+        "size": artifact.stat().st_size,
+        "kind": suffix.removeprefix("."),
+    }
+
+
+def test_json_artifact_content_keeps_text_envelope(client, tmp_path):
+    content = '{"cues": []}'
+    artifact = tmp_path / "captions.json"
+    artifact.write_text(content, encoding="utf-8")
+
+    response = client.get("/api/artifacts/content", params={"path": str(artifact)})
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "content": content,
+        "name": artifact.name,
+        "size": artifact.stat().st_size,
+        "kind": "json",
+    }

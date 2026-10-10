@@ -247,7 +247,7 @@ async def get_artifact_content(path: str):
     p = Path(path).resolve()
     if not p.exists() or not p.is_file():
         raise HTTPException(status_code=404, detail="File not found")
-    if p.suffix in (".json", ".txt", ".md", ".log", ".html", ".csv"):
+    if p.suffix in (".json", ".txt", ".md", ".log", ".html", ".csv", ".srt", ".vtt"):
         text = p.read_text(encoding="utf-8", errors="replace")
         return {"content": text, "name": p.name, "size": p.stat().st_size, "kind": p.suffix.replace(".", "")}
     return FileResponse(p)

@@ -6,7 +6,6 @@ hands to ``AsyncSubprocessRunner``:
     trimmer / audio_processor      "ffmpeg"                    (downloader.py:806, audio_processor.py:64)
     transcriber                    "ffmpeg"                    (downloader.py:927)
     mediainfo                      "ffprobe"                   (mediainfo_tool.py:33)
-    subtitle.translate.srt         "ffprobe" + "ffmpeg"        (subtitles.py:146, subtitles.py:168)
     media.download.yt-dlp          "yt-dlp"                    (downloader.py:260) + ffmpeg for merge/embed
     streamlink                     "streamlink", falls back to "yt-dlp"  (mediainfo_tool.py:83, :99)
     ocrmypdf                       "ocrmypdf"                  (mediainfo_tool.py:139)
@@ -40,8 +39,8 @@ TOOL_DEPENDENCIES: dict[str, list[str]] = {
     "streamlink": ["conda.streamlink", "conda.ytdlp"],
     "sox": ["conda.sox"],
     "demucs": ["pip.demucs"],
-    "subtitle.translate.srt": ["conda.media"],
-    "subtitle_translator": ["conda.media"],  # deprecated alias
+    "subtitle.translate.srt": [],
+    "subtitle_translator": [],  # deprecated alias
     # --- documents -------------------------------------------------------
     "pandoc": ["conda.pandoc"],
     "pdf_tools": ["conda.poppler"],
