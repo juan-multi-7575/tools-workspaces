@@ -44,13 +44,13 @@ export const DownloadsTab: React.FC<DownloadsTabProps> = ({
       : []
     return (
       <div className="space-y-2">
-        <div className="rounded-xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/40 p-6 text-center text-[#7C5339] text-xs font-mono space-y-2">
-          <Clock className="mx-auto size-6 text-[#9D6638] mb-1 opacity-60" />
+        <div className="rounded-xl border border-dashed border-brand-sage bg-brand-cream-dark/40 p-6 text-center text-brand-caramel-text text-xs font-mono space-y-2">
+          <Clock className="mx-auto size-6 text-brand-caramel mb-1 opacity-60" />
           <p>{filterQuery ? 'No matching downloads found.' : 'Nothing downloading.'}</p>
           {!filterQuery && (
             <p>
               Completed files land in{' '}
-              <button onClick={onBrowseFiles} className="font-bold text-[#9D6638] underline underline-offset-2 hover:text-[#86542C]">
+              <button onClick={onBrowseFiles} className="font-bold text-brand-caramel underline underline-offset-2 hover:text-brand-caramel-hover">
                 Saved Files →
               </button>
             </p>
@@ -58,7 +58,7 @@ export const DownloadsTab: React.FC<DownloadsTabProps> = ({
         </div>
         {recentCompleted.length > 0 && (
           <div className="space-y-2">
-            <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7C5339] px-1">
+            <p className="font-mono text-xs font-bold uppercase tracking-wider text-brand-caramel-text px-1">
               Recently completed
             </p>
             {recentCompleted.map((task) => (

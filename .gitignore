@@ -15,3 +15,15 @@ dist/
 
 # Large binary assets
 *.zip
+
+# Local working/scratch directories
+.scratch/
+.opencode/agent-results/
+deps/
+
+# Media uploads and working files
+uploads/
+
+# Local working files
+opencode-image-reader.ts
+docs/superpowers/

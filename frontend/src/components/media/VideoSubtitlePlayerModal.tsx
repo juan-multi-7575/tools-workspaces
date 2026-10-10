@@ -167,17 +167,17 @@ export default function VideoSubtitlePlayerModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-[#4E220F]/50 backdrop-blur-xs">
-      <div className="relative flex flex-col w-full max-w-6xl max-h-[92vh] rounded-2xl border-2 border-[#B0BA99] bg-[#F7F1DE] shadow-2xl overflow-hidden text-[#4E220F]">
+    <div className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-5 bg-brand-espresso/50 backdrop-blur-xs">
+      <div className="relative flex flex-col w-full max-w-6xl max-h-[92vh] rounded-2xl border-2 border-brand-sage bg-brand-cream shadow-2xl overflow-hidden text-brand-espresso">
         {/* Header Bar */}
-        <div className="flex items-center justify-between border-b border-[#B0BA99]/60 px-5 py-3 bg-[#EDE5CD]/90">
+        <div className="flex items-center justify-between border-b border-brand-sage/60 px-5 py-3 bg-brand-cream-dark/90">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex size-8 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7] shrink-0 shadow-xs">
+            <div className="flex size-8 items-center justify-center rounded-xl bg-brand-caramel text-brand-cream-light shrink-0 shadow-xs">
               <Play className="size-4 fill-current" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-xs font-bold text-[#4E220F] font-mono truncate">{video.name}</h3>
-              <p className="text-[10px] text-[#7C5339] font-mono">
+              <h3 className="text-xs font-bold text-brand-espresso font-mono truncate">{video.name}</h3>
+              <p className="text-xs text-brand-caramel-text font-mono">
                 {(video.size / (1024 * 1024)).toFixed(1)} MB • Synchronized Video & Subtitles Studio
               </p>
             </div>
@@ -186,12 +186,12 @@ export default function VideoSubtitlePlayerModal({
           <div className="flex items-center gap-2 shrink-0">
             {/* Subtitle Selector Dropdown */}
             {subtitles.length > 0 && (
-              <div className="flex items-center gap-1.5 bg-[#FFFFFF] border border-[#B0BA99] rounded-xl px-2.5 py-1 text-xs">
-                <Captions className="size-3.5 text-[#9D6638]" />
+              <div className="flex items-center gap-1.5 bg-surface-white border border-brand-sage rounded-xl px-2.5 py-1 text-xs">
+                <Captions className="size-3.5 text-brand-caramel" />
                 <select
                   value={selectedSubId}
                   onChange={(e) => setSelectedSubId(e.target.value)}
-                  className="bg-transparent font-mono text-xs text-[#4E220F] font-semibold outline-none cursor-pointer"
+                  className="bg-transparent font-mono text-xs text-brand-espresso font-semibold outline-none cursor-pointer"
                 >
                   {subtitles.map((sub) => (
                     <option key={sub.name} value={sub.name}>
@@ -209,14 +209,14 @@ export default function VideoSubtitlePlayerModal({
 
             <a
               href={video.download_url}
-              className="inline-flex items-center gap-1 rounded-xl bg-[#9D6638] px-3 py-1.5 text-xs font-bold text-[#FDFBF7] shadow-xs hover:bg-[#86542C] transition-all"
+              className="inline-flex items-center gap-1 rounded-xl bg-brand-caramel px-3 py-1.5 text-xs font-bold text-brand-cream-light shadow-xs hover:bg-brand-caramel-hover transition-all"
             >
               <Download className="size-3.5" /> Download Video
             </a>
 
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-[#7C5339] hover:bg-[#B0BA99]/30 hover:text-[#4E220F] transition-colors"
+              className="rounded-lg p-1.5 text-brand-caramel-text hover:bg-brand-sage/30 hover:text-brand-espresso transition-colors"
             >
               <X className="size-4" />
             </button>
@@ -224,10 +224,10 @@ export default function VideoSubtitlePlayerModal({
         </div>
 
         {/* Modal Main Content: Split Player and Transcript */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_360px] overflow-hidden min-h-0 bg-[#F7F1DE]">
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_360px] overflow-hidden min-h-0 bg-brand-cream">
           {/* Left Pane: Video Player */}
-          <div className="flex flex-col p-4 space-y-3 overflow-y-auto border-b lg:border-b-0 lg:border-r border-[#B0BA99]/50">
-            <div className="relative flex items-center justify-center bg-[#000000] rounded-xl overflow-hidden shadow-lg border border-[#B0BA99] max-h-[58vh]">
+          <div className="flex flex-col p-4 space-y-3 overflow-y-auto border-b lg:border-b-0 lg:border-r border-brand-sage/50">
+            <div className="relative flex items-center justify-center bg-surface-black rounded-xl overflow-hidden shadow-lg border border-brand-sage max-h-[58vh]">
               <video
                 ref={videoRef}
                 controls
@@ -251,13 +251,13 @@ export default function VideoSubtitlePlayerModal({
             </div>
 
             {/* Subtitle Muxing Action Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl border border-[#B0BA99] bg-[#EDE5CD]/60 text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl border border-brand-sage bg-brand-cream-dark/60 text-xs">
               <div className="space-y-0.5">
-                <span className="font-mono text-[11px] font-bold text-[#4E220F] flex items-center gap-1.5">
-                  <Sparkles className="size-3.5 text-[#9D6638]" />
+                <span className="font-mono text-xs font-bold text-brand-espresso flex items-center gap-1.5">
+                  <Sparkles className="size-3.5 text-brand-caramel" />
                   Embed Subtitles into Video (FFmpeg)
                 </span>
-                <p className="text-[10px] text-[#7C5339]">
+                <p className="text-xs text-brand-caramel-text">
                   Permanently mux selected subtitle track directly into the MP4 file.
                 </p>
               </div>
@@ -266,16 +266,16 @@ export default function VideoSubtitlePlayerModal({
                 <button
                   onClick={() => handleMux(false)}
                   disabled={muxing || !selectedSub}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1 text-xs font-bold text-[#4E220F] hover:bg-[#EDE5CD] disabled:opacity-50 transition-all shadow-2xs"
+                  className="inline-flex items-center gap-1 rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1 text-xs font-bold text-brand-espresso hover:bg-brand-cream-dark disabled:opacity-50 transition-all shadow-2xs"
                   title="Fast soft-mux track into MP4 container (instant, no re-encoding)"
                 >
-                  {muxing ? <Loader2 className="size-3 animate-spin text-[#9D6638]" /> : <Layers className="size-3" />}
+                  {muxing ? <Loader2 className="size-3 animate-spin text-brand-caramel" /> : <Layers className="size-3" />}
                   Embed Subtitle Track
                 </button>
                 <button
                   onClick={() => handleMux(true)}
                   disabled={muxing || !selectedSub}
-                  className="inline-flex items-center gap-1 rounded-lg bg-[#9D6638] px-2.5 py-1 text-xs font-bold text-[#FDFBF7] hover:bg-[#86542C] disabled:opacity-50 transition-all shadow-2xs"
+                  className="inline-flex items-center gap-1 rounded-lg bg-brand-caramel px-2.5 py-1 text-xs font-bold text-brand-cream-light hover:bg-brand-caramel-hover disabled:opacity-50 transition-all shadow-2xs"
                   title="Hard-burn subtitles directly onto the video frames"
                 >
                   Burn-In Subtitles
@@ -284,13 +284,13 @@ export default function VideoSubtitlePlayerModal({
             </div>
 
             {muxSuccess && (
-              <div className="flex items-center gap-1.5 p-2.5 text-xs text-[#2E6B47] bg-[#DFF0D8] border border-[#B0BA99] rounded-xl font-medium">
+              <div className="flex items-center gap-1.5 p-2.5 text-xs text-success bg-success-soft border border-brand-sage rounded-xl font-medium">
                 <Check className="size-3.5 shrink-0" />
                 <span>{muxSuccess}</span>
               </div>
             )}
             {muxError && (
-              <div className="flex items-center gap-1.5 p-2.5 text-xs text-[#A83232] bg-[#F2DEDE] border border-[#A83232]/40 rounded-xl font-medium">
+              <div className="flex items-center gap-1.5 p-2.5 text-xs text-accent-contrast bg-error-tint border border-accent-contrast/40 rounded-xl font-medium">
                 <AlertCircle className="size-3.5 shrink-0" />
                 <span>{muxError}</span>
               </div>
@@ -298,22 +298,22 @@ export default function VideoSubtitlePlayerModal({
           </div>
 
           {/* Right Pane: Interactive Synchronized Transcript */}
-          <div className="flex flex-col h-full overflow-hidden bg-[#FFFFFF]/60">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-[#B0BA99]/50 bg-[#EDE5CD]/50 shrink-0">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#4E220F] flex items-center gap-1.5">
-                <FileText className="size-3.5 text-[#9D6638]" />
+          <div className="flex flex-col h-full overflow-hidden bg-surface-white/60">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-brand-sage/50 bg-brand-cream-dark/50 shrink-0">
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-brand-espresso flex items-center gap-1.5">
+                <FileText className="size-3.5 text-brand-caramel" />
                 Interactive Transcript
               </span>
-              <span className="font-mono text-[10px] text-[#7C5339]">
+              <span className="font-mono text-xs text-brand-caramel-text">
                 {cues.length} cues
               </span>
             </div>
 
             {cues.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-[#7C5339]">
-                <Captions className="size-8 text-[#B0BA99] mb-2" />
-                <p className="text-xs font-bold text-[#4E220F]">No Subtitles Active</p>
-                <p className="text-[11px] mt-1 max-w-[200px]">
+              <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-brand-caramel-text">
+                <Captions className="size-8 text-brand-sage mb-2" />
+                <p className="text-xs font-bold text-brand-espresso">No Subtitles Active</p>
+                <p className="text-xs mt-1 max-w-[200px]">
                   Select a subtitle file from the dropdown above to view and sync the transcript.
                 </p>
               </div>
@@ -328,16 +328,16 @@ export default function VideoSubtitlePlayerModal({
                       className={
                         'group flex items-start gap-2.5 p-2 rounded-xl text-xs cursor-pointer transition-all duration-150 ' +
                         (isActive
-                          ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs font-semibold scale-[1.01]'
-                          : 'bg-[#F7F1DE]/60 hover:bg-[#EDE5CD] text-[#4E220F]')
+                          ? 'bg-brand-caramel text-brand-cream-light shadow-xs font-semibold scale-[1.01]'
+                          : 'bg-brand-cream/60 hover:bg-brand-cream-dark text-brand-espresso')
                       }
                     >
                       <span
                         className={
-                          'font-mono text-[10px] px-1.5 py-0.5 rounded shrink-0 flex items-center gap-0.5 ' +
+                          'font-mono text-xs px-1.5 py-0.5 rounded shrink-0 flex items-center gap-0.5 ' +
                           (isActive
-                            ? 'bg-[#FDFBF7]/25 text-[#FDFBF7]'
-                            : 'bg-[#B0BA99]/30 text-[#7C5339] group-hover:text-[#4E220F]')
+                            ? 'bg-brand-cream-light/25 text-brand-cream-light'
+                            : 'bg-brand-sage/30 text-brand-caramel-text group-hover:text-brand-espresso')
                         }
                       >
                         <Clock className="size-2.5" />
@@ -351,11 +351,11 @@ export default function VideoSubtitlePlayerModal({
             )}
 
             {/* Quick Download Subtitle & Transcript Actions Footer */}
-            <div className="p-3 border-t border-[#B0BA99]/50 bg-[#EDE5CD]/40 flex flex-wrap items-center justify-between gap-2 shrink-0">
+            <div className="p-3 border-t border-brand-sage/50 bg-brand-cream-dark/40 flex flex-wrap items-center justify-between gap-2 shrink-0">
               {selectedSub && (
                 <a
                   href={selectedSub.download_url}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] px-2 py-1 text-[11px] font-bold text-[#4E220F] hover:bg-[#EDE5CD] shrink-0"
+                  className="inline-flex items-center gap-1 rounded-lg border border-brand-sage bg-surface-white px-2 py-1 text-xs font-bold text-brand-espresso hover:bg-brand-cream-dark shrink-0"
                 >
                   <Download className="size-3" /> Download Subtitle
                 </a>
@@ -363,7 +363,7 @@ export default function VideoSubtitlePlayerModal({
               {transcripts && transcripts.length > 0 && (
                 <a
                   href={transcripts[0].download_url}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] px-2 py-1 text-[11px] font-bold text-[#4E220F] hover:bg-[#EDE5CD] shrink-0"
+                  className="inline-flex items-center gap-1 rounded-lg border border-brand-sage bg-surface-white px-2 py-1 text-xs font-bold text-brand-espresso hover:bg-brand-cream-dark shrink-0"
                 >
                   <Download className="size-3" /> Download Text (.txt)
                 </a>

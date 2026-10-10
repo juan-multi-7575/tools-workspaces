@@ -1,0 +1,703 @@
+/*
+ * Audio Extractor & Processor — design brief #4 in
+ * docs/research/design-briefs.md, after the `arc` reference.
+ *
+ * Arc's own language is warm: a cream ground, black ink, soft edges, generous
+ * radius, and controls that feel like objects rather than fields. Everything
+ * below is scoped under `.ap-root` with every custom property declared on that
+ * same root, so no token can reach a sibling tool site or the app shell.
+ * `.dep-gate` is app-level and is re-skinned at the end.
+ *
+ * The two free faces stand in for Arc's commercial Marlin and Exposure. Bricolage
+ * Grotesque carries the display, set at the reference's own 32px/700/-1.6px and
+ * scaled up from there; DM Sans carries every control.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&display=swap');
+
+.ap-root {
+  /* The reference's measured ground and ink. */
+  --ap-ground: #fffcec;
+  --ap-panel: #fffdf6;
+  --ap-sunk: #f6efdb;
+  --ap-ink: #000000;
+  /* 5.25:1 and 7.10:1 on this cream. */
+  --ap-ink-70: #6e6a5e;
+  --ap-ink-85: #5a564c;
+  --ap-hair: rgba(0, 0, 0, 0.12);
+  --ap-hair-strong: rgba(0, 0, 0, 0.22);
+  --ap-accent: #b4763a;
+  /* 3.65:1 is enough for the accent as a fill and for display type; small text
+     on cream takes this, 6.33:1. */
+  --ap-accent-text: #8a4f22;
+  --ap-accent-wash: rgba(180, 118, 58, 0.12);
+  --ap-bad: #a32a12;
+
+  --ap-display: 'Bricolage Grotesque', 'Trebuchet MS', Georgia, serif;
+  --ap-ui: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  --ap-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  /* Arc's own display measure: 32px, weight 700, tracking -1.6px. */
+  --ap-display-size: 32px;
+  --ap-display-track: -1.6px;
+
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background-color: var(--ap-ground);
+  color: var(--ap-ink);
+  font-family: var(--ap-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.ap-root *,
+.ap-root *::before,
+.ap-root *::after {
+  box-sizing: border-box;
+}
+
+.ap-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ap-mono {
+  font-family: var(--ap-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ap-root ::selection {
+  background-color: var(--ap-accent);
+  color: #fffdf6;
+}
+
+.ap-root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.ap-root ::-webkit-scrollbar-thumb {
+  background: var(--ap-hair-strong);
+  border-radius: 9999px;
+}
+
+.ap-root :focus-visible {
+  outline: 2px solid var(--ap-accent-text);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------------ buttons */
+
+.ap-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  /* The reference's controls are objects: fully rounded, padded generously. */
+  padding: 12px 22px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  font-family: var(--ap-ui);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  background: none;
+  color: var(--ap-ink);
+}
+
+.ap-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.ap-btn--accent {
+  background: var(--ap-ink);
+  border-color: var(--ap-ink);
+  color: var(--ap-ground);
+  font-weight: 700;
+}
+
+.ap-btn--accent:disabled {
+  background: var(--ap-sunk);
+  border-color: var(--ap-hair);
+  color: var(--ap-ink-70);
+}
+
+.ap-btn--outline {
+  border-color: var(--ap-hair-strong);
+}
+
+.ap-btn--small {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-color: var(--ap-hair-strong);
+}
+
+.ap-btn--run {
+  padding: 14px 26px;
+  font-size: 15px;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------ the pill signature */
+
+/*
+ * Format and sample rate are choices, not fields. Generous radius, a soft
+ * interior, and a pressed state you can feel: the whole point of the reference
+ * is that a consumer control should not look like a form input.
+ */
+.ap-pills {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--ap-sunk);
+}
+
+.ap-pills--wrap {
+  flex-wrap: wrap;
+  border-radius: 22px;
+}
+
+.ap-pill {
+  padding: 9px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--ap-ink-85);
+  font-family: var(--ap-ui);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+}
+
+.ap-pill[aria-pressed='true'] {
+  background: var(--ap-ink);
+  color: var(--ap-ground);
+  font-weight: 700;
+}
+
+.ap-pill:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+/* ------------------------------------------------------------------- top bar */
+
+.ap-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 0 0 auto;
+  padding: 12px 22px;
+  font-size: 13px;
+}
+
+.ap-bar__home {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px 8px 12px;
+  border: 1.5px solid var(--ap-hair-strong);
+  border-radius: 999px;
+  background: none;
+  color: var(--ap-ink-85);
+  font-family: var(--ap-ui);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ap-bar__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ap-bar__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ap-accent);
+  flex: 0 0 auto;
+}
+
+.ap-bar__id {
+  margin-left: auto;
+  color: var(--ap-ink-70);
+  font-family: var(--ap-mono);
+  font-size: 12px;
+}
+
+/* --------------------------------------------------------------------- stage */
+
+.ap-stage {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.ap-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 8px 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/*
+ * Column children keep their own height. Left to shrink, the waveform gives up
+ * its height as soon as a result panel appears below it, and because it clips
+ * its own overflow the decoded peaks are cropped rather than pushed down.
+ */
+.ap-main > * {
+  flex: 0 0 auto;
+}
+
+/* ----------------------------------------------------------------- waveform */
+
+.ap-wave {
+  border-radius: 26px;
+  overflow: hidden;
+}
+
+.ap-wave__head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 0 4px 14px;
+}
+
+.ap-wave__meta {
+  margin: 0 0 0 auto;
+  font-size: 13px;
+  color: var(--ap-ink-70);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Play drives the real waveform, so it sits with the name of the file it plays. */
+.ap-transport {
+  flex: 0 0 auto;
+  min-width: 72px;
+}
+
+.ap-wave__stage {
+  position: relative;
+  border-radius: 26px;
+  background-color: var(--ap-panel);
+  /* A soft edge rather than a hard drop shadow — the reference has no shadow
+     at all, only the warmth of the cream. */
+  box-shadow:
+    inset 0 0 0 1.5px var(--ap-hair),
+    0 18px 44px -28px rgba(0, 0, 0, 0.35);
+  padding: 26px 26px 30px;
+  min-height: clamp(200px, 34vh, 360px);
+  display: flex;
+  align-items: center;
+}
+
+.ap-wave__canvas {
+  width: 100%;
+  height: clamp(150px, 26vh, 280px);
+  cursor: pointer;
+  /* wavesurfer measures this box and is given its pixel height directly, so the
+     canvas is never wider or taller than the element that holds it. */
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ap-wave__empty {
+  margin: 0;
+  padding: 8px 4px;
+  max-width: 34rem;
+}
+
+.ap-wave__empty-title {
+  margin: 0 0 8px;
+  font-family: var(--ap-display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.ap-wave__empty-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--ap-ink-70);
+}
+
+.ap-wave__failed {
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(163, 42, 18, 0.08);
+  box-shadow: inset 0 0 0 1.5px rgba(163, 42, 18, 0.45);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ap-wave__foot {
+  margin: 12px 4px 0;
+  font-size: 13px;
+  color: var(--ap-ink-70);
+}
+
+/* -------------------------------------------------------------- run ledger */
+
+.ap-ledger {
+  padding: 4px;
+}
+
+.ap-ledger__title {
+  margin: 0 0 12px;
+  font-family: var(--ap-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.ap-ledger__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ap-ledger__row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: var(--ap-panel);
+  box-shadow: inset 0 0 0 1.5px var(--ap-hair);
+}
+
+.ap-ledger__facts {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.ap-ledger__name {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.ap-ledger__meta {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--ap-ink-70);
+}
+
+.ap-ledger__note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ap-ink-70);
+  max-width: 46rem;
+}
+
+/* -------------------------------------------------------- the floating rail */
+
+.ap-rail {
+  flex: 0 0 auto;
+  width: 300px;
+  padding: 8px 24px 24px 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.ap-rail__inner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  border-radius: 26px;
+  background: var(--ap-panel);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ap-hair),
+    0 26px 60px -30px rgba(0, 0, 0, 0.42);
+}
+
+.ap-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.ap-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ap-ink-85);
+}
+
+.ap-input {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1.5px solid var(--ap-hair-strong);
+  border-radius: 14px;
+  background: var(--ap-ground);
+  color: var(--ap-ink);
+  font-family: var(--ap-ui);
+  font-size: 13px;
+}
+
+.ap-input::placeholder {
+  color: var(--ap-ink-70);
+}
+
+.ap-drop {
+  padding: 14px 12px;
+  border: 1.5px dashed var(--ap-hair-strong);
+  border-radius: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ap-ink-70);
+  cursor: pointer;
+}
+
+.ap-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ap-ink-70);
+}
+
+.ap-error {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: rgba(163, 42, 18, 0.08);
+  box-shadow: inset 0 0 0 1.5px rgba(163, 42, 18, 0.45);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------- result report */
+
+.ap-report {
+  min-width: 0;
+}
+
+.ap-root .ap-report .bg-brand-cream-dark\/50,
+.ap-root .ap-report .bg-brand-cream-dark {
+  background-color: var(--ap-sunk);
+}
+
+.ap-root .ap-report .bg-surface-white {
+  background-color: var(--ap-panel);
+}
+
+.ap-root .ap-report .bg-accent-contrast\/10 {
+  background-color: rgba(163, 42, 18, 0.08);
+}
+
+.ap-root .ap-report .border-brand-sage {
+  border-color: var(--ap-hair);
+}
+
+.ap-root .ap-report .border-accent-contrast\/50 {
+  border-color: var(--ap-bad);
+}
+
+.ap-root .ap-report .text-brand-caramel-text {
+  color: var(--ap-ink-70);
+}
+
+.ap-root .ap-report .text-brand-espresso {
+  color: var(--ap-ink);
+}
+
+.ap-root .ap-report .text-accent-contrast {
+  color: var(--ap-bad);
+}
+
+.ap-root .ap-report .text-success {
+  color: var(--ap-ink-85);
+}
+
+.ap-root .ap-report a {
+  color: var(--ap-accent-text);
+}
+
+/* --------------------------------------------------------------- action dock */
+
+.ap-dock {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 22px;
+  background: var(--ap-ground);
+}
+
+.ap-dock__note {
+  margin: 0;
+  flex: 1 1 220px;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ap-ink-70);
+}
+
+.ap-dock__gate {
+  flex: 0 1 400px;
+  min-width: 0;
+  max-width: 440px;
+}
+
+/* ------------------------------------------------------------------- the hero */
+
+.ap-hero-page {
+  overflow: hidden;
+}
+
+.ap-hero {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 30px;
+  padding: clamp(28px, 6vw, 84px);
+  overflow: hidden;
+}
+
+.ap-hero--flat {
+  justify-content: flex-start;
+}
+
+.ap-hero__eyebrow {
+  margin: 0 0 18px;
+  font-family: var(--ap-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ap-ink-70);
+}
+
+/* Arc sets its display at 32px/700/-1.6px; the hero scales that ratio up. */
+.ap-hero__title {
+  margin: 0 0 20px;
+  font-family: var(--ap-display);
+  font-size: clamp(2.1rem, 5vw, 3.6rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+}
+
+.ap-lede {
+  max-width: 36rem;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--ap-ink-70);
+}
+
+.ap-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ap-hero__wave {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: clamp(90px, 16vh, 170px);
+  margin-top: clamp(8px, 3vh, 36px);
+  opacity: 0.9;
+}
+
+.ap-hero__bar {
+  flex: 1 1 auto;
+  max-width: 6px;
+  min-height: 3px;
+  border-radius: 999px;
+  background: var(--ap-ink);
+}
+
+@media (max-width: 1040px) {
+  .ap-rail {
+    width: 268px;
+  }
+}
+
+@media (max-width: 880px) {
+  .ap-stage {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .ap-main {
+    overflow: visible;
+    padding: 8px 18px 20px;
+  }
+
+  .ap-rail {
+    width: auto;
+    padding: 0 18px 24px;
+  }
+
+  .ap-dock__gate {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .ap-btn--run {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 520px) {
+  .ap-hero__actions .ap-btn {
+    width: 100%;
+  }
+
+  .ap-pills--wrap {
+    border-radius: 999px;
+  }
+
+  .ap-wave__stage {
+    padding: 18px 16px 22px;
+    border-radius: 20px;
+  }
+}

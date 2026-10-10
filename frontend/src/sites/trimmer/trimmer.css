@@ -1,0 +1,812 @@
+/*
+ * Trimmer — Media & Audio Trimmer. Design brief #2 in
+ * docs/research/design-briefs.md, after the `type.method` (Kern Type)
+ * reference.
+ *
+ * The reference is one composition: an enormous letterform set edge to edge on a
+ * navy ground, a small mark top left, one accent dot, and nothing else moving.
+ * Everything below is scoped under `.tr-root` and every custom property is
+ * declared on that same root, so no token can reach a sibling tool site or the
+ * app shell. `.dep-gate` is an app-level class, so it is re-skinned at the end
+ * of this file rather than imported.
+ *
+ * MOTION. Exactly one authored moment exists on this site: the playhead easing
+ * as it scrubs (`transition` on `.tr-playhead`). There are no entrance
+ * animations, no hover transitions and no transforms anywhere else — the
+ * reference does not have them, and a second animation would be decoration
+ * pretending to be meaning.
+ */
+
+/* Two faces, both SIL OFL. Loaded here rather than from the app shell's
+   stylesheet so this site stays a single-directory change. */
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@400;500&display=swap');
+
+.tr-root {
+  /* Measured off the reference's own palette. */
+  --tr-ground: #2b313f;
+  --tr-ink: #f9fafb;
+  /* Named for what they measure against this ground: 6.40:1 and 5.07:1. */
+  --tr-ink-66: #b3b6bb;
+  --tr-ink-56: #9ea2a8;
+  --tr-hair: rgba(249, 250, 251, 0.14);
+  --tr-hair-strong: rgba(249, 250, 251, 0.3);
+  --tr-accent: #3b82f6;
+  /* The accent is 3.54:1 here, which is enough for a rule, a dot and display
+     size type but not for a sentence — so small accent text uses this, 5.89:1. */
+  --tr-accent-text: #7cb0ff;
+  --tr-bad: #ff8a8a;
+
+  --tr-display: 'Archivo Black', 'Arial Black', Georgia, serif;
+  --tr-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* The band is sized so the glyphs are the interface at every viewport. */
+  /*
+    The strip is sized so the glyphs are the interface at every viewport — but
+    note this is bounded above by what a *time* axis can hold, not by taste. A
+    selected region is drawn purely as space between letters, so the letters
+    have to be small enough that an unselected stretch can set a dense run and
+    a selected one can set the same run pulled wide. At 60px an equal pair of
+    stretches reads as five letters against one, which is the whole signal.
+  */
+  --tr-strip-size: clamp(1.75rem, 4.6vw, 4.5rem);
+  --tr-band-size: clamp(1.75rem, 9vw, 8rem);
+
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background-color: var(--tr-ground);
+  color: var(--tr-ink);
+  font-family: var(--tr-mono);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.tr-root *,
+.tr-root *::before,
+.tr-root *::after {
+  box-sizing: border-box;
+}
+
+.tr-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tr-mono {
+  font-family: var(--tr-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tr-root ::selection {
+  background-color: var(--tr-accent);
+  color: var(--tr-ground);
+}
+
+.tr-root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.tr-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tr-root ::-webkit-scrollbar-thumb {
+  background: var(--tr-hair-strong);
+  border-radius: 9999px;
+}
+
+.tr-root :focus-visible {
+  outline: 2px solid var(--tr-accent);
+  outline-offset: 3px;
+}
+
+/* ------------------------------------------------------------------ buttons */
+
+.tr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: var(--tr-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  background: none;
+  color: var(--tr-ink);
+}
+
+.tr-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tr-btn--accent {
+  background: var(--tr-accent);
+  border-color: var(--tr-accent);
+  /* Navy on the accent is 3.54:1 and the button label is 13px, so the label
+     takes the ground's own near-white instead: 3.68:1 against the blue. */
+  color: #0b1120;
+  font-weight: 700;
+}
+
+.tr-btn--accent:disabled {
+  background: none;
+  border-color: var(--tr-hair-strong);
+  color: var(--tr-ink);
+  font-weight: 500;
+}
+
+.tr-btn--outline {
+  border-color: var(--tr-hair-strong);
+}
+
+.tr-btn--ghost {
+  padding: 6px 12px;
+  font-size: 11px;
+  color: var(--tr-ink-66);
+  border-color: var(--tr-hair);
+}
+
+.tr-btn--small {
+  padding: 8px 14px;
+  font-size: 12px;
+  border-color: var(--tr-hair-strong);
+  white-space: nowrap;
+}
+
+.tr-btn--wide {
+  width: 100%;
+}
+
+.tr-btn--run {
+  padding: 14px 26px;
+  font-size: 14px;
+}
+
+/* ------------------------------------------------------------------- top bar */
+
+.tr-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 0 0 auto;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--tr-hair);
+  font-size: 12px;
+}
+
+.tr-bar__home {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px 6px 8px;
+  border: 1px solid var(--tr-hair);
+  border-radius: 999px;
+  background: none;
+  color: var(--tr-ink-66);
+  font-family: var(--tr-mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tr-bar__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--tr-ink);
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tr-bar__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tr-accent);
+  flex: 0 0 auto;
+}
+
+.tr-bar__id {
+  margin-left: auto;
+  color: var(--tr-ink-56);
+  letter-spacing: 0.04em;
+}
+
+/* --------------------------------------------------------------------- stage */
+
+.tr-stage {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.tr-rail {
+  flex: 0 0 340px;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 22px 22px 40px;
+  border-right: 1px solid var(--tr-hair);
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.tr-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tr-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tr-ink-56);
+}
+
+.tr-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--tr-ink-56);
+}
+
+.tr-input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--tr-hair);
+  border-radius: 8px;
+  background: rgba(249, 250, 251, 0.04);
+  color: var(--tr-ink);
+  font-family: var(--tr-mono);
+  font-size: 12px;
+}
+
+.tr-input::placeholder {
+  color: var(--tr-ink-56);
+}
+
+.tr-num {
+  width: 100%;
+}
+
+.tr-source {
+  display: flex;
+  gap: 8px;
+}
+
+.tr-source__drop {
+  padding: 16px 12px;
+  border: 1px dashed var(--tr-hair-strong);
+  border-radius: 10px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--tr-ink-66);
+  cursor: pointer;
+}
+
+.tr-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--tr-bad);
+  border-radius: 8px;
+  background: rgba(255, 138, 138, 0.08);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--tr-ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tr-error__text {
+  margin: 0;
+  font-family: var(--tr-mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--tr-ink);
+}
+
+.tr-measure__body {
+  margin: 0;
+  font-size: 12px;
+  color: var(--tr-ink-66);
+}
+
+.tr-measure__body strong {
+  font-size: 15px;
+  color: var(--tr-ink);
+}
+
+.tr-measure__from {
+  color: var(--tr-ink-56);
+}
+
+.tr-measure__idle {
+  color: var(--tr-ink-56);
+}
+
+.tr-empty {
+  margin: 0;
+  padding: 16px 14px;
+  border: 1px solid var(--tr-hair);
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--tr-ink-66);
+}
+
+.tr-regions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tr-region {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tr-region__row {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+
+/*
+ * The region index is set as display type, not as list furniture: it is the
+ * left-margin marginalia the reference's typography makes room for.
+ */
+.tr-region__num {
+  font-family: var(--tr-display);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--tr-ink-56);
+}
+
+.tr-region__len {
+  margin: 0;
+  font-size: 11px;
+  color: var(--tr-ink-56);
+}
+
+/* ---------------------------------------------------------------- the timeline */
+
+.tr-field-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tr-strip-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  padding: 28px clamp(20px, 4vw, 64px);
+}
+
+.tr-strip-head,
+.tr-strip-foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: 11px;
+  color: var(--tr-ink-56);
+  letter-spacing: 0.04em;
+}
+
+.tr-strip-head .tr-strip__time {
+  font-size: 13px;
+  color: var(--tr-ink);
+}
+
+.tr-strip__mid {
+  color: var(--tr-ink-56);
+}
+
+/* The band hugs the glyphs rather than floating in a tall empty box: the
+     reference is a band of type, not a track with type on it. */
+  .tr-strip {
+  position: relative;
+  height: calc(var(--tr-strip-size) * 2.15);
+  cursor: crosshair;
+  touch-action: none;
+  border-top: 1px solid var(--tr-hair);
+  border-bottom: 1px solid var(--tr-hair);
+}
+
+.tr-strip[data-live='false'] {
+  cursor: default;
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+}
+
+.tr-strip:focus-visible {
+  outline: 2px solid var(--tr-accent);
+  outline-offset: 4px;
+}
+
+.tr-strip__segments {
+  position: absolute;
+  inset: 0;
+  /* Same half-letter inset as the hero band, for the same reason. */
+  padding-inline: calc(var(--tr-strip-size) * 0.34);
+  display: flex;
+}
+
+.tr-seg {
+  position: relative;
+  min-width: 0;
+  overflow: visible;
+}
+
+.tr-glyph {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--tr-display);
+  font-size: var(--tr-strip-size);
+  line-height: 0.78;
+  color: var(--tr-ink);
+  pointer-events: none;
+  user-select: none;
+}
+
+.tr-seg[data-inside='true'] .tr-glyph {
+  color: var(--tr-accent-text);
+}
+
+/*
+ * The handles are glyphs, and their weight is the affordance. Archivo Black
+ * ships a single weight, so the "grabbed" state is a real stroke on the
+ * outline — the letter thickens rather than switching to a grabber icon.
+ */
+.tr-handles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tr-handle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translate(-50%, -50%);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--tr-accent);
+  font-family: var(--tr-display);
+  font-size: calc(var(--tr-strip-size) * 1.5);
+  line-height: 1;
+  cursor: ew-resize;
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-text-stroke: 0 transparent;
+  paint-order: stroke fill;
+}
+
+.tr-handle:hover,
+.tr-handle:focus-visible {
+  -webkit-text-stroke: 0.022em currentColor;
+}
+
+.tr-handle:active,
+.tr-handles:has(.tr-handle:active) {
+  -webkit-text-stroke: 0.04em currentColor;
+}
+
+/* THE one authored moment on this site. */
+.tr-playhead {
+  position: absolute;
+  top: -12px;
+  bottom: -12px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--tr-accent);
+  pointer-events: none;
+  transition: left 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* While a finger or mouse is down the playhead tracks the pointer exactly; the
+   easing is for the settle, not for a control that lags behind the cursor. */
+.tr-strip-wrap[data-scrubbing='true'] .tr-playhead {
+  transition: none;
+}
+
+.tr-strip__off {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 24px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--tr-ink-66);
+}
+
+/* ------------------------------------------------------------- result report */
+
+.tr-report {
+  min-width: 0;
+}
+
+.tr-root .tr-report .bg-brand-cream-dark\/50,
+.tr-root .tr-report .bg-brand-cream-dark {
+  background-color: rgba(249, 250, 251, 0.05);
+}
+
+.tr-root .tr-report .bg-surface-white {
+  background-color: rgba(249, 250, 251, 0.03);
+}
+
+.tr-root .tr-report .bg-accent-contrast\/10 {
+  background-color: rgba(255, 138, 138, 0.1);
+}
+
+.tr-root .tr-report .border-brand-sage {
+  border-color: var(--tr-hair);
+}
+
+.tr-root .tr-report .border-accent-contrast\/50 {
+  border-color: var(--tr-bad);
+}
+
+.tr-root .tr-report .text-brand-caramel-text {
+  color: var(--tr-ink-66);
+}
+
+.tr-root .tr-report .text-brand-espresso {
+  color: var(--tr-ink);
+}
+
+.tr-root .tr-report .text-accent-contrast {
+  color: var(--tr-bad);
+}
+
+.tr-root .tr-report .text-success {
+  color: var(--tr-ink);
+}
+
+.tr-root .tr-report a {
+  color: var(--tr-accent-text);
+}
+
+.tr-root .tr-report input,
+.tr-root .tr-report select {
+  background: rgba(249, 250, 251, 0.05);
+  border-color: var(--tr-hair);
+  color: var(--tr-ink);
+}
+
+/* --------------------------------------------------------------- action dock */
+
+.tr-dock {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--tr-hair);
+  background: var(--tr-ground);
+}
+
+.tr-dock__main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tr-dock__note {
+  margin: 0;
+  flex: 1 1 240px;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--tr-ink-66);
+}
+
+.tr-dock__gate {
+  flex: 0 1 420px;
+  min-width: 0;
+  max-width: 460px;
+}
+
+/* ------------------------------------------------------------------- the hero */
+
+.tr-hero-page {
+  overflow: hidden;
+}
+
+.tr-hero {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(28px, 6vh, 72px);
+  padding: clamp(24px, 5vw, 72px);
+  overflow: hidden;
+}
+
+.tr-hero--flat {
+  gap: 20px;
+}
+
+.tr-band {
+  display: flex;
+  width: 100%;
+  height: clamp(120px, 22vh, 220px);
+  flex: 0 0 auto;
+  /*
+    The glyphs are centred on their own slot, so the outermost ones overhang
+    their segment by half a letter. This inset is exactly that half letter,
+    which keeps the run full-bleed while leaving the first and last glyph
+    whole instead of sliced by the viewport edge.
+  */
+  padding-inline: calc(var(--tr-band-size) * 0.34);
+}
+
+.tr-band__seg {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.tr-band__glyph {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--tr-display);
+  font-size: var(--tr-band-size);
+  line-height: 0.78;
+  color: var(--tr-ink);
+}
+
+.tr-band__seg[data-inside='true'] .tr-band__glyph {
+  color: var(--tr-accent-text);
+}
+
+.tr-hero__block {
+  max-width: 46rem;
+}
+
+.tr-hero__eyebrow {
+  margin: 0 0 14px;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--tr-ink-56);
+}
+
+.tr-hero__title {
+  margin: 0 0 18px;
+  font-family: var(--tr-display);
+  font-size: clamp(2rem, 5.2vw, 4.2rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+}
+
+.tr-lede {
+  max-width: 38rem;
+  margin: 0 0 26px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--tr-ink-66);
+}
+
+.tr-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* The reference's single accent dot, bottom right, and nothing else. */
+.tr-dot {
+  position: absolute;
+  right: clamp(24px, 5vw, 72px);
+  bottom: clamp(24px, 5vw, 72px);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--tr-accent);
+}
+
+/* ------------------------------------------------------------------ responsive */
+
+@media (max-width: 960px) {
+  .tr-stage {
+    flex-direction: column-reverse;
+    overflow-y: auto;
+  }
+
+  .tr-rail {
+    flex: 0 0 auto;
+    border-right: 0;
+    border-top: 1px solid var(--tr-hair);
+    overflow: visible;
+  }
+
+  .tr-field-main {
+    flex: 0 0 auto;
+  }
+
+  .tr-strip-wrap {
+    padding: 22px 20px;
+    gap: 14px;
+  }
+
+  .tr-strip {
+    height: calc(var(--tr-strip-size) * 2.15);
+  }
+
+  .tr-dock {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .tr-dock__gate {
+    flex: 1 1 auto;
+    max-width: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .tr-bar__mark {
+    font-size: 11px;
+  }
+
+  .tr-band {
+    height: clamp(90px, 16vh, 140px);
+  }
+
+  .tr-hero__actions .tr-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tr-playhead {
+    transition: none;
+  }
+}

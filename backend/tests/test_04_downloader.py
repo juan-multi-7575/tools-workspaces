@@ -11,10 +11,49 @@ from app.tools.downloader import (
     _to_cli,
     build_ydl_opts,
     execute_ydl,
+    _parse_progress,
     validate_raw_args,
     split_raw_args,
 )
 from app.tools.base import ToolRunContext
+
+
+def test_parse_progress_reports_actual_downloaded_and_total_bytes():
+    progress = _parse_progress(
+        "[download] __YTDLP_PROGRESS__ 50.0% of 2000000/4000000 at 1.00MiB/s ETA 00:02"
+    )
+    assert progress == {
+        "status": "downloading",
+        "percent": 50.0,
+        "speed": "1.00MiB/s",
+        "eta": "00:02",
+        "downloaded_bytes": 2000000,
+        "total_bytes": 4000000,
+    }
+
+
+def test_parse_progress_keeps_unknown_total_unknown():
+    progress = _parse_progress("[download] __YTDLP_PROGRESS__ 50.0% of 2000000/NA at 1.00MiB/s ETA 00:02")
+    assert progress is not None
+    assert progress["downloaded_bytes"] == 2000000
+    assert "total_bytes" not in progress
+
+
+def test_parse_progress_keeps_bytes_when_percent_and_total_are_unknown():
+    progress = _parse_progress(
+        "[download] __YTDLP_PROGRESS__   N/A% of 2000000/NA at 1.00MiB/s ETA Unknown"
+    )
+    assert progress == {
+        "status": "downloading",
+        "speed": "1.00MiB/s",
+        "eta": "Unknown",
+        "downloaded_bytes": 2000000,
+    }
+
+
+def test_parse_progress_ignores_percent_in_already_downloaded_filename():
+    assert _parse_progress("[download] /tmp/50% off.mp4 has already been downloaded") is None
+    assert _parse_progress("[download] 50% off.mp4 has already been downloaded") is None
 
 
 def test_format_presets_and_audio_quality_exist():
@@ -64,9 +103,9 @@ def test_download_mode_audio_and_video_only():
 
 def test_execute_ydl_parses_progress_and_emits_completed(tmp_path):
     lines = [
-        "[download]   0.0% of 10.00MiB at 1.00MiB/s ETA 00:10",
-        "[download]  50.0% of 10.00MiB at 2.00MiB/s ETA 00:02",
-        "[download] 100.0% of 10.00MiB at 2.00MiB/s ETA 00:00",
+        "[download] __YTDLP_PROGRESS__ 0.0% of 10.00MiB at 1.00MiB/s ETA 00:10",
+        "[download] __YTDLP_PROGRESS__ 50.0% of 10.00MiB at 2.00MiB/s ETA 00:02",
+        "[download] __YTDLP_PROGRESS__ 100.0% of 10.00MiB at 2.00MiB/s ETA 00:00",
     ]
 
     class FakeProc:
@@ -102,7 +141,7 @@ def test_execute_ydl_cancels_and_cleans_part_files(tmp_path):
 
     class FakeProc:
         def __init__(self):
-            self._lines = ["[download]   1.0% of 10.00MiB at 1.00MiB/s ETA 00:10"]
+            self._lines = ["[download] __YTDLP_PROGRESS__ 1.0% of 10.00MiB at 1.00MiB/s ETA 00:10"]
             self.stdout = iter(self._lines)
             self.returncode = 0
             self._waited = 0
@@ -139,7 +178,7 @@ def test_downloader_tool_failed_url(client):
     )
     body = resp.json()
     assert body["status"] == "failed"
-    assert "url is required" in body["error"]
+    assert "url is required" in body["error"]["message"]
 
 
 def test_enqueue_list_and_cancel_download(client, tmp_path, monkeypatch):
@@ -194,7 +233,7 @@ def test_execute_ydl_passes_valid_raw_args_through(tmp_path):
     class FakeProc:
         def __init__(self, *a, **k):
             captured["args"] = a[0]
-            self.stdout = iter(["[download] 100.0% of 1MiB at 1MiB/s ETA 00:00"])
+            self.stdout = iter(["[download] __YTDLP_PROGRESS__ 100.0% of 1MiB at 1MiB/s ETA 00:00"])
             self.returncode = 0
 
         def wait(self):
@@ -338,7 +377,7 @@ def test_execute_ydl_artifact_isolation(tmp_path):
 
     class FakeProc:
         returncode = 0
-        stdout = ["[download] 100% of 1.00MiB in 00:01"]
+        stdout = ["[download] __YTDLP_PROGRESS__ 100% of 1.00MiB in 00:01"]
 
         def __init__(self, *args, **kwargs):
             # Simulate newly created file during download
@@ -359,17 +398,19 @@ def test_execute_ydl_artifact_isolation(tmp_path):
         dl.subprocess.Popen = orig
 
 
-def test_execute_ydl_already_downloaded(tmp_path):
-    existing_file = tmp_path / "already_here.mp4"
+@pytest.mark.parametrize("reported_path", ["absolute", "relative"])
+def test_execute_ydl_already_downloaded(tmp_path, reported_path):
+    existing_file = tmp_path / "50% off.mp4"
     existing_file.write_text("existing content")
     import os
     import time
     past = time.time() - 3600
     os.utime(str(existing_file), (past, past))
+    printed_path = str(existing_file) if reported_path == "absolute" else existing_file.name
 
     class FakeAlreadyProc:
         returncode = 0
-        stdout = [f"[download] {str(existing_file)} has already been downloaded"]
+        stdout = [f"[download] {printed_path} has already been downloaded"]
 
         def wait(self):
             return 0
@@ -380,10 +421,6 @@ def test_execute_ydl_already_downloaded(tmp_path):
     try:
         produced = execute_ydl("http://example.com/test", {}, tmp_path)
         assert len(produced) == 1
-        assert produced[0].name == "already_here.mp4"
+        assert produced[0].name == "50% off.mp4"
     finally:
         dl.subprocess.Popen = orig
-
-
-
-

@@ -1,0 +1,83 @@
+[
+  {
+    "state": "hero",
+    "width": 1440,
+    "height": 900,
+    "measurements": {
+      "overflow": [],
+      "pageOverflow": false,
+      "install": [],
+      "chrome": false
+    }
+  },
+  {
+    "state": "hero",
+    "width": 768,
+    "height": 1024,
+    "measurements": {
+      "overflow": [],
+      "pageOverflow": false,
+      "install": [],
+      "chrome": false
+    }
+  },
+  {
+    "state": "hero",
+    "width": 390,
+    "height": 844,
+    "measurements": {
+      "overflow": [],
+      "pageOverflow": false,
+      "install": [],
+      "chrome": false
+    }
+  },
+  {
+    "state": "workspace",
+    "width": 1440,
+    "height": 900,
+    "measurements": {
+      "overflow": [],
+      "pageOverflow": false,
+      "install": [
+        {
+          "bottom": 873,
+          "inViewport": true
+        }
+      ],
+      "chrome": false
+    }
+  },
+  {
+    "state": "workspace",
+    "width": 768,
+    "height": 1024,
+    "measurements": {
+      "overflow": [],
+      "pageOverflow": false,
+      "install": [
+        {
+          "bottom": 997,
+          "inViewport": true
+        }
+      ],
+      "chrome": false
+    }
+  },
+  {
+    "state": "workspace",
+    "width": 390,
+    "height": 844,
+    "measurements": {
+      "overflow": [],
+      "pageOverflow": false,
+      "install": [
+        {
+          "bottom": 819,
+          "inViewport": true
+        }
+      ],
+      "chrome": false
+    }
+  }
+]

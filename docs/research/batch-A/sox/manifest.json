@@ -1,0 +1,1 @@
+{"id":"sox","name":"Sound Effects & DSP Filter (SoX)","description":"Apply professional audio effects, normalization, pitch shifting, and noise filters via Sound eXchange.","category":"Media","tags":["audio","sox","dsp","effects","filter"],"input_kinds":["audio"],"output_kinds":["audio"],"input_ports":null,"output_ports":null,"parameters_schema":{"effect":{"type":"string"}}}

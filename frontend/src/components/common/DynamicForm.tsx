@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, type CSSProperties } from 'react'
 import {
   Search,
   Eye,
@@ -17,6 +17,7 @@ import {
   FileCode,
 } from 'lucide-react'
 import UniversalFileInput from './UniversalFileInput'
+import { useHostSkin } from '../../lib/hostSkin'
 
 export interface SchemaField {
   type?: string
@@ -28,6 +29,7 @@ export interface SchemaField {
   minimum?: number
   maximum?: number
   step?: number
+  unit?: string
   widget?: 'text' | 'textarea' | 'secret' | 'select' | 'artifact_picker' | 'code' | 'url'
   placeholder?: string
 }
@@ -86,6 +88,11 @@ export default function DynamicForm({
   const [search, setSearch] = useState('')
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({})
   const [activeTab, setActiveTab] = useState<string>('all')
+
+  // Every tool page routes its manifest through this form, so none of them can
+  // be asked to theme it: it reads the board it was mounted in instead.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const skin = useHostSkin(rootRef)
 
   const setField = (key: string, val: unknown) => {
     const next = { ...value }
@@ -169,26 +176,33 @@ export default function DynamicForm({
 
   if (Object.keys(schema).length === 0) {
     return (
-      <div className="rounded-xl border border-[#B0BA99] bg-[#EDE5CD]/40 p-5 text-center text-xs text-[#7C5339] font-mono">
-        No configurable parameters for this tool.
+      <div ref={rootRef} className="tool-form" data-tone={skin.tone} style={{ '--tool-ink': skin.ink, '--tool-on-accent': skin.onAccent } as CSSProperties}>
+        <div className="tool-panel-quiet rounded-xl border p-5 text-center text-xs font-mono tool-muted">
+          No configurable parameters for this tool.
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4 font-sans text-xs text-[#4E220F]">
+    <div
+      ref={rootRef}
+      className="tool-form @container space-y-4 font-sans text-xs"
+      data-tone={skin.tone}
+      style={{ '--tool-ink': skin.ink, '--tool-on-accent': skin.onAccent } as CSSProperties}
+    >
       {/* ========================================================================= */}
       {/* 1. HERO URL INSERTION BAR (High-Priority Primary Control)                */}
       {/* ========================================================================= */}
       {urlKey && (
-        <div className="relative rounded-2xl border-2 border-[#9D6638]/50 bg-[#F7F1DE] p-4 shadow-sm ring-1 ring-[#9D6638]/20 transition-all focus-within:border-[#9D6638] focus-within:ring-2 focus-within:ring-[#9D6638]/30">
+        <div data-param-key={urlKey} className="tool-panel relative rounded-2xl border-2 p-4 transition-all">
           <div className="flex items-center justify-between mb-2">
-            <label className="flex items-center gap-2 font-bold text-[#4E220F] text-xs">
-              <span className="flex size-5 items-center justify-center rounded-md bg-[#9D6638] text-[#FDFBF7]">
+            <label className="flex items-center gap-2 text-xs font-bold">
+              <span className="tool-on-accent flex size-5 items-center justify-center rounded-md">
                 <Link2 className="size-3" />
               </span>
               <span>{schema[urlKey]?.title ? String(schema[urlKey].title) : 'Target Media URL'}</span>
-              <span className="font-mono text-[9px] font-bold text-[#4E220F] px-2 py-0.5 rounded-full bg-[#B0BA99]/40 border border-[#B0BA99]">
+              <span className="tool-accent-chip font-mono text-xs font-bold px-2 py-0.5 rounded-full">
                 REQUIRED
               </span>
             </label>
@@ -197,7 +211,7 @@ export default function DynamicForm({
               <button
                 type="button"
                 onClick={() => setField(urlKey, undefined)}
-                className="flex items-center gap-1 font-mono text-[10px] text-[#7C5339] hover:text-[#A83232] transition-colors"
+                className="tool-quiet-action flex items-center gap-1 font-mono text-xs"
               >
                 <X className="size-3" /> clear
               </button>
@@ -213,24 +227,24 @@ export default function DynamicForm({
               placeholder={
                 schema[urlKey]?.placeholder
                   ? String(schema[urlKey].placeholder)
-                  : 'https://www.youtube.com/watch?v=... or media link'
+                  : 'https://www.youtube.com/watch?v=… or media link'
               }
-              className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] pl-3.5 pr-20 py-2.5 font-mono text-xs text-[#4E220F] placeholder-[#7C5339]/60 shadow-inner focus:border-[#9D6638] focus:outline-none focus:ring-1 focus:ring-[#9D6638]/40 font-medium"
+              className="tool-well w-full rounded-xl pl-3.5 pr-20 py-2.5 font-mono font-medium"
             />
             <button
               type="button"
               onClick={() => handlePasteUrl(urlKey)}
-              className="absolute right-1.5 top-1.5 inline-flex items-center gap-1.5 rounded-lg bg-[#EDE5CD] px-3 py-1.5 text-[11px] font-semibold text-[#4E220F] hover:bg-[#B0BA99]/40 border border-[#B0BA99] active:scale-95 transition-all"
+              className="tool-panel-quiet absolute right-1.5 top-1.5 inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold active:scale-95 transition-all"
               title="Paste URL from clipboard"
             >
-              <Clipboard className="size-3 text-[#9D6638]" />
+              <Clipboard className="size-3 tool-accent-text" />
               <span>Paste</span>
             </button>
           </div>
 
           {schema[urlKey]?.description && (
-            <p className="mt-2 text-[11px] text-[#7C5339] flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-[#9D6638] inline-block" />
+            <p className="mt-2 text-xs tool-muted flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full tool-accent-text inline-block" />
               {String(schema[urlKey].description)}
             </p>
           )}
@@ -241,13 +255,13 @@ export default function DynamicForm({
       {/* 2. DOWNLOAD MODE SELECTOR (Video + Audio / Audio Only / Video Only)        */}
       {/* ========================================================================= */}
       {hasDownloadMode && (
-        <div className="rounded-2xl border border-[#B0BA99] bg-[#EDE5CD]/50 p-3.5 space-y-2.5 shadow-2xs">
+        <div data-param-key="download_mode" className="tool-panel-quiet rounded-2xl border p-3.5 space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-[10px] uppercase font-bold tracking-wider text-[#7C5339] flex items-center gap-1.5">
-              <Sparkles className="size-3 text-[#9D6638]" />
+            <span className="font-mono text-xs uppercase font-bold tracking-wider tool-muted flex items-center gap-1.5">
+              <Sparkles className="size-3 tool-accent-text" />
               Download Mode
             </span>
-            <span className="font-mono text-[10px] font-semibold text-[#4E220F]">
+            <span className="font-mono text-xs font-semibold">
               {currentMode === 'audio_only'
                 ? 'Extracting Audio Track'
                 : currentMode === 'video_only'
@@ -260,17 +274,15 @@ export default function DynamicForm({
             <button
               type="button"
               onClick={() => handleModeChange('video_audio')}
-              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all ${
-                currentMode === 'video_audio'
-                  ? 'border-[#9D6638] bg-[#9D6638] text-[#FDFBF7] font-bold shadow-xs ring-1 ring-[#9D6638]'
-                  : 'border-[#B0BA99] bg-[#FFFFFF] text-[#4E220F] hover:bg-[#EDE5CD] hover:border-[#9D6638]'
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all font-bold ${
+                currentMode === 'video_audio' ? 'tool-on-accent' : 'tool-choice'
               }`}
             >
               <div className="flex items-center gap-1 text-xs font-bold">
                 <Video className="size-3.5" />
                 <span>Video + Audio</span>
               </div>
-              <span className={`text-[10px] ${currentMode === 'video_audio' ? 'text-[#FDFBF7]/80' : 'text-[#7C5339]'}`}>
+              <span className={`text-xs ${currentMode === 'video_audio' ? 'opacity-80' : 'tool-muted'}`}>
                 Full Merged Video
               </span>
             </button>
@@ -278,17 +290,15 @@ export default function DynamicForm({
             <button
               type="button"
               onClick={() => handleModeChange('audio_only')}
-              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all ${
-                currentMode === 'audio_only'
-                  ? 'border-[#9D6638] bg-[#9D6638] text-[#FDFBF7] font-bold shadow-xs ring-1 ring-[#9D6638]'
-                  : 'border-[#B0BA99] bg-[#FFFFFF] text-[#4E220F] hover:bg-[#EDE5CD] hover:border-[#9D6638]'
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all font-bold ${
+                currentMode === 'audio_only' ? 'tool-on-accent' : 'tool-choice'
               }`}
             >
               <div className="flex items-center gap-1 text-xs font-bold">
                 <Music className="size-3.5" />
                 <span>Audio Only</span>
               </div>
-              <span className={`text-[10px] ${currentMode === 'audio_only' ? 'text-[#FDFBF7]/80' : 'text-[#7C5339]'}`}>
+              <span className={`text-xs ${currentMode === 'audio_only' ? 'opacity-80' : 'tool-muted'}`}>
                 MP3 / FLAC / WAV
               </span>
             </button>
@@ -296,17 +306,15 @@ export default function DynamicForm({
             <button
               type="button"
               onClick={() => handleModeChange('video_only')}
-              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all ${
-                currentMode === 'video_only'
-                  ? 'border-[#9D6638] bg-[#9D6638] text-[#FDFBF7] font-bold shadow-xs ring-1 ring-[#9D6638]'
-                  : 'border-[#B0BA99] bg-[#FFFFFF] text-[#4E220F] hover:bg-[#EDE5CD] hover:border-[#9D6638]'
+              className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2.5 text-center transition-all font-bold ${
+                currentMode === 'video_only' ? 'tool-on-accent' : 'tool-choice'
               }`}
             >
               <div className="flex items-center gap-1 text-xs font-bold">
                 <Film className="size-3.5" />
                 <span>Video Only</span>
               </div>
-              <span className={`text-[10px] ${currentMode === 'video_only' ? 'text-[#FDFBF7]/80' : 'text-[#7C5339]'}`}>
+              <span className={`text-xs ${currentMode === 'video_only' ? 'opacity-80' : 'tool-muted'}`}>
                 No Audio Track
               </span>
             </button>
@@ -318,16 +326,14 @@ export default function DynamicForm({
       {/* 3. STRUCTURED CATEGORY TABS & SEARCH BAR                                  */}
       {/* ========================================================================= */}
       {availableGroups.length > 1 && (
-        <div className="space-y-2 pt-1 border-t border-[#B0BA99]/60">
+        <div className="space-y-2 pt-1 border-t tool-rule">
           <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 scrollbar-none">
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setActiveTab('all')}
                 className={`rounded-xl px-3 py-1 text-xs font-semibold transition-all ${
-                  activeTab === 'all'
-                    ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs font-bold'
-                    : 'bg-[#EDE5CD]/70 text-[#4E220F] hover:bg-[#EDE5CD] border border-[#B0BA99]/60'
+                  activeTab === 'all' ? 'tool-on-accent font-bold' : 'tool-panel-quiet border'
                 }`}
               >
                 All ({Object.keys(schema).length - (urlKey ? 1 : 0) - (hasDownloadMode ? 1 : 0)})
@@ -341,14 +347,12 @@ export default function DynamicForm({
                     type="button"
                     onClick={() => setActiveTab(g.id)}
                     className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-1 text-xs font-semibold transition-all ${
-                      isActive
-                        ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs font-bold'
-                        : 'bg-[#EDE5CD]/70 text-[#4E220F] hover:bg-[#EDE5CD] border border-[#B0BA99]/60'
+                      isActive ? 'tool-on-accent font-bold' : 'tool-panel-quiet border'
                     }`}
                   >
                     <Icon className="size-3" />
                     <span>{g.label}</span>
-                    <span className="font-mono text-[9px] px-1.5 py-0.2 rounded-full bg-[#B0BA99]/40 font-bold">
+                    <span className="tool-accent-chip font-mono text-xs px-1.5 py-0.2 rounded-full font-bold">
                       {g.count}
                     </span>
                   </button>
@@ -362,18 +366,18 @@ export default function DynamicForm({
       {/* Search parameter bar */}
       {Object.keys(schema).length > 5 && (
         <div className="relative">
-          <Search className="absolute left-3 top-2.5 size-3.5 text-[#7C5339]" />
+          <Search className="absolute left-3 top-2.5 size-3.5 tool-muted" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search parameter names, descriptions..."
-            className="w-full rounded-xl border border-[#B0BA99] bg-[#FFFFFF] pl-9 pr-8 py-2 text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:outline-none focus:ring-1 focus:ring-[#9D6638]/30 font-medium"
+            placeholder="Search parameter names, descriptions…"
+            className="tool-well w-full rounded-xl pl-9 pr-8 py-2 font-medium"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-2.5 top-2.5 text-[#7C5339] hover:text-[#4E220F]"
+              className="tool-quiet-action absolute right-2.5 top-2.5"
             >
               <X className="size-3.5" />
             </button>
@@ -384,13 +388,22 @@ export default function DynamicForm({
       {/* ========================================================================= */}
       {/* 4. PARAMETER FORM GRID WITH DUAL FILE INGESTION                           */}
       {/* ========================================================================= */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {/* The grid splits on its own width, not the viewport's. Several hosts mount
+        this form in a rail far narrower than the window, where a viewport
+        breakpoint would still ask for two columns and squeeze a field until its
+        label and placeholder were cut off mid-word. The query container is the
+        form root: putting it on the grid itself makes its track sizing depend on
+        the very query it is answering, which collapses the columns. */}
+      <div className="grid grid-cols-1 gap-3 @min-[26rem]:grid-cols-2">
         {entries.map(([key, rawField]) => {
           const field = rawField as SchemaField
           const type = field.type || 'string'
           const val = value[key]
+          // Booleans always render as checkboxes — even when the key name
+          // looks like a file path (e.g. restrict_filenames).
           const isArtifactField =
-            key.includes('input') || key.includes('file') || key.includes('path') || key === 'paths'
+            type !== 'boolean' &&
+            (key.includes('input') || key.includes('file') || key.includes('path') || key === 'paths')
           const isFullWidth =
             field.widget === 'code' ||
             field.widget === 'textarea' ||
@@ -398,36 +411,46 @@ export default function DynamicForm({
             key === 'raw_args' ||
             isArtifactField
 
-          return (
-            <div
-              key={key}
-              className={`space-y-2 rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-3.5 transition-all hover:border-[#9D6638]/70 shadow-xs ${
-                isFullWidth ? 'sm:col-span-2' : ''
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <label className="font-bold text-[#4E220F] text-xs flex items-center gap-1.5">
-                  {field.title || key}
-                  <span className="font-mono text-[9px] text-[#7C5339] px-1.5 py-0.2 rounded-full bg-[#EDE5CD] border border-[#B0BA99]/60 font-semibold">
-                    {type}
-                  </span>
-                </label>
-                {val !== undefined && (
-                  <button
-                    type="button"
-                    onClick={() => setField(key, undefined)}
-                    className="flex items-center gap-1 font-mono text-[10px] text-[#7C5339] hover:text-[#A83232] transition-colors"
-                  >
-                    <RotateCcw className="size-2.5" /> reset
-                  </button>
-                )}
-              </div>
-
-              {field.description && (
-                <p className="text-[11px] text-[#7C5339] leading-relaxed">{field.description}</p>
+          const fieldHelper = (() => {
+          const parts: string[] = []
+          if (field.unit) parts.push(field.unit)
+          if (field.default !== undefined && val !== undefined && val !== field.default) {
+            parts.push(`Default: ${String(field.default)}`)
+          }
+          if (field.minimum !== undefined || field.maximum !== undefined) {
+            parts.push(`Range: ${field.minimum ?? '−∞'}…${field.maximum ?? '+∞'}`)
+          }
+          return parts.join(' · ')
+        })()
+        return (
+          <div key={key} data-param-key={key} className={`tool-card space-y-2 rounded-2xl border p-3.5 ${
+            isFullWidth ? '@min-[26rem]:col-span-2' : ''
+          }`}>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold flex items-center gap-1.5">
+                {field.title || key}
+              </label>
+              {val !== undefined && (
+                <button
+                  type="button"
+                  onClick={() => setField(key, undefined)}
+                  className="tool-quiet-action flex items-center gap-1 font-mono text-xs"
+                >
+                  <RotateCcw className="size-2.5" /> reset
+                </button>
               )}
+            </div>
 
-              {/* UNIVERSAL FILE PICKER: Drag & Drop + Click to Browse + Server Upload + Artifact Picker */}
+{field.description && (
+              <p className="text-xs leading-relaxed tool-muted">{field.description}</p>
+            )}
+            {fieldHelper && (
+              <p className="text-xs font-mono leading-tight tool-faint">
+                {fieldHelper}
+              </p>
+            )}
+
+            {/* UNIVERSAL FILE PICKER: Drag & Drop + Click to Browse + Server Upload + Artifact Picker */}
               {isArtifactField ? (
                 <UniversalFileInput
                   value={val !== undefined ? String(val) : ''}
@@ -443,7 +466,7 @@ export default function DynamicForm({
                 <select
                   value={String(val ?? field.default ?? '')}
                   onChange={(e) => setField(key, e.target.value || undefined)}
-                  className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-3 py-2 text-xs text-[#4E220F] font-mono font-medium focus:border-[#9D6638] focus:bg-[#FFFFFF] focus:outline-none"
+                  className="tool-well w-full rounded-xl px-3 py-2 text-xs font-mono font-medium"
                 >
                   <option value="">— select option —</option>
                   {field.enum.map((opt) => (
@@ -459,10 +482,10 @@ export default function DynamicForm({
                     id={`field-${key}`}
                     checked={Boolean(val ?? field.default ?? false)}
                     onChange={(e) => setField(key, e.target.checked)}
-                    className="size-4 rounded border-[#B0BA99] bg-[#F7F1DE] accent-[#9D6638] cursor-pointer"
+                    className="tool-checkbox size-4 rounded cursor-pointer"
                   />
-                  <label htmlFor={`field-${key}`} className="text-xs font-semibold text-[#4E220F] select-none cursor-pointer">
-                    Enable {field.title || key}
+                  <label htmlFor={`field-${key}`} className="text-xs font-semibold select-none cursor-pointer">
+                    {Boolean(val ?? field.default ?? false) ? 'Enabled' : 'Disabled'}
                   </label>
                 </div>
               ) : field.widget === 'secret' ? (
@@ -472,12 +495,12 @@ export default function DynamicForm({
                     value={String(val ?? '')}
                     onChange={(e) => setField(key, e.target.value)}
                     placeholder="Enter secret key..."
-                    className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 pl-3 pr-8 py-2 font-mono text-xs text-[#4E220F] focus:border-[#9D6638] focus:bg-[#FFFFFF] focus:outline-none"
+                    className="tool-well w-full rounded-xl pl-3 pr-8 py-2 font-mono text-xs"
                   />
                   <button
                     type="button"
                     onClick={() => setShowSecrets((p) => ({ ...p, [key]: !p[key] }))}
-                    className="absolute right-2.5 top-2.5 text-[#7C5339] hover:text-[#4E220F]"
+                    className="tool-quiet-action absolute right-2.5 top-2.5"
                   >
                     {showSecrets[key] ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                   </button>
@@ -488,16 +511,18 @@ export default function DynamicForm({
                     rows={key === 'raw_args' ? 2 : 4}
                     value={String(val ?? field.default ?? '')}
                     onChange={(e) => setField(key, e.target.value)}
-                    placeholder={field.placeholder || 'Enter code or command arguments...'}
-                    className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-3 py-2 font-mono text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:bg-[#FFFFFF] focus:outline-none leading-relaxed"
+                    placeholder={field.placeholder || 'Enter code or command arguments…'}
+                    className="tool-well w-full rounded-xl px-3 py-2 font-mono text-xs leading-relaxed"
                   />
                   {key === 'raw_args' && (
-                    <FileCode className="absolute right-2.5 bottom-2.5 size-3.5 text-[#7C5339] pointer-events-none" />
+                    <FileCode className="absolute right-2.5 bottom-2.5 size-3.5 tool-muted pointer-events-none" />
                   )}
                 </div>
               ) : (
                 <input
                   type={type === 'number' || type === 'integer' ? 'number' : 'text'}
+                  min={(type === 'number' || type === 'integer') && field.minimum !== undefined ? field.minimum : undefined}
+                  max={(type === 'number' || type === 'integer') && field.maximum !== undefined ? field.maximum : undefined}
                   value={val !== undefined ? String(val) : (field.default !== undefined ? String(field.default) : '')}
                   onChange={(e) =>
                     setField(
@@ -509,8 +534,8 @@ export default function DynamicForm({
                         : e.target.value,
                     )
                   }
-                  placeholder={field.placeholder || `Enter ${key}...`}
-                  className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-3 py-2 text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:bg-[#FFFFFF] focus:outline-none font-mono font-medium"
+                  placeholder={field.placeholder || `Enter ${key}…`}
+                  className="tool-well w-full rounded-xl px-3 py-2 text-xs font-mono font-medium"
                 />
               )}
             </div>

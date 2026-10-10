@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import {
   Languages,
   FileText,
@@ -7,6 +7,7 @@ import {
   ChevronUp,
 } from 'lucide-react'
 import UniversalFileInput from '../common/UniversalFileInput'
+import { useHostSkin } from '../../lib/hostSkin'
 
 interface TranslatorFormProps {
   value?: Record<string, unknown>
@@ -48,6 +49,11 @@ export default function TranslatorForm({
 }: TranslatorFormProps) {
   const [showAdvanced, setShowAdvanced] = useState(false)
 
+  // The SRT page's shell is cream; this form is also mounted on boards that are
+  // not, so it reads whichever one it landed on.
+  const rootRef = useRef<HTMLDivElement>(null)
+  const skin = useHostSkin(rootRef)
+
   const inputPath = String(value.input_path ?? '')
   const targetLang = String(value.target_lang ?? 'English')
   const sourceLang = String(value.source_lang ?? 'auto')
@@ -66,18 +72,18 @@ export default function TranslatorForm({
   }
 
   return (
-    <div className="space-y-4 text-[#4E220F]">
+    <div ref={rootRef} className="tool-form space-y-4" data-tone={skin.tone} style={{ '--tool-ink': skin.ink, '--tool-on-accent': skin.onAccent } as CSSProperties}>
       {/* ========================================================================= */}
       {/* 1. INPUT SUBTITLE / DOCUMENT FILE (MAIN FOCUS)                            */}
       {/* ========================================================================= */}
-      <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-4 shadow-sm space-y-3">
+      <div className="tool-panel rounded-2xl border p-4 space-y-3">
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 font-bold text-xs text-[#4E220F]">
-            <span className="flex size-6 items-center justify-center rounded-lg bg-[#9D6638] text-[#FFFFFF]">
+          <label className="flex items-center gap-2 font-bold text-xs">
+            <span className="tool-on-accent flex size-6 items-center justify-center rounded-lg">
               <FileText className="size-3.5" />
             </span>
             <span>Subtitle or Document File</span>
-            <span className="font-mono text-[9px] font-bold text-[#4E220F] px-2 py-0.5 rounded-full bg-[#B0BA99]/40 border border-[#B0BA99]">
+            <span className="tool-accent-chip font-mono text-xs font-bold px-2 py-0.5 rounded-full">
               REQUIRED (.srt, .vtt, .txt)
             </span>
           </label>
@@ -92,7 +98,7 @@ export default function TranslatorForm({
           availableArtifacts={availableArtifacts}
         />
 
-        <p className="text-[11px] text-[#7C5339]">
+        <p className="text-xs tool-muted">
           The translator strictly preserves all subtitle cue numbers, line sequencing, and exact millisecond timecodes (<code>00:00:00,000 --&gt; 00:00:00,000</code>).
         </p>
       </div>
@@ -102,18 +108,18 @@ export default function TranslatorForm({
       {/* ========================================================================= */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* Target Language */}
-        <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-3.5 shadow-xs space-y-2">
-          <label className="flex items-center gap-1.5 font-bold text-xs text-[#4E220F]">
-            <Languages className="size-3.5 text-[#9D6638]" />
+        <div className="tool-panel rounded-2xl border p-3.5 space-y-2">
+          <label className="flex items-center gap-1.5 font-bold text-xs">
+            <Languages className="size-3.5 tool-accent-text" />
             <span>Target Language</span>
-            <span className="font-mono text-[9px] font-bold text-[#4E220F] px-1.5 py-0.2 rounded-full bg-[#EDE5CD] border border-[#B0BA99]/60">
+            <span className="tool-accent-chip font-mono text-xs font-bold px-1.5 py-0.2 rounded-full">
               OUTPUT
             </span>
           </label>
           <select
             value={targetLang}
             onChange={(e) => setField('target_lang', e.target.value)}
-            className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-3 py-2 text-xs font-bold text-[#4E220F] focus:border-[#9D6638] focus:bg-[#FFFFFF] focus:outline-none"
+            className="tool-well w-full rounded-xl px-3 py-2 text-xs font-bold"
           >
             {POPULAR_LANGUAGES.map((lang) => (
               <option key={lang} value={lang}>
@@ -121,22 +127,22 @@ export default function TranslatorForm({
               </option>
             ))}
           </select>
-          <p className="text-[10px] text-[#7C5339]">Translates dialogue into natural, fluent {targetLang}.</p>
+          <p className="text-xs tool-muted">Translates dialogue into natural, fluent {targetLang}.</p>
         </div>
 
         {/* Source Language */}
-        <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-3.5 shadow-xs space-y-2">
-          <label className="flex items-center gap-1.5 font-bold text-xs text-[#4E220F]">
-            <Sparkles className="size-3.5 text-[#9D6638]" />
+        <div className="tool-panel rounded-2xl border p-3.5 space-y-2">
+          <label className="flex items-center gap-1.5 font-bold text-xs">
+            <Sparkles className="size-3.5 tool-accent-text" />
             <span>Source Language</span>
-            <span className="font-mono text-[9px] font-semibold text-[#7C5339] px-1.5 py-0.2 rounded-full bg-[#EDE5CD]">
+            <span className="tool-accent-chip font-mono text-xs font-semibold px-1.5 py-0.2 rounded-full">
               ORIGINAL
             </span>
           </label>
           <select
             value={sourceLang}
             onChange={(e) => setField('source_lang', e.target.value)}
-            className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-3 py-2 text-xs font-bold text-[#4E220F] focus:border-[#9D6638] focus:bg-[#FFFFFF] focus:outline-none"
+            className="tool-well w-full rounded-xl px-3 py-2 text-xs font-bold"
           >
             {SOURCE_LANGUAGES.map((sl) => (
               <option key={sl.id} value={sl.id}>
@@ -144,39 +150,39 @@ export default function TranslatorForm({
               </option>
             ))}
           </select>
-          <p className="text-[10px] text-[#7C5339]">Auto-detects spoken dialect or specify source explicitly.</p>
+          <p className="text-xs tool-muted">Auto-detects spoken dialect or specify source explicitly.</p>
         </div>
       </div>
 
       {/* ========================================================================= */}
       {/* 3. COLLAPSIBLE ADVANCED AI OPTIONS                                        */}
       {/* ========================================================================= */}
-      <div className="rounded-2xl border border-[#B0BA99]/70 bg-[#EDE5CD]/40 overflow-hidden">
+      <div className="tool-panel-quiet rounded-2xl border overflow-hidden">
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="w-full flex items-center justify-between p-3 text-xs font-bold text-[#4E220F] hover:bg-[#EDE5CD]/70 transition-colors"
+          className="tool-panel-quiet w-full flex items-center justify-between p-3 text-xs font-bold border-b"
         >
           <span className="flex items-center gap-2">
-            <Sparkles className="size-3.5 text-[#9D6638]" />
+            <Sparkles className="size-3.5 tool-accent-text" />
             Advanced AI Translation Settings
           </span>
-          <span className="flex items-center gap-1 font-mono text-[10px] text-[#7C5339]">
+          <span className="flex items-center gap-1 font-mono text-xs tool-muted">
             {showAdvanced ? 'Collapse' : 'Expand'}
             {showAdvanced ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
           </span>
         </button>
 
         {showAdvanced && (
-          <div className="p-3.5 pt-1 space-y-3 border-t border-[#B0BA99]/50 bg-[#FFFFFF]">
+          <div className="tool-panel space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Provider Selection */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-[#4E220F]">AI Translation Provider</label>
+                <label className="block text-xs font-bold">AI Translation Provider</label>
                 <select
                   value={provider}
                   onChange={(e) => setField('provider', e.target.value)}
-                  className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-3 py-2 text-xs font-mono font-medium text-[#4E220F] focus:border-[#9D6638] focus:bg-[#FFFFFF] focus:outline-none"
+                  className="tool-well w-full rounded-xl px-3 py-2 text-xs font-mono font-medium"
                 >
                   <option value="auto">⚡ Auto (Fastest: Groq ➔ NVIDIA ➔ OpenAI)</option>
                   <option value="groq">Groq (Llama / Qwen - Ultra Fast Subtitles)</option>
@@ -186,30 +192,30 @@ export default function TranslatorForm({
                   <option value="gemini">Google Gemini (Gemini 2.0 Flash)</option>
                   <option value="anthropic">Anthropic (Claude 3.5 Haiku)</option>
                 </select>
-                <p className="text-[10px] text-[#7C5339]">
+                <p className="text-xs tool-muted">
                   Keys detected automatically from <code>~/.bashrc</code> with zero disk persistence.
                 </p>
               </div>
 
               {/* Model Override */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold text-[#4E220F]">Model Override (Optional)</label>
+                <label className="block text-xs font-bold">Model Override (Optional)</label>
                 <input
                   type="text"
                   value={model === 'auto' ? '' : model}
                   onChange={(e) => setField('model', e.target.value.trim() || 'auto')}
-                  placeholder="e.g. qwen/qwen3.8-27b or auto"
-                  className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 px-3 py-2 text-xs font-mono text-[#4E220F] focus:border-[#9D6638] focus:bg-[#FFFFFF] focus:outline-none"
+                  placeholder="e.g. qwen/qwen3-27b, or blank for auto"
+                  className="tool-well w-full rounded-xl px-3 py-2 text-xs font-mono"
                 />
-                <p className="text-[10px] text-[#7C5339]">Leave blank to use provider default translation model.</p>
+                <p className="text-xs tool-muted">Leave blank to use provider default translation model.</p>
               </div>
             </div>
 
             {/* Batch Size Slider / Input */}
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs font-bold text-[#4E220F]">
+              <div className="flex items-center justify-between text-xs font-bold">
                 <span>Subtitle Cues per Batch</span>
-                <span className="font-mono text-xs text-[#9D6638]">{batchSize} cues</span>
+                <span className="font-mono text-xs tool-accent-text">{batchSize} cues</span>
               </div>
               <input
                 type="range"
@@ -218,9 +224,9 @@ export default function TranslatorForm({
                 step={10}
                 value={batchSize}
                 onChange={(e) => setField('batch_size', Number(e.target.value))}
-                className="w-full accent-[#9D6638] cursor-pointer"
+                className="tool-checkbox w-full cursor-pointer"
               />
-              <p className="text-[10px] text-[#7C5339]">
+              <p className="text-xs tool-muted">
                 Keeps context size balanced for optimal conversational flow and speed (default: 50 cues).
               </p>
             </div>

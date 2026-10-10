@@ -27,7 +27,7 @@ function getArtifactBadge(name: string) {
     return { label: 'AUDIO', color: 'bg-orange-100 text-orange-900 border-orange-300' }
   }
   const ext = name.split('.').pop()?.toUpperCase() || 'FILE'
-  return { label: ext, color: 'bg-[#EDE5CD] text-[#4E220F] border-[#B0BA99]' }
+  return { label: ext, color: 'bg-brand-cream-dark text-brand-espresso border-brand-sage' }
 }
 
 function formatFileName(name: string, maxLen = 34): string {
@@ -47,7 +47,10 @@ function formatTimeAgo(timestamp: number): string {
   const elapsedMin = Math.floor(elapsedSec / 60)
   if (elapsedMin < 60) return `${elapsedMin}m ago`
   const elapsedHours = Math.floor(elapsedMin / 60)
-  return `${elapsedHours}h ago`
+  if (elapsedHours < 48) return `${elapsedHours}h ago`
+  const elapsedDays = Math.floor(elapsedHours / 24)
+  if (elapsedDays < 30) return `${elapsedDays}d ago`
+  return `${Math.floor(elapsedDays / 30)}mo ago`
 }
 
 function isAudioMedia(name: string): boolean {
@@ -86,18 +89,18 @@ export const ArtifactsTab: React.FC<ArtifactsTabProps> = ({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between px-1">
-        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#7C5339] flex items-center gap-1">
-          <FolderOpen className="size-3 text-[#9D6638]" />
+        <span className="font-mono text-xs font-bold uppercase tracking-wider text-brand-caramel-text flex items-center gap-1">
+          <FolderOpen className="size-3 text-brand-caramel" />
           Server Saved Files
         </span>
-        <span className="font-mono text-[10px] text-[#7C5339]">
-          {filtered.length} files found
+        <span className="font-mono text-xs text-brand-caramel-text">
+          {filtered.length} file{filtered.length === 1 ? '' : 's'} found
         </span>
       </div>
 
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/30 p-8 text-center text-[#7C5339] text-xs font-mono">
-          <Clock className="mx-auto size-6 text-[#9D6638] mb-2 opacity-60" />
+        <div className="rounded-xl border border-dashed border-brand-sage bg-brand-cream-dark/30 p-8 text-center text-brand-caramel-text text-xs font-mono">
+          <Clock className="mx-auto size-6 text-brand-caramel mb-2 opacity-60" />
           {filterQuery ? 'No matching saved files found.' : 'No output artifacts recorded yet.'}
         </div>
       ) : (
@@ -112,19 +115,19 @@ export const ArtifactsTab: React.FC<ArtifactsTabProps> = ({
           return (
             <div
               key={art.path}
-              className="flex items-center justify-between gap-2.5 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] p-2.5 shadow-xs hover:border-[#9D6638]/80 transition-all group"
+              className="flex items-center justify-between gap-2.5 rounded-xl border border-brand-sage bg-surface-white p-2.5 shadow-xs hover:border-brand-caramel/80 transition-all group"
             >
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <span
-                  className={`font-mono text-[9px] font-extrabold px-1.5 py-0.5 rounded border uppercase shrink-0 ${badge.color}`}
+                  className={`font-mono text-xs font-extrabold px-1.5 py-0.5 rounded border uppercase shrink-0 ${badge.color}`}
                 >
                   {badge.label}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <span className="font-mono text-xs font-bold text-[#4E220F] truncate block" title={art.name}>
+                  <span className="font-mono text-xs font-bold text-brand-espresso truncate block" title={art.name}>
                     {formatFileName(art.name, 36)}
                   </span>
-                  <div className="flex items-center gap-2 font-mono text-[10px] text-[#7C5339]">
+                  <div className="flex items-center gap-2 font-mono text-xs text-brand-caramel-text">
                     <span>{(art.size / 1024 / 1024).toFixed(2)} MB</span>
                     <span>•</span>
                     <span>{formatTimeAgo(art.mtime * 1000)}</span>
@@ -133,13 +136,13 @@ export const ArtifactsTab: React.FC<ArtifactsTabProps> = ({
                       title={compatTitle}
                       className={
                         compatible.length > 0
-                          ? 'font-bold text-[#2E6B47]'
-                          : 'italic text-[#7C5339]/70'
+                          ? 'font-bold text-success'
+                          : 'italic text-brand-caramel-text/70'
                       }
                     >
                       {compatible.length > 0
                         ? `✓ fits ${compatible[0].toolName}${compatible.length > 1 ? ` +${compatible.length - 1}` : ''}`
-                        : 'no tool match'}
+                        : 'No tool match'}
                     </span>
                   </div>
                 </div>
@@ -149,7 +152,7 @@ export const ArtifactsTab: React.FC<ArtifactsTabProps> = ({
                 {isAudio && onOpenAudioPlayer && (
                   <button
                     onClick={() => onOpenAudioPlayer(art)}
-                    className="inline-flex items-center gap-1 rounded bg-[#9D6638] px-2 py-1 text-[10px] font-semibold text-[#FDFBF7] hover:bg-[#86542C] transition-all shadow-2xs"
+                    className="inline-flex items-center gap-1 rounded bg-brand-caramel px-2 py-1 text-xs font-semibold text-brand-cream-light hover:bg-brand-caramel-hover transition-all shadow-2xs"
                   >
                     <Play className="size-2.5 fill-current" />
                     Play
@@ -160,10 +163,10 @@ export const ArtifactsTab: React.FC<ArtifactsTabProps> = ({
                 <button
                   type="button"
                   onClick={() => copyToClipboard(art.path)}
-                  className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[10px] font-semibold transition-all ${
+                  className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-xs font-semibold transition-all ${
                     copiedPath === art.path
                       ? 'border-emerald-500 bg-emerald-100 text-emerald-800'
-                      : 'border-[#B0BA99] bg-[#EDE5CD] text-[#4E220F] hover:bg-[#B0BA99]/40'
+                      : 'border-brand-sage bg-brand-cream-dark text-brand-espresso hover:bg-brand-sage/40'
                   }`}
                   title="Copy local server path"
                 >
@@ -174,7 +177,7 @@ export const ArtifactsTab: React.FC<ArtifactsTabProps> = ({
                     </>
                   ) : (
                     <>
-                      <Copy className="size-2.5 text-[#9D6638]" />
+                      <Copy className="size-2.5 text-brand-caramel" />
                       <span>Path</span>
                     </>
                   )}
@@ -185,10 +188,10 @@ export const ArtifactsTab: React.FC<ArtifactsTabProps> = ({
                   href={`/api/artifacts/content?path=${encodeURIComponent(art.path)}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 rounded border border-[#B0BA99] bg-[#EDE5CD] px-2 py-1 text-[10px] font-semibold text-[#4E220F] hover:bg-[#B0BA99]/40 transition-colors"
+                  className="inline-flex items-center gap-1 rounded border border-brand-sage bg-brand-cream-dark px-2 py-1 text-xs font-semibold text-brand-espresso hover:bg-brand-sage/40 transition-colors"
                   title="Download file"
                 >
-                  <Download className="size-2.5 text-[#9D6638]" />
+                  <Download className="size-2.5 text-brand-caramel" />
                   <span>Get</span>
                 </a>
 

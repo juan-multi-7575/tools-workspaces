@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { resolveUrl } from '../../lib/api'
+import { errorMessage } from '../../lib/apiTransport'
 import { formatFileName, getArtifactBadge } from '../../lib/utils'
 
 export interface ToolResultViewerProps {
@@ -52,7 +53,7 @@ function getModelColorStyle(modelName: string) {
   if (lower.includes('claude') || lower.includes('anthropic')) {
     return 'bg-orange-100 text-orange-950 border-orange-300'
   }
-  return 'bg-[#EDE5CD] text-[#4E220F] border-[#B0BA99]'
+  return 'bg-brand-cream-dark text-brand-espresso border-brand-sage'
 }
 
 export default function ToolResultViewer({
@@ -84,30 +85,30 @@ export default function ToolResultViewer({
   const downloadUrl = primaryArtifact ? resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(primaryArtifact.path)}`) : ''
 
   return (
-    <div className="space-y-4 font-sans text-xs text-[#4E220F] w-full min-w-0 overflow-x-hidden">
+    <div className="space-y-4 font-sans text-xs text-brand-espresso w-full min-w-0 overflow-x-hidden">
       {/* 1. STATUS & DURATION BANNER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-2xl border border-[#B0BA99] bg-[#EDE5CD]/50 p-3.5 shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-2xl border border-brand-sage bg-brand-cream-dark/50 p-3.5 shadow-2xs">
         <div className="flex items-center gap-2.5">
           <span
             className={`flex size-7 items-center justify-center rounded-xl shadow-2xs ${
               status === 'completed'
-                ? 'bg-[#9D6638] text-[#FDFBF7]'
-                : 'bg-[#B0BA99] text-[#4E220F]'
+                ? 'bg-brand-caramel text-brand-cream-light'
+                : 'bg-brand-sage text-brand-espresso'
             }`}
           >
             {status === 'completed' ? <CheckCircle2 className="size-4" /> : <AlertCircle className="size-4" />}
           </span>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="font-bold text-sm text-[#4E220F]">{toolName}</h4>
-              <span className="font-mono text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#9D6638]/15 border border-[#9D6638]/30 text-[#4E220F] uppercase">
+              <h4 className="font-bold text-sm text-brand-espresso">{toolName}</h4>
+              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full bg-brand-caramel/15 border border-brand-caramel/30 text-brand-espresso uppercase">
                 {status}
               </span>
             </div>
-            <p className="text-[11px] text-[#7C5339] flex items-center gap-2 mt-0.5">
+            <p className="text-xs text-brand-caramel-text flex items-center gap-2 mt-0.5">
               {elapsedSeconds !== undefined && (
                 <span className="flex items-center gap-1 font-mono">
-                  <Clock className="size-3 text-[#9D6638]" />
+                  <Clock className="size-3 text-brand-caramel" />
                   {elapsedSeconds.toFixed(2)}s elapsed
                 </span>
               )}
@@ -122,9 +123,9 @@ export default function ToolResultViewer({
             <button
               type="button"
               onClick={() => copyToClipboard(outputText)}
-              className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1.5 font-bold text-[#4E220F] hover:bg-[#EDE5CD] active:scale-95 transition-all shadow-2xs"
+              className="inline-flex items-center gap-1 rounded-xl border border-brand-sage bg-surface-white px-2.5 py-1.5 font-bold text-brand-espresso hover:bg-brand-cream-dark active:scale-95 transition-all shadow-2xs"
             >
-              {copied ? <Check className="size-3 text-[#9D6638]" /> : <Copy className="size-3 text-[#7C5339]" />}
+              {copied ? <Check className="size-3 text-brand-caramel" /> : <Copy className="size-3 text-brand-caramel-text" />}
               <span>{copied ? 'Copied' : 'Copy Output'}</span>
             </button>
           )}
@@ -133,10 +134,10 @@ export default function ToolResultViewer({
             <button
               type="button"
               onClick={onRerun}
-              className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1.5 font-bold text-[#4E220F] hover:bg-[#EDE5CD] active:scale-95 transition-all shadow-2xs"
+              className="inline-flex items-center gap-1 rounded-xl border border-brand-sage bg-surface-white px-2.5 py-1.5 font-bold text-brand-espresso hover:bg-brand-cream-dark active:scale-95 transition-all shadow-2xs"
               title="Edit parameters & run again"
             >
-              <RotateCcw className="size-3 text-[#9D6638]" />
+              <RotateCcw className="size-3 text-brand-caramel" />
               <span>Modify & Re-run</span>
             </button>
           )}
@@ -145,13 +146,13 @@ export default function ToolResultViewer({
 
       {/* QUICK SAVED OUTPUTS & FILE PATH ACCESS */}
       {artifacts && artifacts.length > 0 && (
-        <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-3.5 shadow-2xs space-y-2.5">
-          <div className="flex items-center justify-between font-mono text-[10px] font-bold text-[#7C5339] uppercase">
+        <div className="rounded-2xl border border-brand-sage bg-surface-white p-3.5 shadow-2xs space-y-2.5">
+          <div className="flex items-center justify-between font-mono text-xs font-bold text-brand-caramel-text uppercase">
             <span className="flex items-center gap-1.5">
-              <Layers className="size-3.5 text-[#9D6638]" />
+              <Layers className="size-3.5 text-brand-caramel" />
               Saved Output Files ({artifacts.length})
             </span>
-            <span className="text-[9px] text-[#7C5339]/80 lowercase font-normal">
+            <span className="text-xs text-brand-caramel-text/80 lowercase font-normal">
               1-click copy path or download
             </span>
           </div>
@@ -164,17 +165,17 @@ export default function ToolResultViewer({
               return (
                 <div
                   key={art.name}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-[#B0BA99]/60 bg-[#F7F1DE]/40 p-2.5 shadow-2xs hover:border-[#9D6638]/70 transition-all"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-xl border border-brand-sage/60 bg-brand-cream/40 p-2.5 shadow-2xs hover:border-brand-caramel/70 transition-all"
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <span className={`font-mono text-[9px] font-extrabold px-1.5 py-0.5 rounded border uppercase shrink-0 ${badge.color}`}>
+                    <span className={`font-mono text-xs font-extrabold px-1.5 py-0.5 rounded border uppercase shrink-0 ${badge.color}`}>
                       {badge.label}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="font-mono text-xs font-bold text-[#4E220F] truncate" title={art.name}>
+                      <p className="font-mono text-xs font-bold text-brand-espresso truncate" title={art.name}>
                         {formatFileName(art.name, 45)}
                       </p>
-                      <p className="font-mono text-[10px] text-[#7C5339]/80 truncate select-all" title={art.path}>
+                      <p className="font-mono text-xs text-brand-caramel-text/80 truncate select-all" title={art.path}>
                         {art.path}
                       </p>
                     </div>
@@ -192,11 +193,11 @@ export default function ToolResultViewer({
                       className={`inline-flex items-center gap-1 rounded-xl border px-2.5 py-1 text-xs font-mono font-bold transition-all shadow-xs ${
                         isCopied
                           ? 'border-emerald-500 bg-emerald-50 text-emerald-800'
-                          : 'border-[#B0BA99] bg-[#EDE5CD] text-[#4E220F] hover:bg-[#B0BA99]/40 hover:text-[#9D6638]'
+                          : 'border-brand-sage bg-brand-cream-dark text-brand-espresso hover:bg-brand-sage/40 hover:text-brand-caramel'
                       }`}
                       title="Copy exact absolute file path"
                     >
-                      {isCopied ? <Check className="size-3 text-emerald-700" /> : <Copy className="size-3 text-[#9D6638]" />}
+                      {isCopied ? <Check className="size-3 text-emerald-700" /> : <Copy className="size-3 text-brand-caramel" />}
                       <span>{isCopied ? 'Path Copied!' : 'Copy Path'}</span>
                     </button>
 
@@ -205,10 +206,10 @@ export default function ToolResultViewer({
                       href={downloadUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-2.5 py-1 text-xs font-mono font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 hover:text-[#9D6638] transition-all shadow-xs"
+                      className="inline-flex items-center gap-1 rounded-xl border border-brand-sage bg-brand-cream-dark px-2.5 py-1 text-xs font-mono font-bold text-brand-espresso hover:bg-brand-sage/40 hover:text-brand-caramel transition-all shadow-xs"
                       title="Download or open file directly"
                     >
-                      <Download className="size-3 text-[#9D6638]" />
+                      <Download className="size-3 text-brand-caramel" />
                       <span>Get File</span>
                     </a>
 
@@ -217,7 +218,7 @@ export default function ToolResultViewer({
                       <button
                         type="button"
                         onClick={() => onOpenAudioPlayer({ name: art.name, url: downloadUrl, artifactName: art.name })}
-                        className="inline-flex items-center gap-1 rounded-xl bg-[#9D6638] px-2.5 py-1 text-xs font-mono font-bold text-[#FFFFFF] hover:bg-[#86542C] transition-all shadow-xs"
+                        className="inline-flex items-center gap-1 rounded-xl bg-brand-caramel px-2.5 py-1 text-xs font-mono font-bold text-surface-white hover:bg-brand-caramel-hover transition-all shadow-xs"
                       >
                         <Play className="size-3 fill-current" />
                         <span>Play</span>
@@ -248,7 +249,7 @@ export default function ToolResultViewer({
             const q = tableSearch.toLowerCase()
             const matchModel = String(r.model || '').toLowerCase().includes(q)
             const matchProvider = String(r.provider_name || r.provider || '').toLowerCase().includes(q)
-            const matchErr = String(r.error || '').toLowerCase().includes(q)
+            const matchErr = errorMessage(r.error || '').toLowerCase().includes(q)
             return matchModel || matchProvider || matchErr
           }
           return true
@@ -259,33 +260,33 @@ export default function ToolResultViewer({
             {/* Telemetry Summary Cards */}
             {data.summary && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div className="rounded-xl border border-[#B0BA99] bg-[#FFFFFF] p-3 text-center shadow-2xs">
-                  <span className="font-mono text-[10px] text-[#7C5339] uppercase font-bold">Health Rate</span>
+                <div className="rounded-xl border border-brand-sage bg-surface-white p-3 text-center shadow-2xs">
+                  <span className="font-mono text-xs text-brand-caramel-text uppercase font-bold">Health Rate</span>
                   <p className={`text-lg font-bold mt-0.5 ${
                     data.summary.health_percentage === 100
                       ? 'text-emerald-700'
                       : data.summary.health_percentage > 0
-                        ? 'text-[#9D6638]'
+                        ? 'text-brand-caramel'
                         : 'text-rose-700'
                   }`}>
                     {data.summary.health_percentage}%
                   </p>
                 </div>
-                <div className="rounded-xl border border-[#B0BA99] bg-[#FFFFFF] p-3 text-center shadow-2xs">
-                  <span className="font-mono text-[10px] text-[#7C5339] uppercase font-bold">Total Probed</span>
-                  <p className="text-lg font-bold text-[#4E220F] mt-0.5">
+                <div className="rounded-xl border border-brand-sage bg-surface-white p-3 text-center shadow-2xs">
+                  <span className="font-mono text-xs text-brand-caramel-text uppercase font-bold">Total Probed</span>
+                  <p className="text-lg font-bold text-brand-espresso mt-0.5">
                     {data.summary.total_probed}
                   </p>
                 </div>
-                <div className="rounded-xl border border-[#B0BA99] bg-[#FFFFFF] p-3 text-center shadow-2xs">
-                  <span className="font-mono text-[10px] text-[#7C5339] uppercase font-bold">Passed</span>
+                <div className="rounded-xl border border-brand-sage bg-surface-white p-3 text-center shadow-2xs">
+                  <span className="font-mono text-xs text-brand-caramel-text uppercase font-bold">Passed</span>
                   <p className="text-lg font-bold text-emerald-700 mt-0.5">
                     {data.summary.healthy}
                   </p>
                 </div>
-                <div className="rounded-xl border border-[#B0BA99] bg-[#FFFFFF] p-3 text-center shadow-2xs">
-                  <span className="font-mono text-[10px] text-[#7C5339] uppercase font-bold">Failed / Unconf</span>
-                  <p className={`text-lg font-bold mt-0.5 ${failedCount > 0 ? 'text-rose-700' : 'text-[#7C5339]'}`}>
+                <div className="rounded-xl border border-brand-sage bg-surface-white p-3 text-center shadow-2xs">
+                  <span className="font-mono text-xs text-brand-caramel-text uppercase font-bold">Failed / Unconf</span>
+                  <p className={`text-lg font-bold mt-0.5 ${failedCount > 0 ? 'text-rose-700' : 'text-brand-caramel-text'}`}>
                     {failedCount}
                   </p>
                 </div>
@@ -293,15 +294,15 @@ export default function ToolResultViewer({
             )}
 
             {/* Filter & Search Bar for Table */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-[#EDE5CD]/50 p-2.5 rounded-xl border border-[#B0BA99]">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 bg-brand-cream-dark/50 p-2.5 rounded-xl border border-brand-sage">
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => setTableFilter('all')}
-                  className={`font-mono text-[10px] px-2.5 py-1 rounded-lg border transition-all ${
+                  className={`font-mono text-xs px-2.5 py-1 rounded-lg border transition-all ${
                     tableFilter === 'all'
-                      ? 'bg-[#9D6638] text-[#FDFBF7] border-[#9D6638] font-bold shadow-2xs'
-                      : 'bg-[#FFFFFF] text-[#4E220F] border-[#B0BA99] hover:bg-[#EDE5CD]'
+                      ? 'bg-brand-caramel text-brand-cream-light border-brand-caramel font-bold shadow-2xs'
+                      : 'bg-surface-white text-brand-espresso border-brand-sage hover:bg-brand-cream-dark'
                   }`}
                 >
                   All ({totalProbed})
@@ -309,10 +310,10 @@ export default function ToolResultViewer({
                 <button
                   type="button"
                   onClick={() => setTableFilter('passed')}
-                  className={`font-mono text-[10px] px-2.5 py-1 rounded-lg border transition-all ${
+                  className={`font-mono text-xs px-2.5 py-1 rounded-lg border transition-all ${
                     tableFilter === 'passed'
-                      ? 'bg-emerald-700 text-[#FDFBF7] border-emerald-700 font-bold shadow-2xs'
-                      : 'bg-[#FFFFFF] text-emerald-800 border-[#B0BA99] hover:bg-[#EDE5CD]'
+                      ? 'bg-emerald-700 text-brand-cream-light border-emerald-700 font-bold shadow-2xs'
+                      : 'bg-surface-white text-emerald-800 border-brand-sage hover:bg-brand-cream-dark'
                   }`}
                 >
                   Passed ({healthyCount})
@@ -320,10 +321,10 @@ export default function ToolResultViewer({
                 <button
                   type="button"
                   onClick={() => setTableFilter('failed')}
-                  className={`font-mono text-[10px] px-2.5 py-1 rounded-lg border transition-all ${
+                  className={`font-mono text-xs px-2.5 py-1 rounded-lg border transition-all ${
                     tableFilter === 'failed'
-                      ? 'bg-rose-700 text-[#FDFBF7] border-rose-700 font-bold shadow-2xs'
-                      : 'bg-[#FFFFFF] text-rose-800 border-[#B0BA99] hover:bg-[#EDE5CD]'
+                      ? 'bg-rose-700 text-brand-cream-light border-rose-700 font-bold shadow-2xs'
+                      : 'bg-surface-white text-rose-800 border-brand-sage hover:bg-brand-cream-dark'
                   }`}
                 >
                   Failed ({failedCount})
@@ -336,13 +337,13 @@ export default function ToolResultViewer({
                   value={tableSearch}
                   onChange={(e) => setTableSearch(e.target.value)}
                   placeholder="Filter model name or diagnostic..."
-                  className="w-full rounded-lg border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1 font-mono text-[10px] text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:outline-none"
+                  className="w-full rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none"
                 />
                 {tableSearch && (
                   <button
                     type="button"
                     onClick={() => setTableSearch('')}
-                    className="absolute right-1.5 top-1 font-mono text-[9px] text-[#7C5339] hover:text-[#4E220F] px-1 rounded bg-[#EDE5CD]"
+                    className="absolute right-1.5 top-1 font-mono text-xs text-brand-caramel-text hover:text-brand-espresso px-1 rounded bg-brand-cream-dark"
                   >
                     ✕
                   </button>
@@ -351,10 +352,10 @@ export default function ToolResultViewer({
             </div>
 
             {/* Interactive Model Health Table */}
-            <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] shadow-2xs overflow-hidden">
+            <div className="rounded-2xl border border-brand-sage bg-surface-white shadow-2xs overflow-hidden">
               <div className="overflow-x-auto max-h-[440px] overflow-y-auto">
                 <table className="w-full text-left border-collapse text-xs">
-                  <thead className="bg-[#EDE5CD]/80 text-[#4E220F] font-bold text-[10px] font-mono uppercase tracking-wider sticky top-0 border-b border-[#B0BA99] z-10">
+                  <thead className="bg-brand-cream-dark/80 text-brand-espresso font-bold text-xs font-mono uppercase tracking-wider sticky top-0 border-b border-brand-sage z-panel">
                     <tr>
                       <th className="py-2.5 px-3">Model Name</th>
                       <th className="py-2.5 px-3">Provider</th>
@@ -364,10 +365,10 @@ export default function ToolResultViewer({
                       <th className="py-2.5 px-3 text-right">Latency</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#B0BA99]/40 font-mono text-[11px]">
+                  <tbody className="divide-y divide-brand-sage/40 font-mono text-xs">
                     {filteredRows.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="py-8 text-center text-xs text-[#7C5339] italic">
+                        <td colSpan={6} className="py-8 text-center text-xs text-brand-caramel-text italic">
                           No model probe results match the current filter.
                         </td>
                       </tr>
@@ -376,13 +377,13 @@ export default function ToolResultViewer({
                         const isHealthy = r.status === 'HEALTHY'
                         const isUnconfigured = r.status === 'UNCONFIGURED'
                         const passedList: string[] = r.tests_passed || (isHealthy ? ['Auth Verification', 'Chat Completion', 'Payload Schema', 'Latency SLA'] : [])
-                        const failedList: string[] = r.tests_failed || (isUnconfigured ? ['API Key Configured'] : (!isHealthy ? [r.error ? r.error.slice(0, 30) : 'Probe Failed'] : []))
+                        const failedList: string[] = r.tests_failed || (isUnconfigured ? ['API Key Configured'] : (!isHealthy ? [r.error ? errorMessage(r.error).slice(0, 30) : 'Probe Failed'] : []))
 
                         return (
                           <tr
                             key={idx}
-                            className={`hover:bg-[#EDE5CD]/30 transition-colors ${
-                              isHealthy ? 'bg-[#FDFBF7]' : 'bg-[#FFF9F5]'
+                            className={`hover:bg-brand-cream-dark/30 transition-colors ${
+                              isHealthy ? 'bg-brand-cream-light' : 'bg-surface-warm-white'
                             }`}
                           >
                             {/* 1. MODEL NAME (Focal Point with distinct color badge) */}
@@ -393,24 +394,24 @@ export default function ToolResultViewer({
                             </td>
 
                             {/* 2. PROVIDER */}
-                            <td className="py-2.5 px-3 align-top whitespace-nowrap text-[#4E220F] font-sans font-bold text-xs">
+                            <td className="py-2.5 px-3 align-top whitespace-nowrap text-brand-espresso font-sans font-bold text-xs">
                               {r.provider_name || r.provider}
                             </td>
 
                             {/* 3. STATUS (Tick mark / Cross) */}
                             <td className="py-2.5 px-3 align-top whitespace-nowrap">
                               {isHealthy ? (
-                                <span className="inline-flex items-center gap-1 font-bold text-[10px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
+                                <span className="inline-flex items-center gap-1 font-bold text-xs px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
                                   <CheckCircle2 className="size-3 text-emerald-600" />
                                   <span>PASSED</span>
                                 </span>
                               ) : isUnconfigured ? (
-                                <span className="inline-flex items-center gap-1 font-bold text-[10px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300 shadow-2xs">
+                                <span className="inline-flex items-center gap-1 font-bold text-xs px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300 shadow-2xs">
                                   <AlertCircle className="size-3 text-amber-600" />
                                   <span>UNCONFIG</span>
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 font-bold text-[10px] px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300 shadow-2xs">
+                                <span className="inline-flex items-center gap-1 font-bold text-xs px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300 shadow-2xs">
                                   <AlertCircle className="size-3 text-rose-600" />
                                   <span>FAILED</span>
                                 </span>
@@ -424,7 +425,7 @@ export default function ToolResultViewer({
                                   {passedList.map((t: string, tidx: number) => (
                                     <span
                                       key={tidx}
-                                      className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap"
+                                      className="inline-flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap"
                                     >
                                       <Check className="size-2 text-emerald-600" />
                                       {t}
@@ -432,7 +433,7 @@ export default function ToolResultViewer({
                                   ))}
                                 </div>
                               ) : (
-                                <span className="text-[#7C5339]/50 text-[10px] italic">—</span>
+                                <span className="text-brand-caramel-text/50 text-xs italic">—</span>
                               )}
                             </td>
 
@@ -440,11 +441,11 @@ export default function ToolResultViewer({
                             <td className="py-2.5 px-3 align-top">
                               {isHealthy ? (
                                 <div className="space-y-0.5">
-                                  <span className="text-emerald-700 font-bold text-[10px] flex items-center gap-1">
+                                  <span className="text-emerald-700 font-bold text-xs flex items-center gap-1">
                                     <Check className="size-2.5" /> All checks operational
                                   </span>
                                   {r.response_snippet && (
-                                    <span className="text-[#7C5339] text-[10px] block truncate max-w-[280px]" title={r.response_snippet}>
+                                    <span className="text-brand-caramel-text text-xs block truncate max-w-[280px]" title={r.response_snippet}>
                                       "{r.response_snippet}"
                                     </span>
                                   )}
@@ -456,7 +457,7 @@ export default function ToolResultViewer({
                                       {failedList.map((f: string, fidx: number) => (
                                         <span
                                           key={fidx}
-                                          className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap"
+                                          className="inline-flex items-center gap-1 text-xs font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap"
                                         >
                                           ✕ {f}
                                         </span>
@@ -465,10 +466,10 @@ export default function ToolResultViewer({
                                   )}
                                   {r.error && (
                                     <div
-                                      className="font-mono text-[10px] text-rose-800 bg-rose-50/80 border border-rose-200/80 px-2 py-1 rounded-md max-w-md break-words"
-                                      title={r.error}
+                                      className="font-mono text-xs text-rose-800 bg-rose-50/80 border border-rose-200/80 px-2 py-1 rounded-md max-w-md break-words"
+                                      title={errorMessage(r.error)}
                                     >
-                                      {r.error}
+                                      {errorMessage(r.error)}
                                     </div>
                                   )}
                                 </div>
@@ -478,7 +479,7 @@ export default function ToolResultViewer({
                             {/* 6. LATENCY */}
                             <td className="py-2.5 px-3 align-top text-right whitespace-nowrap">
                               {r.latency_ms !== null && r.latency_ms !== undefined && r.latency_ms > 0 ? (
-                                <span className={`font-bold text-[10px] px-2 py-0.5 rounded-md border ${
+                                <span className={`font-bold text-xs px-2 py-0.5 rounded-md border ${
                                   r.latency_ms < 150
                                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                     : r.latency_ms < 500
@@ -488,7 +489,7 @@ export default function ToolResultViewer({
                                   {r.latency_ms}ms
                                 </span>
                               ) : (
-                                <span className="text-[#7C5339]/50">—</span>
+                                <span className="text-brand-caramel-text/50">—</span>
                               )}
                             </td>
                           </tr>
@@ -505,24 +506,24 @@ export default function ToolResultViewer({
 
       {/* B. SUMMARIZER LIVE RESULTS */}
       {toolId === 'summarizer' && data && (
-        <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-4 shadow-2xs space-y-3">
-          <div className="flex items-center justify-between border-b border-[#B0BA99]/60 pb-2.5">
-            <h5 className="font-bold text-xs text-[#4E220F] flex items-center gap-1.5">
-              <Sparkles className="size-3.5 text-[#9D6638]" />
+        <div className="rounded-2xl border border-brand-sage bg-surface-white p-4 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between border-b border-brand-sage/60 pb-2.5">
+            <h5 className="font-bold text-xs text-brand-espresso flex items-center gap-1.5">
+              <Sparkles className="size-3.5 text-brand-caramel" />
               Executive Summary & Key Takeaways
             </h5>
-            <span className="font-mono text-[10px] font-bold text-[#9D6638] bg-[#EDE5CD] px-2 py-0.5 rounded-lg">
+            <span className="font-mono text-xs font-bold text-brand-caramel bg-brand-cream-dark px-2 py-0.5 rounded-lg">
               {data.bullet_count || data.takeaways?.length || 0} Key Points
             </span>
           </div>
 
           <div className="space-y-2">
             {(data.takeaways || []).map((point: string, idx: number) => (
-              <div key={idx} className="flex items-start gap-2.5 rounded-xl bg-[#F7F1DE]/60 p-3 border border-[#B0BA99]/40">
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-[#9D6638] text-[10px] font-bold text-[#FDFBF7]">
+              <div key={idx} className="flex items-start gap-2.5 rounded-xl bg-brand-cream/60 p-3 border border-brand-sage/40">
+                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-caramel text-xs font-bold text-brand-cream-light">
                   {idx + 1}
                 </span>
-                <p className="text-xs leading-relaxed text-[#4E220F] font-medium">{point}</p>
+                <p className="text-xs leading-relaxed text-brand-espresso font-medium">{point}</p>
               </div>
             ))}
           </div>
@@ -531,13 +532,13 @@ export default function ToolResultViewer({
 
       {/* C. CODEC TRANSFORMER RESULTS */}
       {toolId === 'codec_tool' && data && (
-        <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-4 shadow-2xs space-y-3">
-          <div className="flex items-center justify-between border-b border-[#B0BA99]/60 pb-2.5">
-            <h5 className="font-bold text-xs text-[#4E220F] flex items-center gap-1.5">
-              <Layers className="size-3.5 text-[#9D6638]" />
+        <div className="rounded-2xl border border-brand-sage bg-surface-white p-4 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between border-b border-brand-sage/60 pb-2.5">
+            <h5 className="font-bold text-xs text-brand-espresso flex items-center gap-1.5">
+              <Layers className="size-3.5 text-brand-caramel" />
               Codec Transformation Result
             </h5>
-            <span className="font-mono text-[10px] font-bold text-[#4E220F] bg-[#EDE5CD] px-2 py-0.5 rounded-lg uppercase">
+            <span className="font-mono text-xs font-bold text-brand-espresso bg-brand-cream-dark px-2 py-0.5 rounded-lg uppercase">
               {data.codec} • {data.length} chars
             </span>
           </div>
@@ -547,7 +548,7 @@ export default function ToolResultViewer({
               readOnly
               value={data.output || ''}
               rows={6}
-              className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/80 p-3 font-mono text-xs text-[#4E220F] shadow-inner focus:outline-none"
+              className="w-full rounded-xl border border-brand-sage bg-brand-cream/80 p-3 font-mono text-xs text-brand-espresso shadow-inner focus:outline-none"
             />
           </div>
         </div>
@@ -555,16 +556,16 @@ export default function ToolResultViewer({
 
       {/* D. SCRIPT RUNNER LIVE TERMINAL LOGS */}
       {toolId === 'script_runner' && (
-        <div className="rounded-2xl border border-[#B0BA99] bg-[#2E2824] p-4 text-[#FDFBF7] shadow-md space-y-2">
-          <div className="flex items-center justify-between border-b border-[#EDE5CD]/20 pb-2">
+        <div className="rounded-2xl border border-brand-sage bg-surface-dark p-4 text-brand-cream-light shadow-md space-y-2">
+          <div className="flex items-center justify-between border-b border-brand-cream-dark/20 pb-2">
             <div className="flex items-center gap-2">
-              <Terminal className="size-3.5 text-[#EDE5CD]" />
-              <span className="font-mono text-xs font-bold text-[#FDFBF7]">Process Output Console</span>
+              <Terminal className="size-3.5 text-brand-cream-dark" />
+              <span className="font-mono text-xs font-bold text-brand-cream-light">Process Output Console</span>
             </div>
             {data?.exit_code !== undefined && (
               <span
-                className={`font-mono text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                  data.exit_code === 0 ? 'bg-[#9D6638] text-[#FDFBF7]' : 'bg-[#7C5339] text-[#FDFBF7]'
+                className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md ${
+                  data.exit_code === 0 ? 'bg-brand-caramel text-brand-cream-light' : 'bg-brand-caramel-text text-brand-cream-light'
                 }`}
               >
                 Exit Code: {data.exit_code}
@@ -572,7 +573,7 @@ export default function ToolResultViewer({
             )}
           </div>
 
-          <pre className="max-h-64 overflow-y-auto font-mono text-[11px] leading-relaxed text-[#EDE5CD] whitespace-pre-wrap">
+          <pre className="max-h-64 overflow-y-auto font-mono text-xs leading-relaxed text-brand-cream-dark whitespace-pre-wrap">
             {outputText || data?.stdout || 'No process output returned.'}
           </pre>
         </div>
@@ -580,33 +581,33 @@ export default function ToolResultViewer({
 
       {/* E. MEDIAINFO INSPECTOR */}
       {toolId === 'mediainfo' && data && (
-        <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-4 shadow-2xs space-y-3">
-          <h5 className="font-bold text-xs text-[#4E220F] flex items-center gap-1.5">
-            <Volume2 className="size-3.5 text-[#9D6638]" />
+        <div className="rounded-2xl border border-brand-sage bg-surface-white p-4 shadow-2xs space-y-3">
+          <h5 className="font-bold text-xs text-brand-espresso flex items-center gap-1.5">
+            <Volume2 className="size-3.5 text-brand-caramel" />
             Media Stream Properties
           </h5>
 
           {data.format && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <div className="rounded-xl bg-[#F7F1DE]/70 p-2.5 border border-[#B0BA99]/60 text-center">
-                <span className="text-[10px] text-[#7C5339] font-bold block">Format</span>
-                <span className="font-mono text-xs font-bold text-[#4E220F]">{data.format.format_name || 'N/A'}</span>
+              <div className="rounded-xl bg-brand-cream/70 p-2.5 border border-brand-sage/60 text-center">
+                <span className="text-xs text-brand-caramel-text font-bold block">Format</span>
+                <span className="font-mono text-xs font-bold text-brand-espresso">{data.format.format_name || 'N/A'}</span>
               </div>
-              <div className="rounded-xl bg-[#F7F1DE]/70 p-2.5 border border-[#B0BA99]/60 text-center">
-                <span className="text-[10px] text-[#7C5339] font-bold block">Duration</span>
-                <span className="font-mono text-xs font-bold text-[#4E220F]">
+              <div className="rounded-xl bg-brand-cream/70 p-2.5 border border-brand-sage/60 text-center">
+                <span className="text-xs text-brand-caramel-text font-bold block">Duration</span>
+                <span className="font-mono text-xs font-bold text-brand-espresso">
                   {data.format.duration ? `${parseFloat(data.format.duration).toFixed(1)}s` : 'N/A'}
                 </span>
               </div>
-              <div className="rounded-xl bg-[#F7F1DE]/70 p-2.5 border border-[#B0BA99]/60 text-center">
-                <span className="text-[10px] text-[#7C5339] font-bold block">Bitrate</span>
-                <span className="font-mono text-xs font-bold text-[#4E220F]">
+              <div className="rounded-xl bg-brand-cream/70 p-2.5 border border-brand-sage/60 text-center">
+                <span className="text-xs text-brand-caramel-text font-bold block">Bitrate</span>
+                <span className="font-mono text-xs font-bold text-brand-espresso">
                   {data.format.bit_rate ? `${Math.round(data.format.bit_rate / 1000)} kb/s` : 'N/A'}
                 </span>
               </div>
-              <div className="rounded-xl bg-[#F7F1DE]/70 p-2.5 border border-[#B0BA99]/60 text-center">
-                <span className="text-[10px] text-[#7C5339] font-bold block">Streams</span>
-                <span className="font-mono text-xs font-bold text-[#4E220F]">{data.streams?.length || 1}</span>
+              <div className="rounded-xl bg-brand-cream/70 p-2.5 border border-brand-sage/60 text-center">
+                <span className="text-xs text-brand-caramel-text font-bold block">Streams</span>
+                <span className="font-mono text-xs font-bold text-brand-espresso">{data.streams?.length || 1}</span>
               </div>
             </div>
           )}
@@ -615,10 +616,10 @@ export default function ToolResultViewer({
 
       {/* F. INLINE AUDIO / MEDIA PLAYER */}
       {primaryArtifact && isAudioFile(primaryArtifact.name) && (
-        <div className="rounded-2xl border border-[#B0BA99] bg-[#EDE5CD]/50 p-4 shadow-2xs space-y-2.5">
+        <div className="rounded-2xl border border-brand-sage bg-brand-cream-dark/50 p-4 shadow-2xs space-y-2.5">
           <div className="flex items-center justify-between">
-            <h5 className="font-bold text-xs text-[#4E220F] flex items-center gap-1.5">
-              <Volume2 className="size-3.5 text-[#9D6638]" />
+            <h5 className="font-bold text-xs text-brand-espresso flex items-center gap-1.5">
+              <Volume2 className="size-3.5 text-brand-caramel" />
               Generated Audio Stream
             </h5>
             {onOpenAudioPlayer && (
@@ -630,7 +631,7 @@ export default function ToolResultViewer({
                     url: downloadUrl,
                   })
                 }
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#9D6638] hover:underline"
+                className="inline-flex items-center gap-1 text-xs font-bold text-brand-caramel hover:underline"
               >
                 <Play className="size-3 fill-current" />
                 Open in Waveform Player
@@ -646,23 +647,23 @@ export default function ToolResultViewer({
 
       {/* G. INLINE IMAGE PREVIEW */}
       {primaryArtifact && isImageFile(primaryArtifact.name) && (
-        <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-4 shadow-2xs space-y-2.5 text-center">
-          <h5 className="font-bold text-xs text-[#4E220F] flex items-center gap-1.5 justify-center mb-2">
+        <div className="rounded-2xl border border-brand-sage bg-surface-white p-4 shadow-2xs space-y-2.5 text-center">
+          <h5 className="font-bold text-xs text-brand-espresso flex items-center gap-1.5 justify-center mb-2">
             Image Output Preview
           </h5>
           <img
             src={downloadUrl}
             alt={primaryArtifact.name}
-            className="max-h-72 mx-auto rounded-xl object-contain border border-[#B0BA99]/60 shadow-xs"
+            className="max-h-72 mx-auto rounded-xl object-contain border border-brand-sage/60 shadow-xs"
           />
         </div>
       )}
 
       {/* H. RAW TEXT / DOCUMENT FALLBACK (When tool produces text and no custom viewer matches) */}
       {!['ai_model_health_check', 'summarizer', 'codec_tool', 'script_runner'].includes(toolId) && outputText && (
-        <div className="rounded-2xl border border-[#B0BA99] bg-[#FFFFFF] p-4 shadow-2xs space-y-2">
-          <h5 className="font-bold text-xs text-[#4E220F]">Generated Content</h5>
-          <pre className="max-h-64 overflow-y-auto font-mono text-[11px] leading-relaxed text-[#4E220F] bg-[#F7F1DE]/80 p-3 rounded-xl border border-[#B0BA99]/60 whitespace-pre-wrap">
+        <div className="rounded-2xl border border-brand-sage bg-surface-white p-4 shadow-2xs space-y-2">
+          <h5 className="font-bold text-xs text-brand-espresso">Generated Content</h5>
+          <pre className="max-h-64 overflow-y-auto font-mono text-xs leading-relaxed text-brand-espresso bg-brand-cream/80 p-3 rounded-xl border border-brand-sage/60 whitespace-pre-wrap">
             {outputText}
           </pre>
         </div>
@@ -670,9 +671,9 @@ export default function ToolResultViewer({
 
       {/* 3. ARTIFACTS ACTION BAR */}
       {artifacts && artifacts.length > 0 && toolId !== 'ai_model_health_check' && (
-        <div className="rounded-2xl border border-[#B0BA99]/70 bg-[#FFFFFF] p-3.5 shadow-2xs space-y-2">
-          <h5 className="font-bold text-xs text-[#4E220F] flex items-center gap-1.5">
-            <FileText className="size-3.5 text-[#9D6638]" />
+        <div className="rounded-2xl border border-brand-sage/70 bg-surface-white p-3.5 shadow-2xs space-y-2">
+          <h5 className="font-bold text-xs text-brand-espresso flex items-center gap-1.5">
+            <FileText className="size-3.5 text-brand-caramel" />
             Output Artifacts
           </h5>
 
@@ -682,13 +683,13 @@ export default function ToolResultViewer({
               return (
                 <div
                   key={idx}
-                  className="flex items-center justify-between rounded-xl bg-[#F7F1DE]/60 px-3 py-2 border border-[#B0BA99]/40"
+                  className="flex items-center justify-between rounded-xl bg-brand-cream/60 px-3 py-2 border border-brand-sage/40"
                 >
-                  <span className="font-mono text-xs font-medium text-[#4E220F] truncate">{art.name}</span>
+                  <span className="font-mono text-xs font-medium text-brand-espresso truncate">{art.name}</span>
                   <a
                     href={url}
                     download={art.name}
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#9D6638] px-2.5 py-1 text-[10px] font-bold text-[#FDFBF7] hover:bg-[#86542C] transition-all"
+                    className="inline-flex items-center gap-1 rounded-lg bg-brand-caramel px-2.5 py-1 text-xs font-bold text-brand-cream-light hover:bg-brand-caramel-hover transition-all"
                   >
                     <Download className="size-3" />
                     Download

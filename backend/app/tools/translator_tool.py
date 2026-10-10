@@ -1,19 +1,14 @@
 from __future__ import annotations
 
+import asyncio
+import re
+from dataclasses import dataclass
 from pathlib import Path
 
 from app.paths import resolve_input_file, run_dir, tool_downloads_dir
 from app.tools.base import Artifact, PortKind, ToolManifest, ToolResult, ToolRunContext
 from app.tools.model_health_tool import _scan_bashrc_keys
-from app.tools.text.llm_translator import LANG_CODE_MAP
-from app.tools.text.srt_translator import (
-    SrtTranslatorTool,
-    SubtitleCue,
-    format_cues_to_srt,
-    format_cues_to_vtt,
-    parse_srt_content,
-    parse_vtt_content,
-)
+from app.tools.text.llm_translator import LANG_CODE_MAP, LlmTranslatorTool
 
 __all__ = [
     "SubtitleTranslatorTool",
@@ -26,14 +21,135 @@ __all__ = [
 ]
 
 
-class SubtitleTranslatorTool(SrtTranslatorTool):
-    """Thin backwards-compatible facade over the split text tools.
+@dataclass
+class SubtitleCue:
+    index: int
+    timing: str
+    text: str
 
-    Canonical id is now ``subtitle.translate.srt`` (inherited); the legacy
-    ``subtitle_translator`` id is registered as a dict-level alias in
-    ``app.tools``. Combined SRT/VTT + plain-text behaviour is preserved here
-    by delegating to :class:`SrtTranslatorTool` / :class:`LlmTranslatorTool`
-    helpers; new code should use ``text.translate.llm`` or
+
+def parse_srt_content(content: str) -> list[SubtitleCue]:
+    """Parse SubRip (.srt) content into SubtitleCue objects."""
+    cues: list[SubtitleCue] = []
+    normalized = content.replace("\r\n", "\n").replace("\r", "\n").strip()
+    if not normalized:
+        return cues
+
+    blocks = re.split(r"\n\s*\n", normalized)
+    for block in blocks:
+        lines = [line.strip() for line in block.split("\n") if line.strip()]
+        if len(lines) < 2:
+            continue
+        try:
+            cue_idx = int(lines[0])
+            timing_line = lines[1]
+            text_lines = lines[2:]
+        except ValueError:
+            if "-->" in lines[0]:
+                cue_idx = len(cues) + 1
+                timing_line = lines[0]
+                text_lines = lines[1:]
+            else:
+                continue
+
+        if "-->" not in timing_line:
+            continue
+
+        cues.append(
+            SubtitleCue(
+                index=cue_idx,
+                timing=timing_line,
+                text=" ".join(text_lines),
+            )
+        )
+    return cues
+
+
+def parse_vtt_content(content: str) -> list[SubtitleCue]:
+    """Parse WebVTT (.vtt) content into SubtitleCue objects."""
+    normalized = content.replace("\r\n", "\n").replace("\r", "\n").strip()
+    if not normalized:
+        return []
+
+    lines = normalized.split("\n")
+    body_lines: list[str] = []
+    in_note = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("WEBVTT"):
+            continue
+        if stripped.startswith("NOTE"):
+            in_note = True
+            continue
+        if in_note:
+            if not stripped:
+                in_note = False
+            continue
+        body_lines.append(line)
+
+    body = "\n".join(body_lines).strip()
+    blocks = re.split(r"\n\s*\n", body)
+    cues: list[SubtitleCue] = []
+
+    for block in blocks:
+        block_lines = [b.strip() for b in block.split("\n") if b.strip()]
+        if not block_lines:
+            continue
+
+        cue_idx = len(cues) + 1
+        timing_line = ""
+        text_lines: list[str] = []
+
+        if "-->" in block_lines[0]:
+            timing_line = block_lines[0]
+            text_lines = block_lines[1:]
+        elif len(block_lines) > 1 and "-->" in block_lines[1]:
+            try:
+                cue_idx = int(block_lines[0])
+            except ValueError:
+                cue_idx = len(cues) + 1
+            timing_line = block_lines[1]
+            text_lines = block_lines[2:]
+
+        if not timing_line or "-->" not in timing_line:
+            continue
+
+        cues.append(
+            SubtitleCue(
+                index=cue_idx,
+                timing=timing_line,
+                text=" ".join(text_lines),
+            )
+        )
+    return cues
+
+
+def format_cues_to_srt(cues: list[SubtitleCue]) -> str:
+    """Reconstruct an .srt formatted string from cues."""
+    blocks = []
+    for cue in cues:
+        timing = cue.timing.replace(".", ",")
+        blocks.append(f"{cue.index}\n{timing}\n{cue.text}\n")
+    return "\n".join(blocks).strip() + "\n"
+
+
+def format_cues_to_vtt(cues: list[SubtitleCue]) -> str:
+    """Reconstruct a WebVTT formatted string from cues."""
+    blocks = ["WEBVTT\n"]
+    for cue in cues:
+        timing = cue.timing.replace(",", ".")
+        blocks.append(f"{cue.index}\n{timing}\n{cue.text}\n")
+    return "\n".join(blocks).strip() + "\n"
+
+
+class SubtitleTranslatorTool(LlmTranslatorTool):
+    """Subtitle / document translator for .srt, .vtt, and plain-text inputs.
+
+    Canonical id is ``subtitle.translate.srt``; the legacy ``subtitle_translator``
+    id is registered as a dict-level alias in ``app.tools``. Combined SRT/VTT +
+    plain-text behaviour is preserved here by reusing the LLM plumbing from
+    :class:`LlmTranslatorTool` (``_resolve_llm``, ``_call_llm_chat``,
+    ``_translate_plain_text``); new code should use ``text.translate.llm`` or
     ``subtitle.translate.srt`` directly.
     """
 
@@ -45,7 +161,78 @@ class SubtitleTranslatorTool(SrtTranslatorTool):
         tags=["subtitles", "translation", "srt", "vtt", "translator", "ai", "llm", "korean", "english"],
         input_kinds=[PortKind.document, PortKind.text, PortKind.any],
         output_kinds=[PortKind.document, PortKind.text],
-        parameters_schema=SrtTranslatorTool.manifest.parameters_schema,
+        parameters_schema={
+            "input_path": {
+                "type": "string",
+                "title": "Subtitle File",
+                "description": "Path to .srt or .vtt file to translate.",
+                "default": "",
+            },
+            "target_lang": {
+                "type": "string",
+                "title": "Target Language",
+                "enum": [
+                    "English",
+                    "Korean",
+                    "Japanese",
+                    "Spanish",
+                    "French",
+                    "German",
+                    "Chinese",
+                    "Hindi",
+                    "Portuguese",
+                    "Italian",
+                    "Arabic",
+                    "Russian",
+                ],
+                "default": "English",
+                "description": "Language to translate the subtitles into.",
+            },
+            "source_lang": {
+                "type": "string",
+                "title": "Source Language",
+                "enum": [
+                    "auto",
+                    "Korean",
+                    "Japanese",
+                    "Chinese",
+                    "Spanish",
+                    "French",
+                    "German",
+                    "Hindi",
+                    "English",
+                ],
+                "default": "auto",
+                "description": "Original language of the subtitles (auto-detected if 'auto').",
+            },
+            "provider": {
+                "type": "string",
+                "title": "AI Translation Provider",
+                "enum": ["auto", "groq", "nvidia", "deepseek", "openai", "gemini", "anthropic"],
+                "enumLabels": {
+                    "auto": "⚡ Auto (Fastest Available: Groq ➔ NVIDIA ➔ OpenAI)",
+                    "groq": "Groq (Llama 3.3 70B - Ultra Fast Subtitle Translation)",
+                    "nvidia": "NVIDIA NIM (Llama 3.1 70B / Nemotron)",
+                    "deepseek": "DeepSeek (DeepSeek-V3 Chat)",
+                    "openai": "OpenAI (GPT-4o-mini / GPT-4o)",
+                    "gemini": "Google Gemini (Gemini 2.0 Flash)",
+                    "anthropic": "Anthropic (Claude 3.5 Haiku)",
+                },
+                "default": "auto",
+            },
+            "model": {
+                "type": "string",
+                "title": "Model Name Override",
+                "default": "auto",
+                "description": "Specific LLM model override (or leave 'auto' for optimal default).",
+            },
+            "batch_size": {
+                "type": "number",
+                "title": "Subtitle Batch Size",
+                "default": 50,
+                "description": "Number of subtitle cues to translate per batch (recommended 40-60).",
+            },
+        },
     )
 
     async def execute(self, context: ToolRunContext) -> ToolResult:
@@ -75,16 +262,20 @@ class SubtitleTranslatorTool(SrtTranslatorTool):
             return ToolResult(
                 artifacts=[],
                 status="failed",
-                error="No active AI API key found. Please export GROQ_API_KEY, NVIDIA_API_KEY, or OPENAI_API_KEY in ~/.bashrc.",
+                error="No active AI API key found. Save a provider key in Settings or export GROQ_API_KEY, NVIDIA_API_KEY, or OPENAI_API_KEY in ~/.bashrc.",
             )
 
         artifacts: list[Artifact] = []
+        failed_cue_indices: list[int] = []
         lang_code = LANG_CODE_MAP.get(target_lang.lower(), target_lang[:2].lower())
 
         for p in input_paths:
             resolved = resolve_input_file(p)
             if not resolved or not resolved.exists():
-                return ToolResult(artifacts=artifacts, status="failed", error=f"input file not found: {p}")
+                return ToolResult(
+                    artifacts=artifacts, status="failed", error=f"input file not found: {p}",
+                    data={"failed_cue_indices": failed_cue_indices},
+                )
             src = resolved
 
             text_content = src.read_text(encoding="utf-8", errors="replace")
@@ -98,7 +289,7 @@ class SubtitleTranslatorTool(SrtTranslatorTool):
                     is_srt = is_vtt = False
 
             if is_srt or is_vtt:
-                translated_cues = await self._translate_cues(
+                translated_cues, failed_indices = await self._translate_cues(
                     cues=cues,
                     target_lang=target_lang,
                     source_lang=source_lang,
@@ -107,6 +298,8 @@ class SubtitleTranslatorTool(SrtTranslatorTool):
                     model=chosen_model,
                     batch_size=batch_size,
                 )
+
+                failed_cue_indices.extend(failed_indices)
 
                 srt_out_content = format_cues_to_srt(translated_cues)
                 vtt_out_content = format_cues_to_vtt(translated_cues)
@@ -132,14 +325,22 @@ class SubtitleTranslatorTool(SrtTranslatorTool):
                 artifacts.append(Artifact(path=str(out_txt), kind=PortKind.text, name=out_txt.name))
 
             else:
-                translated_text = await self._translate_plain_text(
-                    text=text_content,
-                    target_lang=target_lang,
-                    source_lang=source_lang,
-                    provider=resolved_provider,
-                    key=resolved_key,
-                    model=chosen_model,
-                )
+                try:
+                    translated_text = await self._translate_plain_text(
+                        text=text_content,
+                        target_lang=target_lang,
+                        source_lang=source_lang,
+                        provider=resolved_provider,
+                        key=resolved_key,
+                        model=chosen_model,
+                    )
+                except Exception:
+                    return ToolResult(
+                        artifacts=artifacts,
+                        status="failed",
+                        error="AI provider text translation failed. Check provider credentials and availability, then retry.",
+                        data={"failed_cue_indices": failed_cue_indices},
+                    )
                 stem = src.stem
                 out_doc = dest / f"{stem}_{lang_code}.txt"
                 out_doc.write_text(translated_text, encoding="utf-8")
@@ -147,11 +348,82 @@ class SubtitleTranslatorTool(SrtTranslatorTool):
 
         return ToolResult(
             artifacts=artifacts,
-            status="completed",
+            status="failed" if failed_cue_indices else "completed",
+            error=("Subtitle translation failed for some cues. Partial artifacts retain original text for failed cues."
+                   if failed_cue_indices else None),
             data={
                 "target_lang": target_lang,
                 "provider": resolved_provider,
                 "model": chosen_model,
                 "artifacts_count": len(artifacts),
+                "failed_cue_indices": failed_cue_indices,
             },
         )
+
+    async def _translate_cues(
+        self,
+        cues: list[SubtitleCue],
+        target_lang: str,
+        source_lang: str,
+        provider: str,
+        key: str,
+        model: str,
+        batch_size: int,
+    ) -> tuple[list[SubtitleCue], list[int]]:
+        """Translate subtitle cues in batches preserving exact cue timing and IDs."""
+        import logging
+        logger = logging.getLogger("subtitle_translator")
+        translated: list[SubtitleCue] = []
+        failed_indices: list[int] = []
+
+        for i in range(0, len(cues), batch_size):
+            chunk = cues[i : i + batch_size]
+            prompt_lines = [f"[{c.index}] {c.text}" for c in chunk]
+            batch_input = "\n".join(prompt_lines)
+
+            lang_hint = f"from {source_lang} " if source_lang != "auto" else ""
+            system_prompt = (
+                f"You are a professional audiovisual translator. Translate the following subtitles {lang_hint}into natural, fluent {target_lang}.\n"
+                "CRITICAL RULES:\n"
+                "1. Preserve the EXACT bracketed cue ID for each line (e.g. [1], [2]).\n"
+                "2. Maintain natural spoken dialogue, brevity, and tone appropriate for on-screen subtitles.\n"
+                "3. Do not combine, skip, or create cue IDs.\n"
+                "4. Output ONLY the numbered cues in the format: '[id] <translated text>'. Do NOT include any intro, commentary, or markdown blocks."
+            )
+
+            try:
+                response_text = await self._call_llm_chat(provider, key, model, system_prompt, batch_input)
+                parsed_translations = self._parse_batch_response(response_text)
+
+                for c in chunk:
+                    if c.index not in parsed_translations:
+                        failed_indices.append(c.index)
+                    new_text = parsed_translations.get(c.index, c.text)
+                    translated.append(SubtitleCue(index=c.index, timing=c.timing, text=new_text))
+            except Exception as e:
+                logger.warning("Subtitle translation batch %d failed (%s)", i // batch_size + 1, type(e).__name__)
+                failed_indices.extend(c.index for c in chunk)
+                for c in chunk:
+                    translated.append(c)
+
+            if i + batch_size < len(cues):
+                await asyncio.sleep(1.2)
+
+        return translated, failed_indices
+
+    def _parse_batch_response(self, text: str) -> dict[int, str]:
+        """Extracts {index: text} mappings from LLM response."""
+        res: dict[int, str] = {}
+        for line in text.split("\n"):
+            line = line.strip()
+            if not line:
+                continue
+            m = re.match(r"^(?:\[\s*(\d+)\s*\]|(\d+)[:\.\-\)])\s*(.+)$", line)
+            if m:
+                idx_str = m.group(1) or m.group(2)
+                val = m.group(3).strip()
+                try:
+                    res[int(idx_str)] = val
+                except ValueError:
+                    pass
+        return res

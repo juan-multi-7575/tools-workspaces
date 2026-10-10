@@ -60,6 +60,7 @@ class CommandTool(Tool):
             command=resolved_tokens,
             cwd=dest_dir,
             timeout=self.timeout,
+            tool_id=self.manifest.id,
         )
 
         log_path = dest_dir / "execution.log"

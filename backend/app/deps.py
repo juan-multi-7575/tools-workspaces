@@ -17,9 +17,17 @@ PINNED_DEPENDENCIES = [
     {
         "name": "exiftool",
         "url": None,
-        "apt_package": "libimage-exiftool-perl",
     },
 ]
+
+#: Pinned packages the dependency manager (app/depmgr) now provisions, and the
+#: dep id it provisions them under. This module reports on them; it no longer
+#: installs them.
+MANAGED_BY_DEPMGR = {
+    "yt-dlp": "conda.ytdlp",
+    "gallery-dl": "pip.gallery_dl",
+    "exiftool": "conda.exiftool",
+}
 
 
 def installed_version(package: str) -> str | None:
@@ -81,23 +89,30 @@ def check_dependencies(index: Callable[[str | None], str | None] | None = None) 
 
 
 def upgrade_package(package: str, channel: str = "stable") -> dict[str, Any]:
-    dep = next((d for d in PINNED_DEPENDENCIES if d["name"] == package), None)
-    if dep and dep.get("apt_package"):
-        try:
-            cmd = ["apt-get", "install", "-y", dep["apt_package"]]
-            if shutil.which("sudo"):
-                cmd.insert(0, "sudo")
-            subprocess.run(cmd, check=True, capture_output=True, timeout=600)
-        except Exception as e:
-            return {"ok": False, "error": str(e)}
-        return {"ok": True, "package": package, "channel": channel}
+    """Upgrade one pinned package, inside this app's own virtualenv only.
+
+    There is no privileged install here any more, and there is not meant to be
+    one: every binary the app shells out to is provisioned root-free under the
+    deps root by app/depmgr, and this function used to shell out to a
+    system-wide installer for them, producing a second copy outside that root.
+    Packages app/depmgr owns are therefore refused here and pointed at
+    POST /api/deps/install, which is the only install path. ``channel`` is still
+    accepted because callers pass it; nothing left here installs a pre-release.
+    """
+    dep_id = MANAGED_BY_DEPMGR.get(package)
+    if dep_id:
+        return {
+            "ok": False,
+            "package": package,
+            "error": (
+                f"{package} is installed and upgraded by the dependency manager, not here. "
+                f"Install it with POST /api/deps/install using dep_id '{dep_id}', "
+                f"or from the Dependencies console."
+            ),
+        }
     try:
-        if package == "yt-dlp" and channel == "nightly":
-            cmd = [sys.executable, "-m", "pip", "install", "--upgrade", "--pre", "yt-dlp"]
-        else:
-            cmd = [sys.executable, "-m", "pip", "install", "--upgrade", package]
         subprocess.run(
-            cmd,
+            [sys.executable, "-m", "pip", "install", "--upgrade", package],
             check=True, capture_output=True, timeout=600,
         )
     except Exception as e:

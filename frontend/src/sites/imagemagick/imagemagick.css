@@ -1,0 +1,1346 @@
+/*
+ * ImageMagick — Image Converter. Design brief #10 in
+ * docs/research/design-briefs.md, adapted from the `figma` reference.
+ *
+ * Everything here is scoped under `.im-root` and every custom property is
+ * declared on that same root, so no token can reach a sibling tool site or the
+ * Tools Garage shell. `.dep-gate` and its friends are app-level classes, so
+ * they are re-skinned below with a specificity that wins over `index.css`.
+ */
+
+.im-root {
+  /* Palette, verbatim from the brief. */
+  --im-ground: #f5f5f5;
+  --im-panel: #ffffff;
+  --im-sunk: #ebebeb;
+  --im-ink: #000000;
+  --im-ink-70: rgba(0, 0, 0, 0.7);
+  /*
+   * The two de-emphasised inks. Their names are their alpha, so they are named
+   * for what they measure rather than for how faint they look: 0.4 came out at
+   * 2.85:1 and 0.52 at 4.27:1 on this ground, and every one of them is body
+   * copy at 10-12px, so both failed WCAG AA. 0.58 and 0.62 measure 5.20:1 and
+   * 5.86:1 here and still read as secondary against pure black.
+   */
+  --im-ink-62: rgba(0, 0, 0, 0.62);
+  --im-ink-58: rgba(0, 0, 0, 0.58);
+  --im-hair: rgba(0, 0, 0, 0.12);
+  --im-hair-strong: rgba(0, 0, 0, 0.24);
+  --im-accent: #0d99ff;
+  --im-accent-wash: rgba(13, 153, 255, 0.1);
+  /* Black on #0D99FF measures 7.0:1; white would measure 3.0:1 and fail. */
+  --im-on-accent: #000000;
+  --im-bad: #c81e1e;
+
+  /* Free faces (SIL OFL via Google Fonts) with real system fallbacks, so a
+   * blocked or offline font request degrades to the platform UI face. */
+  --im-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --im-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+    Consolas, "Liberation Mono", monospace;
+
+  /* The reference sets its display at 56px/400/-1.25px. Held at that size
+   * rather than scaling up, so the hero keeps the reference's three-line break
+   * in a narrow column instead of wrapping into a wall of text. */
+  --im-display: clamp(2.25rem, 3.6vw, 3.5rem);
+  --im-display-leading: 1.05;
+  --im-display-track: -0.028em;
+
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background-color: var(--im-ground);
+  color: var(--im-ink);
+  font-family: var(--im-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.im-root *,
+.im-root *::before,
+.im-root *::after {
+  box-sizing: border-box;
+}
+
+/*
+ * The site's own icon/screen-reader utilities. They live here rather than
+ * borrowing Tailwind's, so this stylesheet stays self-contained and the site
+ * still reads correctly if it is ever lifted into a bundle without the
+ * app-level utilities.
+ */
+.im-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.im-ico {
+  flex: 0 0 auto;
+}
+
+@keyframes im-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.im-spin {
+  animation: im-spin 900ms linear infinite;
+}
+
+.im-root ::selection {
+  background-color: var(--im-accent);
+  color: var(--im-on-accent);
+}
+
+/*
+ * `index.css` paints every scrollbar in the app with the cream shell's tokens.
+ * Those are the shell's colours, not this site's, so the rail and the canvas
+ * restate them here rather than inheriting a warm thumb on a grey board.
+ */
+.im-root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.im-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.im-root ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 9999px;
+}
+
+.im-root ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.im-root :focus-visible {
+  outline: 2px solid var(--im-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ── the thin top strip ─────────────────────────────────────────────────────
+ * Not a topbar in the shell sense: one row, one action, one identity. It sits
+ * inside the tool's own full-viewport site and carries no Platform navigation.
+ */
+.im-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 52px;
+  border-bottom: 1px solid var(--im-hair);
+  background-color: var(--im-panel);
+}
+
+.im-bar__home {
+  display: inline-flex;
+  white-space: nowrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 8px;
+  border: 1px solid var(--im-hair);
+  border-radius: 999px;
+  background: none;
+  font-family: var(--im-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--im-ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.im-bar__home:hover {
+  border-color: var(--im-hair-strong);
+  background-color: var(--im-sunk);
+}
+
+.im-bar__mark {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.im-bar__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background-color: var(--im-accent);
+}
+
+.im-bar__id {
+  margin-left: auto;
+  font-family: var(--im-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--im-ink-58);
+  white-space: nowrap;
+}
+
+/* ── the hero ──────────────────────────────────────────────────────────────
+ * Full viewport. A narrow measure for the words, the canvas composition for
+ * everything else — the reference puts the headline in a third of the width and
+ * lets the artwork carry the rest of the screen.
+ */
+.im-hero {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: clamp(24px, 5vw, 80px);
+  padding: clamp(24px, 4vw, 64px);
+  overflow: auto;
+}
+
+.im-hero__title {
+  margin: 0;
+  font-size: var(--im-display);
+  font-weight: 400;
+  line-height: var(--im-display-leading);
+  letter-spacing: var(--im-display-track);
+  text-wrap: balance;
+}
+
+.im-hero__lede {
+  max-width: 46ch;
+  margin: 24px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--im-ink-70);
+}
+
+.im-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+/* The reference's own button pair: one solid, one outlined, both ~8px. */
+.im-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: var(--im-ui);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 120ms ease,
+    border-color 120ms ease, color 120ms ease;
+}
+
+.im-btn:active {
+  transform: scale(0.985);
+}
+
+.im-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.im-btn--solid {
+  background-color: var(--im-ink);
+  color: #fff;
+}
+
+.im-btn--solid:hover:not(:disabled) {
+  background-color: #2b2b2b;
+}
+
+.im-btn--outline {
+  border-color: var(--im-hair-strong);
+  background-color: transparent;
+  color: var(--im-ink);
+}
+
+.im-btn--outline:hover:not(:disabled) {
+  background-color: var(--im-sunk);
+}
+
+.im-btn--accent {
+  background-color: var(--im-accent);
+  color: var(--im-on-accent);
+}
+
+.im-btn--accent:hover:not(:disabled) {
+  background-color: #0b86e0;
+}
+
+.im-hero__note {
+  margin: 20px 0 0;
+  font-family: var(--im-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--im-ink-58);
+}
+
+/* ── the canvas composition ────────────────────────────────────────────────
+ * Figma's landing canvas is a stack of translucent panels that overlap and
+ * cast soft shadows. That is the signature of the reference, so it is built
+ * rather than described: three panels, each carrying real content.
+ *
+ * The panels are placed so their content never lands under another panel. The
+ * reference overlaps artwork, which reads fine edge to edge; overlapped text
+ * does not. The 16px of padding absorbs the handful of pixels each rotation
+ * swings outside its own box, so the stack reports no overflow of its own.
+ */
+.im-stack {
+  position: relative;
+  min-height: min(52vh, 430px);
+  width: 100%;
+  padding: 16px;
+}
+
+.im-panel {
+  position: absolute;
+  border-radius: 16px;
+  background-color: var(--im-panel);
+  border: 1px solid var(--im-hair);
+  box-shadow:
+    0 1px 2px -1px rgba(0, 0, 0, 0.16),
+    0 28px 60px -30px rgba(0, 0, 0, 0.42);
+}
+
+/* Top left. Holds the four manifest defaults and nothing else. */
+/*
+ * Each inset leaves room for the rotation at that panel's own edge: a 2.6deg
+ * turn of a 370×260 card swings its corner about 5px outside its box, and a 2.4deg
+ * turn of the tall right-hand card about 24px. Without that headroom the stack
+ * would report horizontal overflow for decoration that is not scrollable.
+ */
+.im-panel--back {
+  inset: 1% 46% 42% 1.5%;
+  transform: rotate(-2.6deg);
+  padding: 16px 18px;
+}
+
+/* Right, narrow and tall: the before/after pair. */
+.im-panel--mid {
+  inset: 10% 3.5% 4% 58%;
+  transform: rotate(2.4deg);
+  padding: 16px 18px;
+}
+
+.im-panel--front {
+  inset: 54% 44% 1% 12%;
+  transform: rotate(-1.1deg);
+  padding: 16px 20px 18px;
+  background-color: var(--im-accent);
+  border-color: rgba(0, 0, 0, 0.14);
+  color: var(--im-on-accent);
+}
+
+.im-panel__label {
+  font-family: var(--im-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--im-ink-58);
+}
+
+/*
+ * On the accent panel the de-emphasised inks have to darken rather than lighten:
+ * 0.62 black over #0D99FF measures 3.93:1, which fails AA at 10px. 0.82 brings
+ * it to 5.82:1 and still sits behind the specimen.
+ */
+.im-panel--front .im-panel__label,
+.im-panel--front .im-panel__foot {
+  color: rgba(0, 0, 0, 0.82);
+}
+
+.im-panel__rows {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.im-panel__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--im-hair);
+  font-family: var(--im-mono);
+  font-size: 12px;
+}
+
+.im-panel__row span:first-child {
+  color: var(--im-ink-58);
+}
+
+.im-panel__row span:last-child {
+  color: var(--im-ink);
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+/* The signature: geometry as the largest type on the page. */
+.im-geo {
+  font-family: var(--im-mono);
+  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  overflow-wrap: anywhere;
+}
+
+/* Two miniature panes, stacked to fit the tall narrow panel. */
+.im-stack__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.im-mini__frame {
+  height: 62px;
+  border: 1px solid var(--im-hair-strong);
+  border-radius: 8px;
+  background-color: var(--im-sunk);
+}
+
+.im-mini__frame--out {
+  border-color: var(--im-accent);
+  background-color: var(--im-accent-wash);
+}
+
+.im-mini__label {
+  font-family: var(--im-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--im-ink-58);
+  text-align: center;
+}
+
+.im-panel__foot {
+  margin: 10px 0 0;
+  font-family: var(--im-mono);
+  font-size: 10px;
+  line-height: 1.55;
+  color: rgba(0, 0, 0, 0.82);
+}
+
+/* ── workspace ─────────────────────────────────────────────────────────────
+ * Three bands, none of which scrolls except the canvas: bar, stage, dock. The
+ * dock is a flex sibling rather than a sticky child, so "pinned" is structural
+ * — the install control cannot be pushed past the fold by a tall stage.
+ */
+.im-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  position: relative;
+}
+
+/*
+ * The rail floats, but it must never float over the panes it exists to serve.
+ * On a wide viewport the canvas reserves a column for it, so the rail sits on
+ * open ground and the panes start beside it — the way a canvas app parks its
+ * toolbar and gives the artboard the rest of the screen.
+ *
+ * The column is 360px for the rail's 320px width plus its 20px page inset. It is
+ * sized by the geometry key: at 320px each of its rows fits on one line, so the
+ * key is readable rather than a column of wrapped fragments.
+ */
+.im-canvas {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px 20px 20px 360px;
+}
+
+.im-canvas__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  gap: 20px;
+  min-height: 100%;
+}
+
+.im-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--im-hair);
+  border-radius: 16px;
+  background-color: var(--im-panel);
+  overflow: hidden;
+}
+
+.im-pane__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--im-hair);
+  font-family: var(--im-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--im-ink-58);
+}
+
+.im-pane__badge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border: 1px solid var(--im-hair);
+  border-radius: 999px;
+  color: var(--im-ink-70);
+  letter-spacing: 0.08em;
+}
+
+.im-pane__badge--accent {
+  border-color: var(--im-accent);
+  color: var(--im-on-accent);
+  background-color: var(--im-accent);
+}
+
+/*
+ * The image area. Deliberately a flat sunk surface: there is no checkerboard
+ * and no texture standing in for an absent image. When there is nothing here,
+ * the pane says what to do and why.
+ */
+.im-pane__surface {
+  flex: 1 1 auto;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: var(--im-sunk);
+}
+
+.im-pane__image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow:
+    0 1px 2px -1px rgba(0, 0, 0, 0.2),
+    0 18px 40px -24px rgba(0, 0, 0, 0.5);
+}
+
+.im-empty {
+  max-width: 44ch;
+  text-align: left;
+}
+
+.im-empty__marks {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.im-empty__mark {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--im-hair-strong);
+  border-radius: 2px;
+}
+
+.im-empty__mark--accent {
+  border-color: var(--im-accent);
+  background-color: var(--im-accent);
+}
+
+.im-empty__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.im-empty__body {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--im-ink-70);
+}
+
+.im-empty__why {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--im-hair);
+  font-family: var(--im-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--im-ink-62);
+}
+
+.im-pane__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--im-hair);
+  font-family: var(--im-mono);
+  font-size: 11px;
+  color: var(--im-ink-62);
+}
+
+.im-pane__foot dt {
+  color: var(--im-ink-58);
+}
+
+.im-pane__foot dd {
+  margin: 0;
+  color: var(--im-ink);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * A two-column definition list for the geometry key. It cannot reuse
+ * `.im-pane__foot`, which is a flex strip: flex would reflow dt/dd around each
+ * other and scramble the pairs.
+ */
+.im-keyfold {
+  border: 1px solid var(--im-hair);
+  border-radius: 8px;
+  background-color: var(--im-panel);
+}
+
+.im-keyfold__summary {
+  padding: 7px 10px;
+  font-family: var(--im-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--im-ink-62);
+  cursor: pointer;
+  list-style: none;
+}
+
+.im-keyfold__summary::-webkit-details-marker {
+  display: none;
+}
+
+.im-keyfold__summary::after {
+  content: '+';
+  float: right;
+  color: var(--im-ink-58);
+}
+
+.im-keyfold[open] .im-keyfold__summary::after {
+  content: '−';
+}
+
+.im-keyfold__summary:hover {
+  color: var(--im-ink);
+}
+
+.im-keyfold .im-keylist {
+  padding: 0 10px 10px;
+}
+
+.im-keylist {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 3px 12px;
+  margin: 0;
+  font-family: var(--im-mono);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.im-keylist dt {
+  color: var(--im-ink);
+  white-space: nowrap;
+}
+
+.im-keylist dd {
+  margin: 0;
+  color: var(--im-ink-62);
+  overflow-wrap: anywhere;
+}
+
+/* ── the floating tool rail ───────────────────────────────────────────────
+ * Overlaid on the canvas rather than given a column of its own, so the canvas
+ * keeps the full width. Translucent, because that is what the reference does
+ * with the panels that float over its artwork.
+ */
+.im-rail {
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  left: 20px;
+  z-index: 2;
+  width: 320px;
+  max-width: calc(100% - 40px);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--im-hair);
+  border-radius: 16px;
+  background-color: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  box-shadow:
+    0 1px 2px -1px rgba(0, 0, 0, 0.18),
+    0 24px 56px -28px rgba(0, 0, 0, 0.5);
+}
+
+/*
+ * One header serves as the rail's title on a wide viewport and as its
+ * disclosure control on a narrow one. The body is hidden by CSS on narrow when
+ * `data-open="false"`, so a phone is not asked to fit the rail, the canvas and
+ * the dock on one screen before the canvas has been seen.
+ */
+.im-rail__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--im-hair);
+  background: none;
+  font-family: var(--im-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--im-ink-58);
+  text-align: left;
+}
+
+.im-rail__title--plain {
+  cursor: default;
+}
+
+.im-rail__caret {
+  margin-left: auto;
+  transition: transform 140ms ease;
+}
+
+.im-rail[data-open='false'] .im-rail__caret {
+  transform: rotate(-90deg);
+}
+
+/*
+ * Bounded by the stage (`top`/`bottom` on the rail) rather than by a viewport
+ * fraction, so a tall rail can never grow down over the pinned dock. The body
+ * takes the remaining height and scrolls, which is also why the rail is a flex
+ * column.
+ */
+.im-rail__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 12px 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-width: 0;
+}
+
+.im-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.im-field__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.im-field__key {
+  font-family: var(--im-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--im-ink-58);
+}
+
+.im-field__hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--im-ink-62);
+}
+
+.im-field__error {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--im-bad);
+}
+
+.im-input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--im-hair-strong);
+  border-radius: 8px;
+  background-color: var(--im-panel);
+  font-family: var(--im-mono);
+  font-size: 12px;
+  color: var(--im-ink);
+}
+
+.im-input::placeholder {
+  color: var(--im-ink-58);
+}
+
+.im-input:focus-visible {
+  border-color: var(--im-accent);
+}
+
+select.im-input {
+  font-family: var(--im-ui);
+  cursor: pointer;
+}
+
+.im-seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--im-hair);
+  border-radius: 8px;
+  background-color: var(--im-sunk);
+}
+
+.im-seg__opt {
+  padding: 7px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font-family: var(--im-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--im-ink-62);
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.im-seg__opt:hover {
+  color: var(--im-ink);
+}
+
+.im-seg__opt[aria-pressed='true'] {
+  background-color: var(--im-accent);
+  color: var(--im-on-accent);
+  font-weight: 600;
+}
+
+.im-range {
+  width: 100%;
+  min-width: 0;
+  accent-color: var(--im-accent);
+  cursor: pointer;
+}
+
+.im-value {
+  font-family: var(--im-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--im-ink);
+}
+
+/* Drop target for the input file. A border and a label, not a texture. */
+.im-drop {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px dashed var(--im-hair-strong);
+  border-radius: 10px;
+  background-color: var(--im-panel);
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--im-ink-70);
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.im-drop:hover {
+  border-color: var(--im-accent);
+  background-color: var(--im-accent-wash);
+}
+
+.im-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.im-chip {
+  padding: 5px 9px;
+  border: 1px solid var(--im-hair);
+  border-radius: 999px;
+  background-color: var(--im-panel);
+  font-family: var(--im-mono);
+  font-size: 10px;
+  color: var(--im-ink-62);
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.im-chip:hover {
+  border-color: var(--im-accent);
+  color: var(--im-ink);
+}
+
+.im-chip[aria-pressed='true'] {
+  border-color: var(--im-accent);
+  background-color: var(--im-accent);
+  color: var(--im-on-accent);
+}
+
+.im-dock__key {
+  font-family: var(--im-mono);
+  font-size: 11px;
+  color: var(--im-ink-62);
+}
+
+.im-dock__key > summary {
+  cursor: pointer;
+  color: var(--im-ink-58);
+}
+
+.im-dock__key > summary:hover {
+  color: var(--im-ink);
+}
+
+/* ── the trailing action bar ───────────────────────────────────────────────
+ * Outside the scrolling area by construction. The gate is the first band so the
+ * install control is the topmost thing in the dock even if the dock ever has to
+ * shrink, and the geometry field sits immediately under it as the signature.
+ */
+/*
+ * Two columns on a wide viewport: the geometry signature and the run action on
+ * the left, the gate on the right. The gate is the reason this bar exists, and
+ * giving it its own column rather than stacking it is what keeps the whole dock
+ * short enough to leave the canvas the majority of the screen.
+ */
+.im-dock {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+  align-items: start;
+  gap: 16px;
+  padding: 12px 20px 14px;
+  border-top: 1px solid var(--im-hair);
+  background-color: var(--im-panel);
+  min-width: 0;
+}
+
+.im-dock__main {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.im-dock__gate {
+  min-width: 0;
+}
+
+.im-dock__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px;
+  min-width: 0;
+}
+
+.im-dock__source {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.im-dock__path {
+  margin: 0;
+  padding: 8px 0;
+  font-family: var(--im-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--im-ink-62);
+  overflow-wrap: anywhere;
+}
+
+/*
+ * The geometry field is the largest interactive type in the workspace: the
+ * brief makes the geometry string the hero, so it is set at display scale and
+ * edited in place rather than tucked into a rail of small inputs.
+ */
+.im-dock__geo {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.im-geo-input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 0 8px;
+  border: 0;
+  border-bottom: 2px solid var(--im-hair-strong);
+  border-radius: 0;
+  background: none;
+  font-family: var(--im-mono);
+  font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  color: var(--im-ink);
+}
+
+.im-geo-input::placeholder {
+  color: rgba(0, 0, 0, 0.28);
+}
+
+.im-geo-input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--im-accent);
+  outline: none;
+}
+
+.im-dock__run {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.im-run {
+  min-height: 44px;
+  min-width: 172px;
+}
+
+.im-timer {
+  font-family: var(--im-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--im-ink-62);
+  white-space: nowrap;
+}
+
+/* ── result, errors, verbatim ────────────────────────────────────────────── */
+.im-report {
+  min-width: 0;
+  margin-top: 20px;
+}
+
+.im-report__error {
+  padding: 12px 14px;
+  border: 1px solid var(--im-bad);
+  border-radius: 12px;
+  background-color: rgba(200, 30, 30, 0.06);
+}
+
+.im-report__error h3 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--im-bad);
+}
+
+.im-report__error pre {
+  margin: 8px 0 0;
+  font-family: var(--im-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--im-ink);
+}
+
+/* ── the shared result panel, in this site's palette ───────────────────────
+ * `ToolResultPanel` is reused rather than reimplemented, so its cream-shell
+ * utilities are re-pointed here. Only colour, radius and the font stack move.
+ */
+.im-root .im-report .bg-brand-cream-dark\/50 {
+  background-color: var(--im-sunk);
+}
+
+.im-root .im-report .bg-brand-cream-dark {
+  background-color: var(--im-sunk);
+}
+
+.im-root .im-report .bg-surface-white {
+  background-color: var(--im-panel);
+}
+
+.im-root .im-report .bg-accent-contrast\/10 {
+  background-color: rgba(200, 30, 30, 0.06);
+}
+
+.im-root .im-report .border-brand-sage {
+  border-color: var(--im-hair);
+}
+
+.im-root .im-report .border-accent-contrast\/50 {
+  border-color: var(--im-bad);
+}
+
+.im-root .im-report .text-brand-caramel-text {
+  color: var(--im-ink-62);
+}
+
+.im-root .im-report .text-brand-espresso {
+  color: var(--im-ink);
+}
+
+.im-root .im-report .text-accent-contrast {
+  color: var(--im-bad);
+}
+
+.im-root .im-report .text-success {
+  color: #0f7a45;
+}
+
+.im-root .im-report .rounded-xl {
+  border-radius: 10px;
+}
+
+.im-root .im-report .font-mono {
+  font-family: var(--im-mono);
+}
+
+.im-root .im-report code {
+  font-family: var(--im-mono);
+}
+
+/* ── the dependency gate, in this site's palette ──────────────────────────
+ * `index.css` defines `.dep-gate` for the cream shell. These rules re-skin it
+ * for this site: every surface is derived from this site's ink and accent, and
+ * the four status hues are darkened because the old ones were tuned for a dark
+ * faceplate and only reached 2.0:1 on a light ground.
+ */
+.im-root .dep-gate {
+  --dep-ok: #0f7a45;
+  --dep-active: #0d99ff;
+  --dep-warn: #8a5a00;
+  --dep-bad: #c81e1e;
+  --dep-ok-text: color-mix(in oklab, #0f7a45 50%, currentColor);
+  --dep-active-text: color-mix(in oklab, #0d99ff 50%, currentColor);
+  --dep-warn-text: color-mix(in oklab, #8a5a00 50%, currentColor);
+  --dep-bad-text: color-mix(in oklab, #c81e1e 50%, currentColor);
+  color: var(--im-ink);
+  font-family: var(--im-ui);
+}
+
+.im-root .dep-gate__panel {
+  border-radius: 12px;
+  border: 1px solid var(--im-hair);
+  background-color: var(--im-sunk);
+  box-shadow: none;
+}
+
+.im-root .dep-gate__row + .dep-gate__row {
+  border-top-color: var(--im-hair);
+}
+
+/*
+ * The install control is the reason the gate exists. Bounding the per-dep list
+ * keeps the gate to two bands tall so the button stays on screen without the
+ * caller having to trust the page height.
+ */
+.im-root .dep-gate__scroll {
+  max-height: 7.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.im-root .dep-gate .rounded-xl,
+.im-root .dep-gate button {
+  border-radius: 8px;
+  font-family: var(--im-ui);
+}
+
+.im-root .dep-gate .font-mono {
+  font-family: var(--im-mono);
+}
+
+/* ── narrow viewports ─────────────────────────────────────────────────────
+ * The rail stops floating and becomes a band between the canvas and the dock.
+ * Both it and the canvas keep their own scroll, so the dock — and therefore the
+ * install control — is still outside every scrolling area.
+ */
+@media (max-width: 900px) {
+  .im-hero {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+
+  .im-stack {
+    min-height: 360px;
+  }
+
+  .im-canvas__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .im-stage {
+    flex-direction: column;
+  }
+
+  /*
+   * On a phone the rail floats over the canvas too, for the same reason it does
+   * on a desktop: in a band it would push the canvas down, and the canvas is
+   * the point of the page. Collapsed by default it costs one 41px strip; opened
+   * it is a sheet over the canvas with its own scroll, which is what a phone
+   * expects a control sheet to do.
+   */
+  .im-rail {
+    top: 8px;
+    bottom: auto;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+    border-radius: 12px;
+    flex: 0 0 auto;
+  }
+
+  .im-rail__title {
+    cursor: pointer;
+    border-radius: 12px 12px 0 0;
+  }
+
+  .im-rail[data-open='true'] .im-rail__title {
+    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid var(--im-hair);
+  }
+
+  .im-rail[data-open='false'] .im-rail__body {
+    display: none;
+  }
+
+  .im-rail__body {
+    max-height: 58dvh;
+  }
+
+  /* The gate carries three paragraphs and a control; at phone sizes it is
+     compacted so the canvas still gets a usable share of the screen. */
+  .im-root .dep-gate {
+    font-size: 11px;
+  }
+
+  .im-root .dep-gate__scroll {
+    max-height: 6rem;
+  }
+
+  .im-pane__surface {
+    min-height: 170px;
+  }
+
+  .im-geo-input {
+    font-size: 1.25rem;
+  }
+
+  .im-chip {
+    padding: 4px 8px;
+  }
+
+  /* Seven presets wrap to two rows on a phone. One scrolling row costs 26px of
+     canvas, which is worth more than the second row. */
+  .im-dock__main .im-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .im-bar {
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .im-bar__home {
+    padding: 6px 10px 6px 8px;
+    font-size: 12px;
+  }
+
+  .im-bar__mark {
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .im-bar__id {
+    display: none;
+  }
+
+  .im-canvas,
+  .im-dock {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Top padding clears the collapsed rail strip, which floats over the canvas
+     at this width rather than sitting in a band above it. */
+  .im-canvas {
+    padding: 57px 12px 12px;
+  }
+
+  .im-dock {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .im-canvas {
+    flex: 1 1 auto;
+  }
+
+  .im-dock {
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  .im-run {
+    width: 100%;
+  }
+
+  .im-dock__run {
+    flex: 1 1 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .im-root *,
+  .im-root *::before,
+  .im-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -6,6 +6,14 @@ from app.paths import run_dir, tool_downloads_dir
 from app.runners.subprocess_runner import AsyncSubprocessRunner
 from app.tools.base import Artifact, PortKind, Tool, ToolManifest, ToolResult, ToolRunContext
 
+#: exiftool ships as the managed dependency ``conda.exiftool``, which the
+#: dependency manager installs root-free. Naming a distro package here sent users
+#: to a privileged install the app no longer performs or needs.
+EXIFTOOL_MISSING = (
+    "exiftool is not installed. It is the managed dependency conda.exiftool and can be "
+    "installed from the Dependencies console on this page."
+)
+
 
 class ImageMagickTool(Tool):
     manifest = ToolManifest(
@@ -51,7 +59,7 @@ class ImageMagickTool(Tool):
         if resize:
             cmd += ["-resize", str(resize)]
         cmd += ["-quality", str(quality), str(out_path)]
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, tool_id=self.manifest.id)
         try:
             res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
         except FileNotFoundError:
@@ -106,11 +114,11 @@ class ExifScrubberTool(Tool):
         if action == "inspect":
             out_name = f"{src.stem}_exif.json"
             out_path = dest_dir / out_name
-            runner = AsyncSubprocessRunner(command=["exiftool", "-j", str(src)], cwd=dest_dir)
+            runner = AsyncSubprocessRunner(command=["exiftool", "-j", str(src)], cwd=dest_dir, tool_id=self.manifest.id)
             try:
                 res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
             except FileNotFoundError:
-                return ToolResult(artifacts=[], status="failed", error="exiftool not installed (apt install libimage-exiftool-perl)")
+                return ToolResult(artifacts=[], status="failed", error=EXIFTOOL_MISSING)
             if res.cancelled:
                 return ToolResult(artifacts=[], status="cancelled", error="cancelled")
             if res.exit_code != 0:
@@ -133,11 +141,11 @@ class ExifScrubberTool(Tool):
             out_name = f"{src.stem}_clean{src.suffix}"
             out_path = dest_dir / out_name
             out_path.unlink(missing_ok=True)
-            runner = AsyncSubprocessRunner(command=["exiftool", "-all=", "-o", str(out_path), str(src)], cwd=dest_dir)
+            runner = AsyncSubprocessRunner(command=["exiftool", "-all=", "-o", str(out_path), str(src)], cwd=dest_dir, tool_id=self.manifest.id)
             try:
                 res = await runner.run(cancel_event=context.cancel_event, progress_queue=context.progress_queue)
             except FileNotFoundError:
-                return ToolResult(artifacts=[], status="failed", error="exiftool not installed (apt install libimage-exiftool-perl)")
+                return ToolResult(artifacts=[], status="failed", error=EXIFTOOL_MISSING)
             if res.cancelled:
                 return ToolResult(artifacts=[], status="cancelled", error="cancelled")
             if res.exit_code != 0 or not out_path.exists():

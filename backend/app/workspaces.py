@@ -9,11 +9,14 @@ from pathlib import Path
 from typing import Any
 
 from app import paths
+from app.depmgr.environ import env_for
 
 
 def create_workspace(name: str) -> dict[str, Any]:
     ws_id = _slugify(name)
     root = paths.workspace_root(ws_id)
+    if (root / "meta.json").exists():
+        raise ValueError(f"A workspace named '{name}' already exists.")
     root.mkdir(parents=True, exist_ok=True)
     meta = {"id": ws_id, "name": name, "templates": [], "runs": []}
     (root / "meta.json").write_text(json.dumps(meta, indent=2))
@@ -28,9 +31,14 @@ def list_workspaces() -> list[dict[str, Any]]:
         if p.is_dir():
             meta_path = p / "meta.json"
             if meta_path.exists():
-                out.append(json.loads(meta_path.read_text()))
+                entry = json.loads(meta_path.read_text())
             else:
-                out.append({"id": p.name, "name": p.name, "templates": [], "runs": []})
+                entry = {"id": p.name, "name": p.name, "templates": [], "runs": []}
+            try:
+                entry["pipeline_runs"] = len(list_pipeline_runs(p.name))
+            except Exception:
+                entry["pipeline_runs"] = 0
+            out.append(entry)
     return out
 
 
@@ -299,6 +307,7 @@ def trim_artifact(workspace_id: str, run_id: str, artifact_name: str, regions: l
                 ["ffmpeg", "-y", "-i", str(src_path), "-ss", str(start), "-to", str(end), str(out)],
                 check=True,
                 capture_output=True,
+                env={**os.environ, **env_for("trimmer")},
             )
         except Exception:
             continue
@@ -403,12 +412,24 @@ def list_workspace_media(workspace_id: str) -> dict[str, Any]:
     # 2. Build smart media packages (pairing video with its subtitles, transcripts, and audio)
     packages_map: dict[str, dict[str, Any]] = {}
     for f in all_files:
-        # Determine base title
+        # Determine base title: strip language/role suffixes repeatedly so
+        # sidecars like `talk_translated.en.srt` group with `talk.mp4`.
         stem = Path(f["name"]).stem
-        for sfx in [".en", ".ko", ".ja", ".zh", ".es", ".fr", ".de", "_en_clean", "_clean", "_en_timestamped", "_timestamped", "_seg_0", "_seg_1"]:
-            if stem.endswith(sfx):
-                stem = stem[: -len(sfx)]
-                break
+        suffixes = [
+            ".en", ".ko", ".ja", ".zh", ".es", ".fr", ".de",
+            "_translated", "-translated", "_transcribed", "-transcribed",
+            "_original", "-original",
+            "_en_clean", "_clean", "_en_timestamped", "_timestamped",
+            "_seg_0", "_seg_1",
+        ]
+        changed = True
+        while changed:
+            changed = False
+            for sfx in suffixes:
+                if stem.endswith(sfx) and len(stem) > len(sfx):
+                    stem = stem[: -len(sfx)]
+                    changed = True
+                    break
 
         pkg = packages_map.setdefault(stem, {
             "title": stem,
@@ -558,7 +579,7 @@ def mux_subtitles_to_video(
             str(out_path),
         ]
 
-    proc = subprocess.run(cmd, capture_output=True, text=True)
+    proc = subprocess.run(cmd, capture_output=True, text=True, env={**os.environ, **env_for("subtitle.translate.srt")})
     if proc.returncode != 0 or not out_path.exists():
         raise RuntimeError(f"FFmpeg muxing failed: {proc.stderr[:400]}")
 

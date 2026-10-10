@@ -1,0 +1,36 @@
+{
+  "id": "summarizer",
+  "name": "AI Document & Transcript Summarizer",
+  "description": "Generate executive summaries and key takeaways from text and transcripts.",
+  "input_kinds": ["text", "document", "any"],
+  "output_kinds": ["document", "text"],
+  "parameters_schema": {
+    "text": {
+      "type": "string",
+      "title": "Input Text",
+      "description": "Enter or paste raw text/transcript to summarize (or select file below).",
+      "default": "",
+      "placeholder": "Paste transcript, lecture notes, or document excerpt here..."
+    },
+    "input_path": {
+      "type": "string",
+      "title": "Input File (Optional)",
+      "description": "Path to document file to summarize.",
+      "default": ""
+    },
+    "max_bullets": {
+      "type": "number",
+      "title": "Maximum Key Takeaways",
+      "description": "Number of key takeaway bullet points to extract.",
+      "default": 5,
+      "minimum": 1,
+      "maximum": 20
+    },
+    "format": {
+      "type": "string",
+      "title": "Output Format",
+      "enum": ["markdown", "plain"],
+      "default": "markdown"
+    }
+  }
+}

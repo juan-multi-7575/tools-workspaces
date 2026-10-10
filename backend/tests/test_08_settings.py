@@ -1,6 +1,6 @@
 import pytest
 
-from app.deps import PINNED_DEPENDENCIES, check_dependencies, upgrade_package
+from app.deps import MANAGED_BY_DEPMGR, PINNED_DEPENDENCIES, check_dependencies, upgrade_package
 from app.settings_store import load_settings
 
 
@@ -83,6 +83,61 @@ def test_update_runs_with_approval(client, monkeypatch):
 
 def test_deps_module_upgrade_functions_exist():
     assert callable(upgrade_package)
+
+
+def test_update_refuses_packages_the_dependency_manager_owns(monkeypatch):
+    """No second copy of a managed dependency outside the deps root."""
+    def explode(*args, **kwargs):
+        raise AssertionError("upgrade_package must not shell out for a managed dependency")
+
+    monkeypatch.setattr("app.deps.subprocess.run", explode)
+    for package, dep_id in MANAGED_BY_DEPMGR.items():
+        res = upgrade_package(package)
+        assert res["ok"] is False
+        assert dep_id in res["error"]
+
+
+def test_upgrade_never_shells_out_to_a_privileged_package_manager(monkeypatch):
+    commands = []
+
+    def record(cmd, **kwargs):
+        commands.append(cmd)
+        return None
+
+    monkeypatch.setattr("app.deps.subprocess.run", record)
+    for package in ("yt-dlp", "gallery-dl", "exiftool", "faster-whisper"):
+        upgrade_package(package)
+
+    forbidden = ("apt", "apt-get", "sudo", "brew", "yum", "dnf", "apk")
+    for cmd in commands:
+        assert not any(str(part) in forbidden for part in cmd), cmd
+
+
+def test_deps_module_never_references_a_privileged_package_manager():
+    """Walk app/deps.py's AST, so prose in a docstring cannot pass by accident."""
+    import ast
+    from pathlib import Path
+
+    import app.deps as deps_module
+
+    forbidden = {"apt-get", "apt", "sudo", "brew", "yum", "dnf", "apk"}
+    tree = ast.parse(Path(deps_module.__file__).read_text(encoding="utf-8"))
+    docstrings = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            body = getattr(node, "body", [])
+            if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) \
+                    and isinstance(body[0].value.value, str):
+                docstrings.add(id(body[0].value))
+
+    offenders = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str) and id(node) not in docstrings:
+            token = node.value.strip().lower()
+            if token in forbidden or token.startswith(tuple(f"{f} " for f in forbidden)):
+                offenders.append(node.value)
+
+    assert offenders == [], f"app/deps.py references privileged package managers: {offenders}"
 
 
 def test_ytdlp_settings_endpoint_get_and_post(client):

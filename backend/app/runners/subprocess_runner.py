@@ -48,6 +48,8 @@ class AsyncSubprocessRunner:
         timeout: float | None = None,
         grace_period: float = 2.0,
         progress_parser: Callable[[str], dict[str, Any] | None] | None = None,
+        env: dict[str, str] | None = None,
+        tool_id: str | None = None,
     ):
         self.command = [str(c) for c in command]
         self.cwd = Path(cwd) if cwd else Path.cwd()
@@ -55,8 +57,32 @@ class AsyncSubprocessRunner:
         self.timeout = timeout
         self.grace_period = grace_period
         self.progress_parser = progress_parser
+        # `env` is merged over the isolated environment for this one execve only.
+        # `tool_id` pulls PATH/conada variables from the app-owned dependency
+        # manager (app/depmgr) so a tool finds the binaries installed under the
+        # deps root instead of anything on the system PATH. Neither mutates
+        # os.environ, and both are no-ops when omitted.
+        self.env = dict(env) if env else {}
+        self.tool_id = tool_id
         self._proc: asyncio.subprocess.Process | None = None
         self._cancel_requested = False
+
+    def _apply_tool_deps(self, isolated: dict[str, str]) -> None:
+        """Prepend the dep manager's bin dirs to PATH for this call only."""
+        if not self.tool_id:
+            return
+        from app.depmgr.environ import env_for
+
+        try:
+            dep_env = env_for(self.tool_id)
+        except Exception:
+            return
+        dep_path = dep_env.pop("PATH", "")
+        if dep_path:
+            inherited = isolated.get("PATH", "")
+            isolated["PATH"] = os.pathsep.join(p for p in (dep_path, inherited) if p)
+        for key, value in dep_env.items():
+            isolated[key] = value
 
     def _build_isolated_env(self) -> dict[str, str]:
         isolated: dict[str, str] = {}
@@ -75,6 +101,13 @@ class AsyncSubprocessRunner:
             if "\x00" not in str(ek) and "\x00" not in str(ev):
                 isolated[str(ek)] = str(ev)
 
+        self._apply_tool_deps(isolated)
+
+        # `env` is the explicit caller override and wins over everything above.
+        for ek, ev in self.env.items():
+            if "\x00" not in str(ek) and "\x00" not in str(ev):
+                isolated[str(ek)] = str(ev)
+
         isolated["PYTHONIOENCODING"] = "utf-8"
         isolated["PYTHONUNBUFFERED"] = "1"
         return isolated
@@ -84,7 +117,13 @@ class AsyncSubprocessRunner:
         cancel_event: asyncio.Event | None = None,
         progress_queue: asyncio.Queue[dict[str, Any]] | None = None,
         log_file: Path | None = None,
+        truncate_log: bool = False,
     ) -> SubprocessResult:
+        """``log_file`` is appended to by default, so callers that share one log
+        across several steps (``declarative.CommandTool`` writes every step of a
+        run into ``execution.log``) keep accumulating it. A caller whose log
+        belongs to a single invocation passes ``truncate_log=True`` so the file
+        starts empty and only holds what that invocation wrote."""
         start_time = time.monotonic()
         env = self._build_isolated_env()
         self.cwd.mkdir(parents=True, exist_ok=True)
@@ -105,7 +144,8 @@ class AsyncSubprocessRunner:
 
         stdout_lines: list[str] = []
         stderr_lines: list[str] = []
-        log_handle = log_file.open("a", encoding="utf-8") if log_file else None
+        log_mode = "w" if truncate_log else "a"
+        log_handle = log_file.open(log_mode, encoding="utf-8") if log_file else None
 
         async def _read_stream(stream: asyncio.StreamReader | None, stream_name: str, buffer: list[str]):
             if stream is None:

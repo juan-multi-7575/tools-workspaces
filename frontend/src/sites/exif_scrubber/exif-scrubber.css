@@ -1,0 +1,66 @@
+.exif-site {
+  --exif-blue: #0000ee;
+  position: relative;
+  box-sizing: border-box;
+  min-height: 100dvh;
+  background: #fff;
+  color: #000;
+  font: 16px/1.35 "Times New Roman", "Liberation Serif", serif;
+}
+.exif-site *, .exif-site *::before, .exif-site *::after { box-sizing: inherit; }
+.exif-site button, .exif-site input { font: inherit; }
+.exif-site button, .exif-site a { color: var(--exif-blue); }
+.exif-site button { cursor: pointer; }
+.exif-site button:disabled { cursor: wait; }
+.exif-site :focus-visible { outline: 2px solid var(--exif-blue); outline-offset: 2px; }
+.exif-file-line input[type="text"], .exif-filter input[type="search"] { border: 2px inset buttonborder; padding: 2px 4px; background: #fff; color: #000; }
+.exif-controls > button, .exif-file-line > button { border: 2px outset buttonborder; padding: 2px 8px; background: buttonface; color: buttontext; }
+.exif-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.exif-hero { padding: 8px; }
+.exif-hero h1 { margin: .67em 0; font-size: 2em; }
+.exif-hero ul { padding-left: 40px; }
+.exif-hero li { margin: 2px 0; }
+.exif-hero button { border: 0; padding: 0; background: transparent; text-decoration: underline; }
+.exif-workspace { display: flex; height: 100dvh; min-height: 0; flex-direction: column; overflow: hidden; }
+.exif-head { display: flex; flex: 0 0 auto; align-items: baseline; gap: 18px; padding: 8px; border-bottom: 1px solid #000; }
+.exif-head span:last-child { margin-left: auto; }
+.exif-main { width: min(100%, 1200px); margin: 0 auto; padding: 8px 12px; overflow: auto; }
+.exif-main h1 { margin: 12px 0 4px; font-size: 1.7em; }
+.exif-main > p { margin: 4px 0 12px; }
+.exif-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 8px 0 12px; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+.exif-input-field { flex: 1 1 420px; min-width: min(100%, 270px); }
+.exif-input-field > label, .exif-action legend { font-weight: bold; }
+.exif-input-field > p { margin: 2px 0 5px; }
+.exif-file-line { display: flex; gap: 6px; }
+.exif-file-line input[type="text"] { flex: 1; min-width: 0; }
+.exif-action { display: flex; gap: 12px; margin: 0; padding: 4px 8px; }
+.exif-controls > button { padding: 4px 10px; }
+.exif-error { white-space: pre-wrap; overflow-wrap: anywhere; }
+.exif-clean { padding: 6px 0; border-bottom: 1px solid #000; }
+.exif-ledger { margin-top: 12px; }
+.exif-ledger > header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; }
+.exif-ledger h2 { margin: 4px 0 8px; font-size: 1.2em; }
+.exif-filter { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 6px 0; }
+.exif-table-wrap { max-height: min(52vh, 580px); overflow: auto; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+.exif-ledger table { width: 100%; border-collapse: collapse; text-align: left; }
+.exif-ledger th, .exif-ledger td { padding: 4px 8px; border-bottom: 1px solid #ddd; vertical-align: top; overflow-wrap: anywhere; }
+.exif-ledger thead { position: sticky; top: 0; background: #fff; }
+.exif-ledger tbody th { min-width: 150px; font-weight: normal; }
+.exif-ledger tr[data-status="removed"] th, .exif-ledger tr[data-status="removed"] td:last-child { color: #a00; }
+.exif-ledger tr[data-status="changed"] td:last-child, .exif-ledger tr[data-status="added"] td:last-child { color: #705000; }
+.exif-foot { flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 6px 8px; border-top: 1px solid #000; }
+.exif-foot button { border: 0; padding: 0; background: transparent; text-decoration: underline; }
+.exif-site .dep-gate { flex: 1 1 320px; color: #000; }
+.exif-site .dep-gate__panel { border: 1px solid #000; border-radius: 0; background: #fff; box-shadow: none; }
+.exif-site .dep-gate__scroll { max-height: 5rem; overflow-y: auto; }
+.exif-site .dep-gate__row + .dep-gate__row { border-top-color: #aaa; }
+.exif-site .dep-gate button { border-radius: 0; font-family: "Times New Roman", "Liberation Serif", serif; }
+.exif-site .dep-gate .font-mono { font-family: ui-monospace, "Liberation Mono", monospace; }
+@media (max-width: 560px) {
+  .exif-head { flex-wrap: wrap; gap: 4px 12px; }
+  .exif-head span:last-child { margin-left: 0; }
+  .exif-file-line { flex-wrap: wrap; }
+  .exif-file-line input[type="text"] { flex-basis: 100%; }
+  .exif-action { flex-wrap: wrap; }
+  .exif-table-wrap { max-height: 48vh; }
+}

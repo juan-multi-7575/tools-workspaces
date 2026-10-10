@@ -1,0 +1,1 @@
+{"id":"gallery-dl","name":"Image & Gallery Scraper (gallery-dl)","description":"Batch download image galleries, photo albums, and social media image sets.","category":"Images","tags":["image","gallery","scraper","download"],"input_kinds":["any"],"output_kinds":["image","binary","any"],"input_ports":null,"output_ports":null,"parameters_schema":{"url":{"type":"string"}}}

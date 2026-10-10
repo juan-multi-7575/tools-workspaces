@@ -3,6 +3,7 @@ import WaveSurferReact from '@wavesurfer/react'
 import type WaveSurfer from 'wavesurfer.js'
 import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
 import { Scissors, SplitSquareHorizontal, Trash2, Volume2, Clock } from 'lucide-react'
+import { themeColor } from '../../lib/themeColors'
 
 export interface Region {
   id: string
@@ -45,9 +46,9 @@ export default function WaveformEditor({
     <div className="space-y-4">
       {/* Waveform visual track */}
       <div className="relative overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950 p-3">
-        <div className="mb-2 flex items-center justify-between font-mono text-[10px] text-zinc-500">
+        <div className="mb-2 flex items-center justify-between font-mono text-xs text-zinc-500">
           <span className="flex items-center gap-1">
-            <Volume2 className="size-3 text-[#3ef50b]" />
+            <Volume2 className="size-3 text-wave-accent" />
             AUDIO TIMELINE
           </span>
           <span className="flex items-center gap-1">
@@ -58,9 +59,9 @@ export default function WaveformEditor({
 
         <WaveSurferReact
           height={120}
-          waveColor="#3f3f46"
-          progressColor="#3ef50b"
-          cursorColor="#f4f4f5"
+          waveColor={themeColor('wave-baseline')}
+          progressColor={themeColor('wave-accent')}
+          cursorColor={themeColor('wave-cursor')}
           url={audioUrl}
           plugins={[regionsRef.current]}
           onReady={(ws: WaveSurfer) => {
@@ -83,10 +84,10 @@ export default function WaveformEditor({
       </div>
 
       <div className="flex items-center justify-between text-xs text-zinc-400">
-        <p className="font-mono text-[11px] text-zinc-500">
+        <p className="font-mono text-xs text-zinc-500">
           Click and drag across the waveform to define cutting regions.
         </p>
-        <span className="font-mono text-[11px] text-zinc-400">
+        <span className="font-mono text-xs text-zinc-400">
           {regions.length} marked region{regions.length === 1 ? '' : 's'}
         </span>
       </div>
@@ -94,7 +95,7 @@ export default function WaveformEditor({
       {/* Regions List */}
       {regions.length > 0 && (
         <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-2.5 space-y-1.5">
-          <div className="flex items-center justify-between px-1 pb-1 border-b border-zinc-850 text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+          <div className="flex items-center justify-between px-1 pb-1 border-b border-zinc-850 text-xs font-mono text-zinc-500 uppercase tracking-wider">
             <span>Region Index</span>
             <span>Time Bounds (seconds)</span>
             <span>Action</span>
@@ -106,14 +107,14 @@ export default function WaveformEditor({
                 key={r.id}
                 className="flex items-center justify-between rounded bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 border border-zinc-850"
               >
-                <span className="font-mono text-[11px] text-zinc-400">#{i + 1}</span>
-                <span className="font-mono text-[11px] text-zinc-200">
+                <span className="font-mono text-xs text-zinc-400">#{i + 1}</span>
+                <span className="font-mono text-xs text-zinc-200">
                   {r.start.toFixed(2)}s <span className="text-zinc-600">→</span> {r.end.toFixed(2)}s
                   <span className="ml-2 text-zinc-500">({(r.end - r.start).toFixed(2)}s)</span>
                 </span>
                 <button
                   onClick={() => removeRegion(r.id)}
-                  className="rounded p-1 text-zinc-500 transition-colors hover:bg-[#f5220b]/10 hover:text-[#f5220b]"
+                  className="rounded p-1 text-zinc-500 transition-colors hover:bg-wave-error/10 hover:text-wave-error"
                   title="Remove region"
                 >
                   <Trash2 className="size-3.5" />
@@ -129,7 +130,7 @@ export default function WaveformEditor({
         <button
           onClick={() => run(false)}
           disabled={!ready || regions.length === 0 || busy}
-          className="inline-flex items-center gap-1.5 rounded-md bg-[#3ef50b] px-3.5 py-1.5 text-xs font-semibold text-zinc-950 transition-all duration-150 hover:bg-[#35d409] active:scale-[0.99] disabled:opacity-40"
+          className="inline-flex items-center gap-1.5 rounded-md bg-wave-accent px-3.5 py-1.5 text-xs font-semibold text-zinc-950 transition-all duration-150 hover:bg-wave-accent-hover active:scale-[0.99] disabled:opacity-40"
         >
           <Scissors className="size-3.5" />
           {busy ? 'Processing…' : 'Trim to First Region'}

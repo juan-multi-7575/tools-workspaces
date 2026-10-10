@@ -1,12 +1,25 @@
 import asyncio
+import os
+import re
 import subprocess
 import time
 from collections import deque
 from pathlib import Path
 from typing import Any
 
+from app.depmgr.environ import env_for
 from app.paths import tool_downloads_dir, run_dir, resolve_input_file
 from app.tools.base import Artifact, PortKind, Tool, ToolManifest, ToolRunContext, ToolResult
+
+def _ytdlp_env() -> dict[str, str]:
+    """yt-dlp is launched with plain subprocess (not AsyncSubprocessRunner) so the
+    download loop can poll its own deadline. It still needs the app-owned deps root
+    on PATH, otherwise a managed yt-dlp/ffmpeg is invisible to it.
+
+    Computed per call, not at import: the deps root follows app.paths.ROOT, which
+    tests relocate. os.environ itself is only read, never written.
+    """
+    return {**os.environ, **env_for("media.download.yt-dlp")}
 
 
 def _safe_put(queue: Any, msg: dict, loop: asyncio.AbstractEventLoop | None = None) -> None:
@@ -269,13 +282,15 @@ def resolve_media_url(url: str, timeout: float = 30.0) -> dict[str, Any]:
         (url or '').strip(),
     ]
     try:
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout, env=_ytdlp_env())
     except FileNotFoundError:
-        return {"ok": False, "error": "yt-dlp is not installed on the server."}
+        return {"ok": False, "error": "yt-dlp is not installed on the server.", "error_code": "DEPENDENCY_UNAVAILABLE"}
     except subprocess.TimeoutExpired:
-        return {"ok": False, "error": f"Timed out after {timeout:.0f}s waiting for metadata."}
+        return {"ok": False, "error": f"Timed out after {timeout:.0f}s waiting for metadata.", "error_code": "PREVIEW_UNAVAILABLE"}
     except Exception as exc:
-        return {"ok": False, "error": f"Metadata lookup failed: {exc}"}
+        from app.errors import unexpected_error
+        unexpected_error(exc)
+        return {"ok": False, "error": "Metadata lookup is currently unavailable.", "error_code": "PREVIEW_UNAVAILABLE"}
     if proc.returncode != 0:
         err = (proc.stderr or '').strip().splitlines()
         msg = err[-1].strip() if err else f"yt-dlp exited with code {proc.returncode}."
@@ -396,6 +411,10 @@ def execute_ydl(
     outtmpl = str(outdir / "%(title)s.%(ext)s")
     ydl_opts = build_ydl_opts(params, outtmpl)
     cmd = _to_cli(ydl_opts)
+    cmd += [
+        "--progress-template",
+        "download:[download] __YTDLP_PROGRESS__ %(progress._percent_str)s of %(progress.downloaded_bytes)s/%(progress.total_bytes)s at %(progress._speed_str)s ETA %(progress._eta_str)s",
+    ]
     raw = params.get("raw_args")
     if raw:
         ok, err = validate_raw_args(raw)
@@ -412,7 +431,7 @@ def execute_ydl(
 
     downloaded_targets: list[Path] = []
 
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=_ytdlp_env())
     try:
         assert proc.stdout is not None
         for line in proc.stdout:
@@ -492,18 +511,35 @@ def execute_ydl(
 
 def _parse_progress(line: str) -> dict | None:
     line = line.strip()
-    if not line.startswith("[download]"):
+    marker = "[download] __YTDLP_PROGRESS__ "
+    if not line.startswith(marker):
         return None
-    if "%" not in line:
+    line = "[download] " + line[len(marker):]
+    percent_match = re.match(
+        r"\[download\]\s*([-+]?(?:\d+(?:\.\d*)?|\.\d+))%",
+        line,
+    )
+    byte_match = re.match(
+        r"\[download\]\s+(?:[-+]?(?:\d+(?:\.\d*)?|\.\d+)%|N/A%|NA)\s+of\s+(\d+)/(\d+|NA|None)\b",
+        line,
+        re.IGNORECASE,
+    )
+    if percent_match is None and byte_match is None:
         return None
-    try:
-        pct_str = line.split("%")[0].split()[-1]
-        percent = float(pct_str)
-    except (ValueError, IndexError):
-        return None
+    msg: dict[str, Any] = {"status": "downloading"}
+    if percent_match is not None:
+        msg["percent"] = float(percent_match.group(1))
     speed = _extract_field(line, " at ", "ETA")
     eta = _extract_field(line, "ETA ", None)
-    return {"status": "downloading", "percent": percent, "speed": speed, "eta": eta}
+    if speed is not None:
+        msg["speed"] = speed
+    if eta is not None:
+        msg["eta"] = eta
+    if byte_match is not None:
+        msg["downloaded_bytes"] = int(byte_match.group(1))
+        if byte_match.group(2).isdigit():
+            msg["total_bytes"] = int(byte_match.group(2))
+    return msg
 
 
 def _extract_field(line: str, start: str, end: str | None) -> str | None:
@@ -604,6 +640,7 @@ class DownloaderTool(Tool):
                 "type": "string",
                 "title": "Video Container Format",
                 "enum": ["mp4", "mkv", "webm", "ogg"],
+                "default": "mp4",
                 "enumLabels": {
                     "mp4": "MP4 (Universal standard)",
                     "mkv": "MKV (Matroska / Subtitle friendly)",
@@ -629,7 +666,7 @@ class DownloaderTool(Tool):
             "writeautomaticsub": {
                 "type": "boolean",
                 "title": "Download Auto-Generated Subtitles",
-                "description": "Download automatic / speech-to-text captions",
+                "description": "Download auto-generated / speech-to-text captions",
             },
             "subtitleslangs": {
                 "type": "string",
@@ -672,6 +709,7 @@ class DownloaderTool(Tool):
                 "type": "integer",
                 "title": "Max Downloads Limit",
                 "placeholder": "10",
+                "minimum": 1,
                 "description": "Maximum number of files to download from a playlist/channel",
             },
             "limit_rate": {
@@ -684,6 +722,7 @@ class DownloaderTool(Tool):
                 "type": "integer",
                 "title": "Concurrent Fragments",
                 "placeholder": "4",
+                "minimum": 1,
                 "description": "Number of parallel threads for dash/hls stream downloads",
             },
             "output_template": {

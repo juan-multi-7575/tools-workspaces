@@ -1,0 +1,115 @@
+{
+  "date": "2026-10-05",
+  "browser": "Chrome/154.0.8037.97 on a dedicated CDP instance (--user-data-dir=/tmp/opencode/chrome-audit, port 9222)",
+  "backend": "uvicorn app.main:app on :8000",
+  "frontend": "vite dev server on :5173",
+  "note": "v2 re-review after the four open template defects were fixed. Probe opens the geometry disclosure before measuring the rail, which is the worst case for the rail's height.",
+  "surfaces": {
+    "home 1440x900": {
+      "horizontalOverflow": 0,
+      "documentOverflowPx": 0,
+      "claimStrings": null,
+      "rawKeyLabels": null,
+      "buildStrings": null,
+      "garageChrome": [],
+      "paramKeys": [],
+      "gateRegions": 0
+    },
+    "hero 1440x900": {
+      "horizontalOverflow": 0,
+      "documentOverflowPx": 0,
+      "claimStrings": null,
+      "rawKeyLabels": null,
+      "buildStrings": null,
+      "garageChrome": [],
+      "paramKeys": [],
+      "gateRegions": 0,
+      "heroIsFullViewport": true,
+      "heroButtons": 2
+    },
+    "workspace 1440x900": {
+      "horizontalOverflow": 0,
+      "documentOverflowPx": 0,
+      "claimStrings": null,
+      "rawKeyLabels": null,
+      "buildStrings": null,
+      "garageChrome": [],
+      "paramKeys": ["format", "quality", "input_path", "resize"],
+      "gateRegions": 1,
+      "gateBottomPx": 900,
+      "viewportHeightPx": 900,
+      "gateInViewport": true,
+      "dockHeightPx": 151,
+      "dockPercentOfViewport": 17,
+      "canvasPercentOfViewport": 77,
+      "railWidthPx": 320,
+      "railBodyClientHeightPx": 616,
+      "railBodyScrollHeightPx": 616,
+      "railNeedsNoScrollWithKeyOpen": true,
+      "railLastRowBottomPx": 707,
+      "railBodyBottomPx": 728,
+      "railLastRowVisibleAtRest": true,
+      "railLastRowReachableByScroll": true
+    },
+    "home 390x844": {
+      "horizontalOverflow": 0,
+      "documentOverflowPx": 0,
+      "claimStrings": null,
+      "rawKeyLabels": null,
+      "buildStrings": null,
+      "garageChrome": [],
+      "paramKeys": [],
+      "gateRegions": 0
+    },
+    "hero 390x844": {
+      "horizontalOverflow": 0,
+      "documentOverflowPx": 0,
+      "claimStrings": null,
+      "rawKeyLabels": null,
+      "buildStrings": null,
+      "garageChrome": [],
+      "paramKeys": [],
+      "gateRegions": 0,
+      "heroIsFullViewport": true,
+      "heroButtons": 2
+    },
+    "workspace 390x844": {
+      "horizontalOverflow": 0,
+      "documentOverflowPx": 0,
+      "claimStrings": null,
+      "rawKeyLabels": null,
+      "buildStrings": null,
+      "garageChrome": [],
+      "paramKeys": ["format", "quality", "input_path", "resize"],
+      "gateRegions": 1,
+      "gateBottomPx": 844,
+      "viewportHeightPx": 844,
+      "gateInViewport": true,
+      "dockPercentOfViewport": 29,
+      "canvasPercentOfViewport": 65,
+      "railBodyClientHeightPx": 490,
+      "railBodyScrollHeightPx": 601,
+      "railScrollsAsAControlSheet": true,
+      "railLastRowReachableByScroll": true
+    }
+  },
+  "readyChip": {
+    "rendered": "Ready — conda.imagemagick 7.1.2-31",
+    "probed": "conda.imagemagick Version: ImageMagick 7.1.2-31 Q16-HDRI x86_64 8309dc92a:20260903 https://imagemagick.org",
+    "commitHashInBody": false,
+    "urlInBody": false,
+    "fullProbeRetainedAsTooltip": true
+  },
+  "contrast": {
+    "method": "every painted text node at 10px or above, foreground composited over its real painted background",
+    "heroLowest": 5.32,
+    "workspaceLowest": 5.2,
+    "homeLowest": 2.67,
+    "homeStillFailing": ["hs-mark__note", "hs-lede em", "hs-legend li", "hs-row__state"]
+  },
+  "console": {
+    "exceptions": 0,
+    "errors": 0,
+    "notes": "React DevTools info banner on each surface, from the dev server only"
+  }
+}

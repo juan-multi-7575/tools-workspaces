@@ -75,12 +75,14 @@ export default function UnifiedMediaRunsHub({
   onInspectRun,
   onRemoveRun,
   onRemoveMediaItem,
+  mediaRefreshKey,
 }: {
   workspaceId: string
   pipelineRuns: PipelineRunGroup[]
   runs: Run[]
   onRefresh: () => void
   highlightRunId?: string | null
+  mediaRefreshKey?: number
   onPreviewArtifact: (name: string, size: number, previewUrl: string, downloadUrl: string) => void
   onInspectRun: (runId: string) => void
   onRemoveRun: (runId: string) => void
@@ -102,6 +104,7 @@ export default function UnifiedMediaRunsHub({
 
   const loadMedia = () => {
     setLoadingMedia(true)
+    setFailureBannerDismissed(false)
     api.listWorkspaceMedia(workspaceId)
       .then((res) => {
         setMediaData(res)
@@ -134,7 +137,7 @@ export default function UnifiedMediaRunsHub({
     loadMedia()
     setFailureBannerDismissed(false)
     setPackageOverride(null)
-  }, [pipelineRuns.length, highlightRunId])
+  }, [pipelineRuns.length, highlightRunId, mediaRefreshKey])
 
   const copyPath = (path: string) => {
     navigator.clipboard.writeText(path)
@@ -235,20 +238,20 @@ export default function UnifiedMediaRunsHub({
   const failedCount = pipelineRuns.filter((r) => r.status === 'failed').length
 
   return (
-    <div className="space-y-6 text-[#4E220F]">
+    <div className="space-y-6 pb-24 text-brand-espresso">
       {/* Top summary + sub-tabs */}
-      <div className="rounded-3xl border border-[#B0BA99] bg-[#FFFFFF] p-4 shadow-sm">
+      <div className="rounded-3xl border border-brand-sage bg-surface-white p-4 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="flex size-8 items-center justify-center rounded-xl bg-[#9D6638] text-[#FDFBF7]">
+            <span className="flex size-8 items-center justify-center rounded-xl bg-brand-caramel text-brand-cream-light">
               <Film className="size-4" />
             </span>
             <div>
-              <h2 className="text-sm font-bold text-[#4E220F]">Outputs • Organized by Recency</h2>
-              <p className="text-[11px] text-[#7C5339]">
+              <h2 className="text-sm font-bold text-brand-espresso">Outputs • Organized by Recency</h2>
+              <p className="text-xs text-brand-caramel-text">
                 {pipelineRuns.length} runs • {allFiles.length} files • {successCount} successful •{' '}
                 {failedCount > 0 ? (
-                  <button onClick={showFailedTimeline} className="font-bold text-[#A83232] underline underline-offset-2 hover:text-[#862727]" title="Show failed runs in timeline">
+                  <button onClick={showFailedTimeline} className="font-bold text-accent-contrast underline underline-offset-2 hover:text-error-hover" title="Show failed runs in timeline">
                     {failedCount} failed
                   </button>
                 ) : (
@@ -260,15 +263,15 @@ export default function UnifiedMediaRunsHub({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="inline-flex rounded-xl border border-[#B0BA99] bg-[#EDE5CD]/60 p-1 gap-1">
-              <button onClick={() => setActiveTab('latest')} className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'latest' ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs' : 'text-[#4E220F] hover:bg-[#EDE5CD]'}`}>
+            <div className="inline-flex rounded-xl border border-brand-sage bg-brand-cream-dark/60 p-1 gap-1">
+              <button onClick={() => setActiveTab('latest')} className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'latest' ? 'bg-brand-caramel text-brand-cream-light shadow-xs' : 'text-brand-espresso hover:bg-brand-cream-dark'}`}>
                 Latest Output
               </button>
-              <button onClick={() => setActiveTab('timeline')} className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'timeline' ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs' : 'text-[#4E220F] hover:bg-[#EDE5CD]'}`}>
-                Timeline <span className="font-mono text-[10px] opacity-70">({pipelineRuns.length})</span>
+              <button onClick={() => setActiveTab('timeline')} className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'timeline' ? 'bg-brand-caramel text-brand-cream-light shadow-xs' : 'text-brand-espresso hover:bg-brand-cream-dark'}`}>
+                Timeline <span className="font-mono text-xs opacity-70">({pipelineRuns.length})</span>
               </button>
-              <button onClick={() => setActiveTab('files')} className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'files' ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs' : 'text-[#4E220F] hover:bg-[#EDE5CD]'}`}>
-                Files <span className="font-mono text-[10px] opacity-70">({allFiles.length})</span>
+              <button onClick={() => setActiveTab('files')} className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'files' ? 'bg-brand-caramel text-brand-cream-light shadow-xs' : 'text-brand-espresso hover:bg-brand-cream-dark'}`}>
+                Files <span className="font-mono text-xs opacity-70">({allFiles.length})</span>
               </button>
             </div>
             <button
@@ -277,9 +280,9 @@ export default function UnifiedMediaRunsHub({
                 onRefresh()
               }}
               disabled={loadingMedia}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-3.5 py-1.5 text-xs font-semibold text-[#4E220F] hover:bg-[#B0BA99]/40 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-brand-sage bg-brand-cream-dark px-3.5 py-1.5 text-xs font-semibold text-brand-espresso hover:bg-brand-sage/40 disabled:opacity-50"
             >
-              <RefreshCw className={`size-3.5 ${loadingMedia ? 'animate-spin text-[#9D6638]' : ''}`} />
+              <RefreshCw className={`size-3.5 ${loadingMedia ? 'animate-spin text-brand-caramel' : ''}`} />
               Refresh
             </button>
           </div>
@@ -288,48 +291,48 @@ export default function UnifiedMediaRunsHub({
 
       {/* LATEST TAB */}
       {activeTab === 'latest' && (
-        <section className="rounded-3xl border border-[#B0BA99] bg-[#FFFFFF] p-6 shadow-sm space-y-5">
+        <section className="rounded-3xl border border-brand-sage bg-surface-white p-6 shadow-sm space-y-5">
           {!latestRun ? (
-            <div className="rounded-2xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/20 p-10 text-center space-y-2">
-              <Film className="mx-auto size-8 text-[#9D6638] opacity-50" />
-              <p className="text-xs font-bold text-[#4E220F]">No outputs yet</p>
-              <p className="text-[11px] text-[#7C5339] max-w-md mx-auto">Run a pipeline on the Canvas to generate your first organized output package.</p>
+            <div className="rounded-2xl border border-dashed border-brand-sage bg-brand-cream-dark/20 p-10 text-center space-y-2">
+              <Film className="mx-auto size-8 text-brand-caramel opacity-50" />
+              <p className="text-xs font-bold text-brand-espresso">No outputs yet</p>
+              <p className="text-xs text-brand-caramel-text max-w-md mx-auto">Run a pipeline on the Canvas to generate your first organized output package.</p>
             </div>
           ) : latestIsFailed ? (
             <div className="space-y-4">
               {!failureBannerDismissed && (
-              <div className="rounded-2xl border-2 border-[#A83232]/40 bg-[#FDF2F2] p-5 space-y-3">
+              <div className="rounded-2xl border-2 border-accent-contrast/40 bg-error-soft p-5 space-y-3">
                 <div className="flex items-center gap-2">
-                  <span className="flex size-7 items-center justify-center rounded-lg bg-[#A83232] text-[#FDFBF7]"><AlertTriangle className="size-4" /></span>
+                  <span className="flex size-7 items-center justify-center rounded-lg bg-accent-contrast text-brand-cream-light"><AlertTriangle className="size-4" /></span>
                   <div>
-                    <h3 className="text-sm font-bold text-[#A83232]">Latest run failed — no new outputs produced</h3>
-                    <p className="text-xs text-[#7C5339] font-mono">{runDisplayName(latestRun)} • {latestRun.pipeline_run_id} • {formatDate(latestRun.timestamp)} • {relativeTime(latestRun.timestamp)}</p>
+                    <h3 className="text-sm font-bold text-accent-contrast">Latest run failed — no new outputs produced</h3>
+                    <p className="text-xs text-brand-caramel-text font-mono">{runDisplayName(latestRun)} • {latestRun.pipeline_run_id} • {formatDate(latestRun.timestamp)} • {relativeTime(latestRun.timestamp)}</p>
                   </div>
-                  <span className="ml-auto text-[10px] font-bold px-2 py-1 rounded-full bg-[#A83232] text-[#FDFBF7]">FAILED</span>
-                  <button onClick={() => setFailureBannerDismissed(true)} className="p-1 rounded-lg text-[#7C5339] hover:bg-[#EDE5CD] hover:text-[#4E220F]" title="Dismiss — previous outputs below">
+                  <span className="ml-auto text-xs font-bold px-2 py-1 rounded-full bg-accent-contrast text-brand-cream-light">FAILED</span>
+                  <button onClick={() => setFailureBannerDismissed(true)} className="p-1 rounded-lg text-brand-caramel-text hover:bg-brand-cream-dark hover:text-brand-espresso" title="Dismiss — previous outputs below">
                     <X className="size-4" />
                   </button>
                 </div>
                 {latestFailedStep && (
-                  <div className="rounded-xl bg-[#FFFFFF] border border-[#A83232]/20 p-3 text-xs">
-                    <p className="font-bold text-[#4E220F]">Halted on “{latestFailedStep.tool_id}”: </p>
-                    <p className="font-mono text-[11px] text-[#A83232] break-words mt-1">{latestFailedStep.error || 'Unknown error'}</p>
+                  <div className="rounded-xl bg-surface-white border border-accent-contrast/20 p-3 text-xs">
+                    <p className="font-bold text-brand-espresso">Halted on “{latestFailedStep.tool_id}”: </p>
+                    <p className="font-mono text-xs text-accent-contrast break-words mt-1">{latestFailedStep.error || 'Unknown error'}</p>
                   </div>
                 )}
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => latestRun.steps[0]?.id && onInspectRun(latestRun.steps[0].id)} className="inline-flex items-center gap-1.5 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-3.5 py-1.5 text-xs font-bold text-[#4E220F] hover:bg-[#EDE5CD]">
-                    <FileTerminal className="size-3.5 text-[#9D6638]" /> View Logs
+                  <button onClick={() => latestRun.steps[0]?.id && onInspectRun(latestRun.steps[0].id)} className="inline-flex items-center gap-1.5 rounded-xl border border-brand-sage bg-surface-white px-3.5 py-1.5 text-xs font-bold text-brand-espresso hover:bg-brand-cream-dark">
+                    <FileTerminal className="size-3.5 text-brand-caramel" /> View Logs
                   </button>
-                  <span className="text-[11px] text-[#7C5339] self-center">Fix API keys / provider, then re-run. Previous successful outputs shown below.</span>
+                  <span className="text-xs text-brand-caramel-text self-center">Fix API keys / provider, then re-run. Previous successful outputs shown below.</span>
                 </div>
               </div>
               )}
               {failedViewPackage && (
                 <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#7C5339] mb-2 flex items-center gap-2"><CheckCircle2 className="size-3.5 text-[#2E6B47]" /> Previous successful outputs (not from failed run)</p>
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 rounded-2xl border border-[#B0BA99]/60 bg-[#F7F1DE]/30 p-5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-brand-caramel-text mb-2 flex items-center gap-2"><CheckCircle2 className="size-3.5 text-success" /> Previous successful outputs (not from failed run)</p>
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 rounded-2xl border border-brand-sage/60 bg-brand-cream/30 p-5">
                     <div className="lg:col-span-7 space-y-2">
-                      <div className="rounded-xl overflow-hidden bg-black aspect-video border border-[#B0BA99] shadow-inner">
+                      <div className="rounded-xl overflow-hidden bg-black aspect-video border border-brand-sage shadow-inner">
                         {failedViewPackage.video ? (
                           <video controls preload="metadata" crossOrigin="anonymous" className="w-full h-full object-contain" src={failedViewPackage.video.preview_url}>
                             {failedViewPackage.subtitles.map((sub, idx) => (
@@ -337,36 +340,36 @@ export default function UnifiedMediaRunsHub({
                             ))}
                           </video>
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-[#FDFBF7] text-xs">No video</div>
+                          <div className="w-full h-full flex items-center justify-center text-brand-cream-light text-xs">No video</div>
                         )}
                       </div>
-                      <div className="flex items-center justify-between text-[11px] text-[#7C5339] font-mono px-1">
+                      <div className="flex items-center justify-between text-xs text-brand-caramel-text font-mono px-1">
                         <span className="truncate">{failedViewPackage.video?.name}</span>
                         <span>{failedViewPackage.video ? formatSize(failedViewPackage.video.size) : ''} • {failedViewPackage.video ? relativeTime(failedViewPackage.video.mtime) : ''}</span>
                       </div>
                     </div>
                     <div className="lg:col-span-5 space-y-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-[#B0BA99] text-[#4E220F]">Previous Package</span>
-                        <span className="font-mono text-[10px] text-[#7C5339]">{failedViewPackage.video ? formatDate(failedViewPackage.video.mtime) : ''}</span>
+                        <span className="font-mono text-xs font-extrabold uppercase px-2 py-0.5 rounded bg-brand-sage text-brand-espresso">Previous Package</span>
+                        <span className="font-mono text-xs text-brand-caramel-text">{failedViewPackage.video ? formatDate(failedViewPackage.video.mtime) : ''}</span>
                       </div>
-                      <h3 className="text-sm font-bold text-[#4E220F] leading-tight truncate">{failedViewPackage.title}</h3>
+                      <h3 className="text-sm font-bold text-brand-espresso leading-tight truncate">{failedViewPackage.title}</h3>
                       <div className="space-y-1.5">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#7C5339]">Subtitles</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-brand-caramel-text">Subtitles</span>
                         <div className="space-y-1.5">
                           {failedViewPackage.subtitles.map((sub) => (
-                            <div key={sub.name} className="flex items-center justify-between p-2 rounded-xl bg-[#FFFFFF] border border-[#B0BA99]/70 text-xs">
+                            <div key={sub.name} className="flex items-center justify-between p-2 rounded-xl bg-surface-white border border-brand-sage/70 text-xs">
                               <span className="font-mono truncate pr-2" title={sub.name}>{subtitleTrackLabel(sub.name, sub.size)}</span>
-                              <a href={sub.download_url} download={sub.name} className="p-1 rounded-lg bg-[#9D6638] text-[#FDFBF7]"><Download className="size-3" /></a>
+                              <a href={sub.download_url} download={sub.name} className="p-1 rounded-lg bg-brand-caramel text-brand-cream-light"><Download className="size-3" /></a>
                             </div>
                           ))}
-                          {failedViewPackage.subtitles.length === 0 && <p className="text-xs text-[#7C5339] italic">No subtitles in this package</p>}
+                          {failedViewPackage.subtitles.length === 0 && <p className="text-xs text-brand-caramel-text italic">No subtitles in this package</p>}
                         </div>
                       </div>
                       {(() => {
                         const successRun = pipelineRuns.find((r) => r.bundle_name === failedViewPackage.title) || pipelineRuns.find((r) => r.status === 'completed')
                         return successRun ? (
-                          <a href={api.downloadPipelineRunUrl(workspaceId, successRun.pipeline_run_id)} className="inline-flex w-full justify-center items-center gap-1.5 rounded-xl border border-[#9D6638] bg-[#EDE5CD] px-3.5 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 mt-2"><Package className="size-3.5 text-[#9D6638]" /> Download This Output as ZIP (Browser)</a>
+                          <a href={api.downloadPipelineRunUrl(workspaceId, successRun.pipeline_run_id)} className="inline-flex w-full justify-center items-center gap-1.5 rounded-xl border border-brand-caramel bg-brand-cream-dark px-3.5 py-2 text-xs font-bold text-brand-espresso hover:bg-brand-sage/40 mt-2"><Package className="size-3.5 text-brand-caramel" /> Download Full Output (.zip)</a>
                         ) : null
                       })()}
                     </div>
@@ -377,45 +380,45 @@ export default function UnifiedMediaRunsHub({
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-[#2E6B47] text-[#FDFBF7]">● Latest • {relativeTime(latestRun.timestamp)}</span>
-                <span className="font-mono text-[10px] text-[#7C5339]">{formatDate(latestRun.timestamp)} • {latestRun.pipeline_run_id}</span>
-                <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#DFF0D8] text-[#2E6B47] border">COMPLETED</span>
+                <span className="font-mono text-xs font-extrabold uppercase px-2 py-0.5 rounded bg-success text-brand-cream-light">● Latest • {relativeTime(latestRun.timestamp)}</span>
+                <span className="font-mono text-xs text-brand-caramel-text">{formatDate(latestRun.timestamp)} • {latestRun.pipeline_run_id}</span>
+                <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-success-soft text-success border">COMPLETED</span>
               </div>
               {activeMediaPackage?.video ? (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 rounded-2xl border-2 border-[#9D6638]/40 bg-[#F7F1DE]/50 p-5 shadow-xs">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 rounded-2xl border-2 border-brand-caramel/40 bg-brand-cream/50 p-5 shadow-xs">
                   <div className="lg:col-span-7 flex flex-col justify-center space-y-2">
-                    <div className="rounded-xl overflow-hidden bg-black aspect-video border border-[#B0BA99] shadow-inner">
+                    <div className="rounded-xl overflow-hidden bg-black aspect-video border border-brand-sage shadow-inner">
                       <video controls preload="metadata" crossOrigin="anonymous" className="w-full h-full object-contain" src={activeMediaPackage.video.preview_url}>
                         {activeMediaPackage.subtitles.map((sub, idx) => (
                           <track key={sub.name} kind="subtitles" src={sub.preview_url} label={sub.name.includes('.en.') ? 'English' : sub.name} default={idx === 0} />
                         ))}
                       </video>
                     </div>
-                    <div className="flex items-center justify-between text-[11px] text-[#7C5339] px-1 font-mono">
+                    <div className="flex items-center justify-between text-xs text-brand-caramel-text px-1 font-mono">
                       <span className="truncate">{activeMediaPackage.video.name}</span>
                       <span className="shrink-0">{formatSize(activeMediaPackage.video.size)} • {relativeTime(activeMediaPackage.video.mtime)}</span>
                     </div>
                   </div>
                   <div className="lg:col-span-5 flex flex-col justify-between space-y-4">
                     <div className="space-y-3">
-                      <h3 className="text-sm font-bold text-[#4E220F] leading-tight">{activeMediaPackage.title}</h3>
+                      <h3 className="text-sm font-bold text-brand-espresso leading-tight">{activeMediaPackage.title}</h3>
                       <div className="space-y-1.5">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-[#7C5339]">Subtitle Tracks</span>
+                        <span className="text-xs font-bold uppercase tracking-wider text-brand-caramel-text">Subtitle Tracks</span>
                         {activeMediaPackage.subtitles.length === 0 ? (
-                          <p className="text-xs text-[#7C5339] italic">No subtitles generated.</p>
+                          <p className="text-xs text-brand-caramel-text italic">No subtitles generated.</p>
                         ) : (
                           <div className="space-y-1.5">
                             {activeMediaPackage.subtitles.map((sub) => {
                               const { language } = describeSubtitleTrack(sub.name)
                               return (
-                                <div key={sub.name} className="flex items-center justify-between p-2 rounded-xl bg-[#FFFFFF] border border-[#B0BA99]/70 text-xs">
+                                <div key={sub.name} className="flex items-center justify-between p-2 rounded-xl bg-surface-white border border-brand-sage/70 text-xs">
                                   <div className="flex items-center gap-2 min-w-0">
-                                    <Captions className={`size-3.5 shrink-0 ${language ? 'text-[#9D6638]' : 'text-[#7C5339]'}`} />
+                                    <Captions className={`size-3.5 shrink-0 ${language ? 'text-brand-caramel' : 'text-brand-caramel-text'}`} />
                                     <span className="font-mono truncate" title={sub.name}>{language ? `🌐 ${subtitleTrackLabel(sub.name, sub.size)}` : subtitleTrackLabel(sub.name, sub.size)}</span>
                                   </div>
                                   <div className="flex items-center gap-1">
-                                    <button onClick={() => onPreviewArtifact(sub.name, sub.size, sub.preview_url, sub.download_url)} className="p-1 rounded-lg border border-[#B0BA99] hover:bg-[#EDE5CD]"><Eye className="size-3" /></button>
-                                    <a href={sub.download_url} download={sub.name} className="p-1 rounded-lg bg-[#9D6638] text-[#FDFBF7]"><Download className="size-3" /></a>
+                                    <button onClick={() => onPreviewArtifact(sub.name, sub.size, sub.preview_url, sub.download_url)} className="p-1 rounded-lg border border-brand-sage hover:bg-brand-cream-dark"><Eye className="size-3" /></button>
+                                    <a href={sub.download_url} download={sub.name} className="p-1 rounded-lg bg-brand-caramel text-brand-cream-light"><Download className="size-3" /></a>
                                   </div>
                                 </div>
                               )
@@ -425,44 +428,44 @@ export default function UnifiedMediaRunsHub({
                       </div>
                       {(activeMediaPackage.audio.length > 0 || activeMediaPackage.transcripts.length > 0) && (
                         <div className="space-y-1.5 pt-1">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-[#7C5339]">Audio & Transcripts</span>
+                          <span className="text-xs font-bold uppercase tracking-wider text-brand-caramel-text">Audio & Transcripts</span>
                           <div className="flex flex-wrap gap-1.5">
                             {activeMediaPackage.audio.map((a) => (
-                              <a key={a.name} href={a.download_url} download={a.name} className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-1 rounded-lg bg-[#FFFFFF] border border-[#B0BA99]">{a.name.split('.').pop()?.toUpperCase()} ({formatSize(a.size)})</a>
+                              <a key={a.name} href={a.download_url} download={a.name} className="inline-flex items-center gap-1 font-mono text-xs font-bold px-2 py-1 rounded-lg bg-surface-white border border-brand-sage">{a.name.split('.').pop()?.toUpperCase()} ({formatSize(a.size)})</a>
                             ))}
                           </div>
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-[#B0BA99]/50">
-                      <a href={activeMediaPackage.video.download_url} className="inline-flex items-center gap-1.5 rounded-xl bg-[#9D6638] px-3.5 py-2 text-xs font-bold text-[#FDFBF7] hover:bg-[#86542C]"><Download className="size-3.5" /> Download Video</a>
+                    <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-brand-sage/50">
+                      <a href={activeMediaPackage.video.download_url} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-caramel px-3.5 py-2 text-xs font-bold text-brand-cream-light hover:bg-brand-caramel-hover"><Download className="size-3.5" /> Download Video</a>
                       {latestRun && (
-                        <a href={api.downloadPipelineRunUrl(workspaceId, latestRun.pipeline_run_id)} className="inline-flex items-center gap-1.5 rounded-xl border border-[#9D6638] bg-[#EDE5CD] px-3.5 py-2 text-xs font-bold text-[#4E220F] hover:bg-[#B0BA99]/40 shadow-2xs"><Package className="size-3.5 text-[#9D6638]" /> Download Full Output (ZIP)</a>
+                        <a href={api.downloadPipelineRunUrl(workspaceId, latestRun.pipeline_run_id)} className="inline-flex items-center gap-1.5 rounded-xl border border-brand-caramel bg-brand-cream-dark px-3.5 py-2 text-xs font-bold text-brand-espresso hover:bg-brand-sage/40 shadow-2xs"><Package className="size-3.5 text-brand-caramel" /> Download Full Output (ZIP)</a>
                       )}
-                      <span className="text-[10px] text-[#7C5339] self-center ml-1">User-decided: only when you click, zipped via browser</span>
-                      <button onClick={() => onRemoveMediaItem(activeMediaPackage.video!.name)} className="ml-auto inline-flex items-center gap-1 rounded-xl border border-[#A83232]/40 bg-[#FFFFFF] px-3 py-2 text-xs font-bold text-[#A83232] hover:bg-[#A83232] hover:text-[#FFFFFF]"><Trash2 className="size-3.5" /> Delete</button>
+                      <span className="text-xs text-brand-caramel-text self-center ml-1">User-decided: only when you click, zipped via browser</span>
+                      <button onClick={() => onRemoveMediaItem(activeMediaPackage.video!.name)} className="ml-auto inline-flex items-center gap-1 rounded-xl border border-accent-contrast/40 bg-surface-white px-3 py-2 text-xs font-bold text-accent-contrast hover:bg-accent-contrast hover:text-surface-white"><Trash2 className="size-3.5" /> Delete</button>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/20 p-8 text-center">
-                  <Package className="mx-auto size-7 text-[#9D6638] opacity-50" />
+                <div className="rounded-2xl border border-dashed border-brand-sage bg-brand-cream-dark/20 p-8 text-center">
+                  <Package className="mx-auto size-7 text-brand-caramel opacity-50" />
                   <p className="text-xs font-bold">Latest run has no video package — check Timeline for per-run files</p>
                 </div>
               )}
               {packages.length > 1 && (
                 <div className="space-y-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#7C5339]">Other recent packages</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-brand-caramel-text">Other recent packages</span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {packages.slice(0, 6).map((pkg) => {
                       const isSelected = activeMediaPackage?.title === pkg.title
                       return (
-                        <div key={pkg.title} onClick={() => setActiveMediaPackage(pkg)} className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${isSelected ? 'border-[#9D6638] bg-[#EDE5CD]/80 ring-2 ring-[#9D6638]/30' : 'border-[#B0BA99] bg-[#FFFFFF] hover:bg-[#F7F1DE]/70'}`}>
+                        <div key={pkg.title} onClick={() => setActiveMediaPackage(pkg)} className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${isSelected ? 'border-brand-caramel bg-brand-cream-dark/80 ring-2 ring-brand-caramel/30' : 'border-brand-sage bg-surface-white hover:bg-brand-cream/70'}`}>
                           <div className="flex items-center gap-2 mb-1">
-                            <Video className="size-4 text-[#9D6638]" />
+                            <Video className="size-4 text-brand-caramel" />
                             <h4 className="text-xs font-bold truncate flex-1">{pkg.title}</h4>
                           </div>
-                          <div className="flex items-center justify-between text-[10px] font-mono text-[#7C5339]">
+                          <div className="flex items-center justify-between text-xs font-mono text-brand-caramel-text">
                             <span>{pkg.subtitles.length} subs</span>
                             <span>{pkg.video ? relativeTime(pkg.video.mtime) : ''}</span>
                           </div>
@@ -479,16 +482,16 @@ export default function UnifiedMediaRunsHub({
 
       {/* TIMELINE TAB */}
       {activeTab === 'timeline' && (
-        <section className="rounded-3xl border border-[#B0BA99] bg-[#FFFFFF] p-6 shadow-sm space-y-5">
+        <section className="rounded-3xl border border-brand-sage bg-surface-white p-6 shadow-sm space-y-5">
           {pipelineRuns.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/20 p-8 text-center space-y-1">
-              <Sparkles className="mx-auto size-7 text-[#9D6638] opacity-50" />
+            <div className="rounded-2xl border border-dashed border-brand-sage bg-brand-cream-dark/20 p-8 text-center space-y-1">
+              <Sparkles className="mx-auto size-7 text-brand-caramel opacity-50" />
               <p className="text-xs font-bold">No runs yet</p>
-              <p className="text-[11px] text-[#7C5339]">Run a pipeline to see a dated timeline.</p>
+              <p className="text-xs text-brand-caramel-text">Run a pipeline to see a dated timeline.</p>
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="sticky top-0 z-10 -mx-1 px-1 py-1 bg-[#FFFFFF]/95 backdrop-blur flex flex-wrap items-center gap-1.5">
+              <div className="sticky top-0 z-panel -mx-1 px-1 py-1 bg-surface-white/95 backdrop-blur flex flex-wrap items-center gap-1.5">
                 {(
                   [
                     { key: 'all', label: 'All', count: pipelineRuns.length },
@@ -502,27 +505,27 @@ export default function UnifiedMediaRunsHub({
                     className={`inline-flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-bold transition-all ${
                       timelineStatusFilter === f.key
                         ? f.key === 'failed'
-                          ? 'bg-[#A83232] text-[#FDFBF7] shadow-xs'
-                          : 'bg-[#9D6638] text-[#FDFBF7] shadow-xs'
-                        : 'text-[#4E220F] border border-[#B0BA99] hover:bg-[#EDE5CD]'
+                          ? 'bg-accent-contrast text-brand-cream-light shadow-xs'
+                          : 'bg-brand-caramel text-brand-cream-light shadow-xs'
+                        : 'text-brand-espresso border border-brand-sage hover:bg-brand-cream-dark'
                     }`}
                   >
-                    {f.label} <span className="font-mono text-[10px] opacity-80">({f.count})</span>
+                    {f.label} <span className="font-mono text-xs opacity-80">({f.count})</span>
                   </button>
                 ))}
               </div>
               {Object.keys(filteredGroupedRuns).length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/20 p-8 text-center">
+                <div className="rounded-2xl border border-dashed border-brand-sage bg-brand-cream-dark/20 p-8 text-center">
                   <p className="text-xs font-bold">No {timelineStatusFilter} runs</p>
                 </div>
               ) : null}
               {Object.entries(filteredGroupedRuns).map(([dateLabel, runs]) => (
                 <div key={dateLabel} className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <Calendar className="size-3.5 text-[#9D6638]" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#7C5339]">{dateLabel}</span>
-                    <span className="h-px flex-1 bg-[#B0BA99]/40" />
-                    <span className="font-mono text-[10px] text-[#7C5339]">{runs.length} run{runs.length > 1 ? 's' : ''}</span>
+                    <Calendar className="size-3.5 text-brand-caramel" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-brand-caramel-text">{dateLabel}</span>
+                    <span className="h-px flex-1 bg-brand-sage/40" />
+                    <span className="font-mono text-xs text-brand-caramel-text">{runs.length} run{runs.length > 1 ? 's' : ''}</span>
                   </div>
                   <div className="space-y-3">
                     {runs.map((group) => {
@@ -531,61 +534,65 @@ export default function UnifiedMediaRunsHub({
                       const isFailed = group.status === 'failed'
                       const failedStep = group.steps.find((s) => s.status === 'failed')
                       return (
-                        <div key={group.pipeline_run_id} className={`rounded-2xl border p-4 space-y-3 transition-all ${isHighlighted ? 'border-[#9D6638] bg-[#FDFBF7] ring-2 ring-[#9D6638]/30' : isFailed ? 'border-[#A83232]/30 bg-[#FDF2F2]' : 'border-[#B0BA99] bg-[#F7F1DE]/30 hover:border-[#9D6638]/40'}`}>
+                        <div key={group.pipeline_run_id} className={`rounded-2xl border p-4 space-y-3 transition-all ${isHighlighted ? 'border-brand-caramel bg-brand-cream-light ring-2 ring-brand-caramel/30' : isFailed ? 'border-accent-contrast/30 bg-error-soft' : 'border-brand-sage bg-brand-cream/30 hover:border-brand-caramel/40'}`}>
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                             <div className="flex flex-wrap items-center gap-2">
-                              {isHighlighted && <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#9D6638] text-[#FDFBF7] animate-pulse">● NEW</span>}
-                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${isFailed ? 'bg-[#A83232] text-[#FDFBF7]' : 'bg-[#2E6B47] text-[#FDFBF7]'}`}>{isFailed ? 'FAILED' : 'COMPLETED'}</span>
+                              {isHighlighted && <span className="text-xs font-extrabold px-2 py-0.5 rounded-full bg-brand-caramel text-brand-cream-light animate-pulse">● NEW</span>}
+                              <span className={`text-xs font-bold px-2 py-0.5 rounded-full uppercase ${isFailed ? 'bg-accent-contrast text-brand-cream-light' : 'bg-success text-brand-cream-light'}`}>{isFailed ? 'FAILED' : 'COMPLETED'}</span>
                               <span className="text-xs font-bold truncate max-w-[240px]" title={group.pipeline_run_id}>{runDisplayName(group)}</span>
-                              <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-[#EDE5CD] border border-[#B0BA99] font-bold">{group.pipeline_run_id.slice(0, 8)}</span>
-                              <span className="font-mono text-[10px] text-[#7C5339] flex items-center gap-1"><Clock className="size-3" />{new Date(group.timestamp * 1000).toLocaleTimeString()} • {relativeTime(group.timestamp)}</span>
+                              <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-brand-cream-dark border border-brand-sage font-bold">{group.pipeline_run_id.slice(0, 8)}</span>
+                              <span className="font-mono text-xs text-brand-caramel-text flex items-center gap-1"><Clock className="size-3" />{new Date(group.timestamp * 1000).toLocaleTimeString()} • {relativeTime(group.timestamp)}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                              <button onClick={() => toggleRun(group.pipeline_run_id)} className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1 text-xs font-bold hover:bg-[#EDE5CD]">
+                              <button onClick={() => toggleRun(group.pipeline_run_id)} disabled={group.media.all_artifacts.length === 0} aria-disabled={group.media.all_artifacts.length === 0} className="inline-flex items-center gap-1 rounded-xl border border-brand-sage bg-surface-white px-2.5 py-1 text-xs font-bold hover:bg-brand-cream-dark disabled:opacity-50 disabled:cursor-not-allowed">
                                 {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />} {isExpanded ? 'Hide' : 'Files'}
                               </button>
                               {group.bundle_name && findPackageForBundle(group.bundle_name) && (
-                                <button onClick={() => viewPackageForRun(group.bundle_name)} className="inline-flex items-center gap-1 rounded-xl border border-[#B0BA99] bg-[#FFFFFF] px-2.5 py-1 text-xs font-bold hover:bg-[#EDE5CD]" title={`Open package “${group.bundle_name}” in Latest Output`}>
-                                  <Package className="size-3 text-[#9D6638]" /> Package
+                                <button onClick={() => viewPackageForRun(group.bundle_name)} className="inline-flex items-center gap-1 rounded-xl border border-brand-sage bg-surface-white px-2.5 py-1 text-xs font-bold hover:bg-brand-cream-dark" title={`Open package “${group.bundle_name}” in Latest Output`}>
+                                  <Package className="size-3 text-brand-caramel" /> Package
                                 </button>
                               )}
                               {group.steps[0]?.id && (
-                                <button onClick={() => onInspectRun(group.steps[0].id)} className="p-1.5 rounded-lg border border-[#B0BA99] bg-[#FFFFFF] hover:bg-[#EDE5CD]" title="Logs"><FileTerminal className="size-3.5" /></button>
+                                <button onClick={() => onInspectRun(group.steps[0].id)} className="p-1.5 rounded-lg border border-brand-sage bg-surface-white hover:bg-brand-cream-dark" title="Logs" aria-label="View logs"><FileTerminal className="size-3.5" /></button>
                               )}
                               {group.steps[0]?.id && (
-                                <button onClick={() => onRemoveRun(group.steps[0].id)} className="p-1.5 rounded-lg border border-[#A83232]/30 bg-[#FFFFFF] text-[#A83232] hover:bg-[#A83232] hover:text-[#FFFFFF]"><Trash2 className="size-3.5" /></button>
+                                <button onClick={() => onRemoveRun(group.steps[0].id)} title="Delete run" aria-label="Delete run" className="p-1.5 rounded-lg border border-accent-contrast/30 bg-surface-white text-accent-contrast hover:bg-accent-contrast hover:text-surface-white"><Trash2 className="size-3.5" /></button>
                               )}
                             </div>
                           </div>
                           {isFailed && failedStep?.error && (
-                            <div className="rounded-xl bg-[#FFFFFF] border border-[#A83232]/20 p-2.5 text-[11px] font-mono text-[#A83232] break-words">
+                            <div className="rounded-xl bg-surface-white border border-accent-contrast/20 p-2.5 text-xs font-mono text-accent-contrast break-words">
                               Halted on {failedStep.tool_id}: {failedStep.error.slice(0, 220)}
                             </div>
                           )}
                           <div className="flex flex-wrap items-center gap-1.5">
                             {[...group.steps].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).map((st, idx) => (
-                              <span key={st.id} className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-mono font-bold border ${st.status === 'completed' ? 'bg-[#FFFFFF] border-[#2E6B47]/30 text-[#2E6B47]' : st.status === 'failed' ? 'bg-[#A83232] text-[#FDFBF7] border-[#A83232]' : 'bg-[#FFFFFF] border-[#B0BA99]'}`}>
-                                {idx + 1}. {st.tool_id} <span className={`size-1.5 rounded-full ${st.status === 'completed' ? 'bg-[#2E6B47]' : st.status === 'failed' ? 'bg-[#FDFBF7]' : 'bg-amber-400'}`} />
+                              <span key={st.id} className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-mono font-bold border ${st.status === 'completed' ? 'bg-surface-white border-success/30 text-success' : st.status === 'failed' ? 'bg-accent-contrast text-brand-cream-light border-accent-contrast' : 'bg-surface-white border-brand-sage'}`}>
+                                {idx + 1}. {st.tool_id} <span className={`size-1.5 rounded-full ${st.status === 'completed' ? 'bg-success' : st.status === 'failed' ? 'bg-brand-cream-light' : 'bg-amber-400'}`} />
                               </span>
                             ))}
-                            <a href={api.downloadPipelineRunUrl(workspaceId, group.pipeline_run_id)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#9D6638] bg-[#EDE5CD] text-[#4E220F] text-xs font-bold hover:bg-[#B0BA99]/40 ml-auto"><Package className="size-3 text-[#9D6638]" /> Download ZIP</a>
+                            {group.media.all_artifacts.length === 0 ? (
+                              <span className="ml-auto text-xs italic text-brand-caramel-text">No outputs</span>
+                            ) : (
+                              <a href={api.downloadPipelineRunUrl(workspaceId, group.pipeline_run_id)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-brand-caramel bg-brand-cream-dark text-brand-espresso text-xs font-bold hover:bg-brand-sage/40 ml-auto"><Package className="size-3 text-brand-caramel" /> Download ZIP</a>
+                            )}
                             {group.media.video && !isFailed && (
-                              <button onClick={() => onPreviewArtifact(group.media.video!.name, group.media.video!.size, group.media.video!.preview_url, group.media.video!.download_url)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#9D6638] text-[#FDFBF7] text-xs font-bold"><Play className="size-3 fill-current" /> Preview</button>
+                              <button onClick={() => onPreviewArtifact(group.media.video!.name, group.media.video!.size, group.media.video!.preview_url, group.media.video!.download_url)} title={group.media.video.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-caramel text-brand-cream-light text-xs font-bold"><Play className="size-3 fill-current" /> Preview</button>
                             )}
                           </div>
                           {isExpanded && (
-                            <div className="pt-2 border-t border-[#B0BA99]/30 space-y-2">
-                              <p className="text-[11px] font-bold uppercase tracking-wider text-[#7C5339]">Files in this run ({group.media.all_artifacts.length})</p>
+                            <div className="pt-2 border-t border-brand-sage/30 space-y-2">
+                              <p className="text-xs font-bold uppercase tracking-wider text-brand-caramel-text">Files in this run ({group.media.all_artifacts.length})</p>
                               {group.media.all_artifacts.length === 0 ? (
-                                <p className="text-xs text-[#7C5339] italic">No files saved for this run.</p>
+                                <p className="text-xs text-brand-caramel-text italic">No files saved for this run.</p>
                               ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                   {group.media.all_artifacts.map((f) => (
-                                    <div key={f.name} className="flex items-center justify-between p-2 rounded-xl bg-[#FFFFFF] border border-[#B0BA99]/50 text-xs">
+                                    <div key={f.name} className="flex items-center justify-between p-2 rounded-xl bg-surface-white border border-brand-sage/50 text-xs">
                                       <span className="font-mono truncate pr-2">{f.name}</span>
                                       <div className="flex items-center gap-1 shrink-0">
-                                        <span className="font-mono text-[10px] text-[#7C5339]">{formatSize(f.size)}</span>
-                                        <a href={f.download_url} download={f.name} className="p-1 rounded bg-[#9D6638] text-[#FDFBF7]"><Download className="size-3" /></a>
+                                        <span className="font-mono text-xs text-brand-caramel-text">{formatSize(f.size)}</span>
+                                        <a href={f.download_url} download={f.name} className="p-1 rounded bg-brand-caramel text-brand-cream-light"><Download className="size-3" /></a>
                                       </div>
                                     </div>
                                   ))}
@@ -606,9 +613,9 @@ export default function UnifiedMediaRunsHub({
 
       {/* FILES TAB */}
       {activeTab === 'files' && (
-        <section className="rounded-3xl border border-[#B0BA99] bg-[#FFFFFF] p-6 shadow-sm space-y-5">
+        <section className="rounded-3xl border border-brand-sage bg-surface-white p-6 shadow-sm space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="inline-flex flex-wrap rounded-xl border border-[#B0BA99] bg-[#EDE5CD]/60 p-1 gap-1">
+            <div className="inline-flex flex-wrap rounded-xl border border-brand-sage bg-brand-cream-dark/60 p-1 gap-1">
               {(
                 [
                   { key: 'all', label: 'All', count: allFiles.length },
@@ -621,70 +628,82 @@ export default function UnifiedMediaRunsHub({
                 <button
                   key={cat.key}
                   onClick={() => { setFileCategoryFilter(cat.key); setFilesPage(1) }}
+                  disabled={cat.count === 0}
+                  aria-disabled={cat.count === 0}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-bold transition-all ${
-                    fileCategoryFilter === cat.key ? 'bg-[#9D6638] text-[#FDFBF7] shadow-xs' : 'text-[#4E220F] hover:bg-[#EDE5CD]'
-                  }`}
+                    fileCategoryFilter === cat.key ? 'bg-brand-caramel text-brand-cream-light shadow-xs' : 'text-brand-espresso hover:bg-brand-cream-dark'
+                  } ${cat.count === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <span>{cat.label}</span>
-                  <span className="font-mono text-[10px] opacity-80">({cat.count})</span>
+                  <span className="font-mono text-xs opacity-80">({cat.count})</span>
                 </button>
               ))}
             </div>
             <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-2.5 size-3.5 text-[#7C5339]" />
+              <Search className="absolute left-3 top-2.5 size-3.5 text-brand-caramel-text" />
               <input
                 type="text"
                 value={fileSearch}
                 onChange={(e) => { setFileSearch(e.target.value); setFilesPage(1) }}
                 placeholder="Search files..."
-                className="w-full rounded-xl border border-[#B0BA99] bg-[#F7F1DE]/70 pl-8 pr-3 py-1.5 text-xs text-[#4E220F] placeholder-[#7C5339]/60 focus:border-[#9D6638] focus:outline-none font-medium"
+                className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 pl-8 pr-3 py-1.5 text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none font-medium"
               />
             </div>
           </div>
 
           {filteredFiles.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#B0BA99] bg-[#EDE5CD]/20 p-8 text-center space-y-1">
-              <Package className="mx-auto size-7 text-[#9D6638] opacity-50" />
+            <div className="rounded-2xl border border-dashed border-brand-sage bg-brand-cream-dark/20 p-8 text-center space-y-1">
+              <Package className="mx-auto size-7 text-brand-caramel opacity-50" />
               <p className="text-xs font-bold">No matching files</p>
-              <p className="text-[11px] text-[#7C5339]">Try adjusting filter or run a successful pipeline.</p>
+              <p className="text-xs text-brand-caramel-text">Try adjusting filter or run a successful pipeline.</p>
             </div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {pagedFiles.map((file) => (
-                  <div key={file.name} className="flex items-center justify-between p-3 rounded-2xl border border-[#B0BA99]/70 bg-[#FFFFFF] hover:border-[#9D6638] transition-all shadow-2xs group">
+                  <div key={file.name} className="flex items-center justify-between p-3 rounded-2xl border border-brand-sage/70 bg-surface-white hover:border-brand-caramel transition-all shadow-2xs group">
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                      <div className="flex size-8 items-center justify-center rounded-lg bg-[#EDE5CD] text-[#4E220F] shrink-0">
-                        {file.category === 'video' && <Video className="size-4 text-[#9D6638]" />}
-                        {file.category === 'subtitle' && <Captions className="size-4 text-[#9D6638]" />}
-                        {file.category === 'audio' && <Music className="size-4 text-[#9D6638]" />}
-                        {file.category === 'document' && <FileText className="size-4 text-[#7C5339]" />}
-                        {file.category !== 'video' && file.category !== 'subtitle' && file.category !== 'audio' && file.category !== 'document' && <FileCode className="size-4 text-[#7C5339]" />}
+                      <div className="flex size-8 items-center justify-center rounded-lg bg-brand-cream-dark text-brand-espresso shrink-0">
+                        {file.category === 'video' && <Video className="size-4 text-brand-caramel" />}
+                        {file.category === 'subtitle' && <Captions className="size-4 text-brand-caramel" />}
+                        {file.category === 'audio' && <Music className="size-4 text-brand-caramel" />}
+                        {file.category === 'document' && <FileText className="size-4 text-brand-caramel-text" />}
+                        {file.category !== 'video' && file.category !== 'subtitle' && file.category !== 'audio' && file.category !== 'document' && <FileCode className="size-4 text-brand-caramel-text" />}
                       </div>
                       <div className="min-w-0">
                         <p className="font-mono text-xs font-bold truncate" title={file.name}>{file.name}</p>
-                        <div className="flex items-center gap-2 text-[10px] text-[#7C5339] font-mono mt-0.5">
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-brand-caramel-text font-mono mt-0.5">
                           <span>{formatSize(file.size)}</span>
                           <span>•</span>
                           <span>{relativeTime(file.mtime)}</span>
                           <span className="hidden sm:inline">• {file.category}</span>
+                          {(file.bundle_name || file.pipeline_run_id) && (
+                            <button
+                              onClick={() => viewPackageForRun(file.bundle_name)}
+                              title={file.pipeline_run_id ? `Run ${file.pipeline_run_id}` : file.bundle_name}
+                              className="hidden sm:inline-flex items-center gap-1 max-w-[160px] truncate rounded-md border border-brand-sage bg-brand-cream-dark/70 px-1.5 py-px text-xs font-bold text-brand-espresso hover:bg-brand-sage/40"
+                            >
+                              <span className="truncate">{file.bundle_name || file.pipeline_run_id!.slice(0, 8)}</span>
+                              <span className="underline underline-offset-2">View run</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => copyPath(file.name)} className="p-1.5 rounded-lg border border-[#B0BA99] hover:bg-[#EDE5CD]" title="Copy">
+                      <button onClick={() => copyPath(file.name)} className="p-1.5 rounded-lg border border-brand-sage hover:bg-brand-cream-dark" title="Copy" aria-label="Copy filename">
                         {copiedPath === file.name ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
                       </button>
-                      <button onClick={() => onPreviewArtifact(file.name, file.size, file.preview_url, file.download_url)} className="p-1.5 rounded-lg border border-[#B0BA99] hover:bg-[#EDE5CD]" title="Preview"><Eye className="size-3" /></button>
-                      <a href={file.download_url} download={file.name} className="p-1.5 rounded-lg bg-[#9D6638] text-[#FDFBF7] hover:bg-[#86542C]" title="Download"><Download className="size-3" /></a>
-                      <button onClick={() => onRemoveMediaItem(file.name)} className="p-1.5 rounded-lg border border-[#A83232]/30 text-[#A83232] hover:bg-[#A83232] hover:text-[#FFFFFF]" title="Delete"><Trash2 className="size-3" /></button>
+                      <button onClick={() => onPreviewArtifact(file.name, file.size, file.preview_url, file.download_url)} className="p-1.5 rounded-lg border border-brand-sage hover:bg-brand-cream-dark" title="Preview" aria-label="Preview file"><Eye className="size-3" /></button>
+                      <a href={file.download_url} download={file.name} className="p-1.5 rounded-lg bg-brand-caramel text-brand-cream-light hover:bg-brand-caramel-hover" title="Download" aria-label="Download file"><Download className="size-3" /></a>
+                      <button onClick={() => onRemoveMediaItem(file.name)} className="p-1.5 rounded-lg border border-accent-contrast/30 text-accent-contrast hover:bg-accent-contrast hover:text-surface-white" title="Delete" aria-label="Delete file"><Trash2 className="size-3" /></button>
                     </div>
                   </div>
                 ))}
               </div>
               {hasMoreFiles && (
                 <div className="flex justify-center pt-2">
-                  <button onClick={() => setFilesPage((p) => p + 1)} className="rounded-xl border border-[#B0BA99] bg-[#EDE5CD] px-4 py-1.5 text-xs font-bold hover:bg-[#B0BA99]/40">
+                  <button onClick={() => setFilesPage((p) => p + 1)} className="rounded-xl border border-brand-sage bg-brand-cream-dark px-4 py-1.5 text-xs font-bold hover:bg-brand-sage/40">
                     Load more ({filteredFiles.length - pagedFiles.length} remaining)
                   </button>
                 </div>

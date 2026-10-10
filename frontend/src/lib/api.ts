@@ -1,3 +1,7 @@
+import { consumePipelineStream, responseError, type PipelineStreamEvent, type StreamOptions } from './apiTransport'
+export { ApiError, errorMessage } from './apiTransport'
+export type { StructuredError, PipelineStreamEvent, StreamOptions } from './apiTransport'
+
 export type PortKind =
   | 'any'
   | 'audio'
@@ -29,6 +33,7 @@ export interface Workspace {
   name: string
   templates: unknown[]
   runs: unknown[]
+  pipeline_runs?: number
 }
 
 export interface RunArtifact {
@@ -127,6 +132,7 @@ export interface DAGPipelineSpec {
 export interface CanvasNodeState {
   id: string
   type?: string
+  ariaLabel?: string
   position: { x: number; y: number }
   data: {
     label: string
@@ -135,7 +141,8 @@ export interface CanvasNodeState {
     inputKinds?: string[]
     outputKinds?: string[]
     params: Record<string, unknown>
-    status?: 'idle' | 'pending' | 'running' | 'completed' | 'failed' | 'skipped'
+    status?: 'idle' | 'pending' | 'running' | 'completed' | 'failed' | 'skipped' | 'interrupted'
+    branchedOutputs?: string[]
     errorMessage?: string
     durationSeconds?: number
     cached?: boolean
@@ -181,29 +188,27 @@ export function resolveUrl(path: string): string {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const url = resolveUrl(path)
   const res = await fetch(url, init)
-  if (!res.ok) {
-    let errorMsg = `${res.status} ${res.statusText}`
-    try {
-      const data = await res.json()
-      if (data && typeof data === 'object') {
-        errorMsg = data.detail || data.error || data.message || errorMsg
-      }
-    } catch {
-      try {
-        const text = await res.text()
-        if (text) errorMsg = text
-      } catch {
-        /* ignore */
-      }
-    }
-    throw new Error(errorMsg)
-  }
+  if (!res.ok) throw await responseError(res)
   return (await res.json()) as T
 }
 
+let toolsRequest: Promise<{ tools: ToolManifest[] }> | undefined
+function getTools(signal?: AbortSignal): Promise<{ tools: ToolManifest[] }> {
+  if (signal?.aborted) return Promise.reject(signal.reason ?? new DOMException('Aborted', 'AbortError'))
+  toolsRequest ??= request<{ tools: ToolManifest[] }>('/api/tools').catch(error => { toolsRequest = undefined; throw error })
+  if (!signal) return toolsRequest
+  return new Promise((resolve, reject) => {
+    const abort = () => { signal.removeEventListener('abort', abort); reject(signal.reason ?? new DOMException('Aborted', 'AbortError')) }
+    signal.addEventListener('abort', abort, { once: true })
+    toolsRequest!.then(value => { signal.removeEventListener('abort', abort); resolve(value) }, error => { signal.removeEventListener('abort', abort); reject(error) })
+  })
+}
+
 export const api = {
-  listTools: () => request<{ tools: ToolManifest[] }>('/api/tools'),
-  listWorkspaces: () => request<{ workspaces: Workspace[] }>('/api/workspaces'),
+  health: (signal?: AbortSignal) => request<{ status: string; version: string }>('/api/health', { signal }),
+  listTools: (signal?: AbortSignal) => getTools(signal),
+  getTool: (toolId: string) => request<ToolManifest>(`/api/tools/${encodeURIComponent(toolId)}`),
+  listWorkspaces: (signal?: AbortSignal) => request<{ workspaces: Workspace[] }>('/api/workspaces', { signal }),
   createWorkspace: (name: string) =>
     request<Workspace>('/api/workspaces', {
       method: 'POST',
@@ -212,15 +217,15 @@ export const api = {
     }),
   deleteWorkspace: (id: string) =>
     request<{ deleted: boolean }>(`/api/workspaces/${id}`, { method: 'DELETE' }),
-  listRuns: (workspaceId: string) =>
-    request<{ runs: Run[] }>(`/api/workspaces/${workspaceId}/runs`),
-  getRunManifest: (workspaceId: string, runId: string) =>
-    request<{ manifest: Record<string, unknown> }>(`/api/workspaces/${workspaceId}/runs/${runId}/manifest`),
-  getRunLogs: (workspaceId: string, runId: string) =>
-    request<{ logs: string }>(`/api/workspaces/${workspaceId}/runs/${runId}/logs`),
-  listArtifacts: (workspaceId: string, runId: string) =>
+  listRuns: (workspaceId: string, signal?: AbortSignal) =>
+    request<{ runs: Run[] }>(`/api/workspaces/${workspaceId}/runs`, { signal }),
+  getRunManifest: (workspaceId: string, runId: string, signal?: AbortSignal) =>
+    request<{ manifest: Record<string, unknown> }>(`/api/workspaces/${workspaceId}/runs/${runId}/manifest`, { signal }),
+  getRunLogs: (workspaceId: string, runId: string, signal?: AbortSignal) =>
+    request<{ logs: string }>(`/api/workspaces/${workspaceId}/runs/${runId}/logs`, { signal }),
+  listArtifacts: (workspaceId: string, runId: string, signal?: AbortSignal) =>
     request<{ run_id: string; artifacts: ArtifactFile[] }>(
-      `/api/workspaces/${workspaceId}/runs/${runId}/artifacts`,
+      `/api/workspaces/${workspaceId}/runs/${runId}/artifacts`, { signal },
     ),
   deleteRun: (workspaceId: string, runId: string) =>
     request<{ deleted: boolean }>(`/api/workspaces/${workspaceId}/runs/${runId}`, {
@@ -277,7 +282,7 @@ export const api = {
     request<{
       status: string
       artifacts: { name: string; path: string; kind?: string }[]
-      error?: string | null
+      error?: string | import('./apiTransport').StructuredError | null
       duration_seconds?: number | null
       data?: Record<string, any> | null
       output_text?: string | null
@@ -326,6 +331,8 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  pipelineStatus: (workspaceId: string, signal?: AbortSignal) =>
+    request<{ active: boolean }>(`/api/workspaces/${workspaceId}/pipeline/status`, { signal }),
   stopPipeline: (workspaceId: string) =>
     request<{ stopped: boolean }>(`/api/workspaces/${workspaceId}/pipeline/stop`, {
       method: 'POST',
@@ -339,7 +346,7 @@ export const api = {
       extractor?: string | null
       thumbnail?: string | null
       is_live?: boolean
-      error?: string
+      error?: string | import('./apiTransport').StructuredError
     }>(`/api/workspaces/${workspaceId}/pipeline/resolve-url`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -349,71 +356,15 @@ export const api = {
     request<{ deleted: boolean }>(`/api/workspaces/${workspaceId}/media/${encodeURIComponent(filename)}`, {
       method: 'DELETE',
     }),
-  runPipelineStream: async (
+  runPipelineStream: (
     workspaceId: string,
     payload: { nodes: DAGNode[]; edges?: DAGEdge[]; error_policy?: string; cache_policy?: 'reuse' | 'recompute' },
-    onEvent: (event: {
-      type: string
-      node_id?: string
-      tool_id?: string
-      tool_name?: string
-      status?: string
-      duration?: number
-      error?: string
-      reason?: string
-      results?: unknown[]
-    }) => void,
-  ) => {
-    const url = resolveUrl(`/api/workspaces/${workspaceId}/pipeline/run-stream`)
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-
-    if (!response.ok) {
-      let errorMsg = `${response.status} ${response.statusText}`
-      try {
-        const data = await response.json()
-        errorMsg = data.detail || data.error || errorMsg
-      } catch {
-        /* ignore */
-      }
-      throw new Error(errorMsg)
-    }
-
-    const reader = response.body?.getReader()
-    if (!reader) {
-      throw new Error('ReadableStream not supported on this browser')
-    }
-
-    const decoder = new TextDecoder()
-    let buffer = ''
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      buffer += decoder.decode(value, { stream: true })
-      const lines = buffer.split('\n')
-      buffer = lines.pop() || ''
-
-      for (const line of lines) {
-        const trimmed = line.trim()
-        if (trimmed.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(trimmed.slice(6))
-            onEvent(data)
-          } catch {
-            /* ignore JSON parse errors */
-          }
-        }
-      }
-    }
-  },
-  listTemplates: (workspaceId: string, starters = true) =>
+    onEvent: (event: PipelineStreamEvent) => void,
+    options?: StreamOptions,
+  ) => consumePipelineStream(resolveUrl(`/api/workspaces/${workspaceId}/pipeline/run-stream`), payload, onEvent, options),
+  listTemplates: (workspaceId: string, starters = true, signal?: AbortSignal) =>
     request<{ templates: { name: string; chain: string[] }[] }>(
-      `/api/workspaces/${workspaceId}/templates?starters=${starters}`,
+      `/api/workspaces/${workspaceId}/templates?starters=${starters}`, { signal },
     ),
   saveTemplate: (workspaceId: string, name: string, chain: string[]) =>
     request<{ name: string; chain: string[] }>(`/api/workspaces/${workspaceId}/templates`, {
@@ -426,8 +377,8 @@ export const api = {
       `/api/workspaces/${workspaceId}/templates/${encodeURIComponent(name)}`,
       { method: 'DELETE' },
     ),
-  getWorkspaceCanvas: (workspaceId: string) =>
-    request<CanvasState>(`/api/workspaces/${workspaceId}/canvas`),
+  getWorkspaceCanvas: (workspaceId: string, signal?: AbortSignal) =>
+    request<CanvasState>(`/api/workspaces/${workspaceId}/canvas`, { signal }),
   saveWorkspaceCanvas: (workspaceId: string, state: Partial<CanvasState>) =>
     request<CanvasState>(`/api/workspaces/${workspaceId}/canvas`, {
       method: 'PUT',
@@ -523,10 +474,10 @@ export const api = {
     }
     return res.json() as Promise<{ name: string; path: string; size: number; kind: string }>
   },
-  listWorkspaceMedia: (workspaceId: string) =>
-    request<WorkspaceMediaResponse>(`/api/workspaces/${workspaceId}/media`),
-  listPipelineRuns: (workspaceId: string) =>
-    request<{ pipeline_runs: PipelineRunGroup[] }>(`/api/workspaces/${workspaceId}/pipeline-runs`),
+  listWorkspaceMedia: (workspaceId: string, signal?: AbortSignal) =>
+    request<WorkspaceMediaResponse>(`/api/workspaces/${workspaceId}/media`, { signal }),
+  listPipelineRuns: (workspaceId: string, signal?: AbortSignal) =>
+    request<{ pipeline_runs: PipelineRunGroup[] }>(`/api/workspaces/${workspaceId}/pipeline-runs`, { signal }),
   muxSubtitles: (
     workspaceId: string,
     videoPath: string,

@@ -25,7 +25,7 @@ class AudioProcessorTool(Tool):
         output_kinds=[PortKind.audio],
         parameters_schema={
             "format": {"type": "string", "enum": ["wav", "mp3", "flac", "ogg", "m4a"], "default": "wav"},
-            "sample_rate": {"type": "number", "enum": [22050, 44100, 48000], "default": 44100},
+            "sample_rate": {"type": "number", "enum": [22050, 44100, 48000], "default": 44100, "unit": "Hz"},
         },
     )
 
@@ -73,7 +73,7 @@ class AudioProcessorTool(Tool):
             str(out_path),
         ]
 
-        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=300)
+        runner = AsyncSubprocessRunner(command=cmd, cwd=dest_dir, timeout=300, tool_id=self.manifest.id)
         try:
             res = await runner.run(
                 cancel_event=context.cancel_event,
