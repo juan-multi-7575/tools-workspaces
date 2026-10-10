@@ -268,7 +268,10 @@ test('the home index links only to sites that exist, and says so about the rest'
   assert.equal(describeSite('imagemagick', built).availability, 'built')
   assert.equal(describeSite('imagemagick', built).path, 'imagemagick')
   // A tool with no brief-covered site must not borrow a link to a dead route.
-  for (const id of ['trimmer', 'some.tool.nobody.briefed']) {
+  // These are synthetic ids on purpose: naming a real tool here would make this
+  // file fail the moment that tool's site was built, which is the opposite of
+  // what the membership assertion above is for.
+  for (const id of ['some.tool.nobody.briefed', 'another.tool.nobody.briefed']) {
     const site = describeSite(id, built)
     assert.equal(site.availability, 'planned')
     assert.equal(site.path, undefined, `${id} must not advertise a path it does not have`)
