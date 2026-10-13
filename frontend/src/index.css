@@ -13,6 +13,13 @@
   --color-brand-caramel-muted: rgba(157, 102, 56, 0.15);
   --color-brand-espresso: #4E220F;
   --color-brand-espresso-muted: rgba(78, 34, 15, 0.75);
+  /* Placeholder ink. The caramel reads as "not filled in yet", but at any
+     alpha it drops under 4.5:1 on every cream surface it sits on (60% over
+     cream measures 2.59:1), so the token carries the passing colour and every
+     placeholder site points here instead of picking its own alpha. Keep it at
+     or darker than #85572F: that is the last value still clearing 4.5:1 on
+     --color-brand-cream-dark, the darkest surface a placeholder is used on. */
+  --color-placeholder: #85572F;
 
   --color-accent-primary: #9D6638;
   --color-accent-primary-hover: #86542C;
@@ -68,6 +75,37 @@
 :focus-visible {
   outline: 2px solid var(--color-focus-ring) !important;
   outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------------------
+   Skip to content (.skip-link)
+
+   WCAG 2.4.1. The shell's sidebar is ~20 tab stops deep and the mobile header
+   comes before it, so without this the first focusable thing a keyboard user
+   reaches is navigation they have already used. The link is off-screen until
+   it takes focus, then it parks itself over the top-left corner: the design is
+   untouched for pointer users, and the jump target (`#main-content`) is the
+   shell's <main>, which carries tabIndex={-1} so the browser can move focus
+   onto it.
+   --------------------------------------------------------------------------- */
+.skip-link {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-modal);
+  transform: translateY(-120%);
+  border-bottom-right-radius: 0.75rem;
+  border: 1px solid var(--color-brand-sage);
+  background-color: var(--color-surface-white);
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-brand-espresso);
+  box-shadow: 0 10px 30px -12px rgba(78, 34, 15, 0.45);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
 }
 
 html,
@@ -279,6 +317,11 @@ body {
   --tool-edge-soft: color-mix(in oklab, var(--tool-edge) 55%, transparent);
   --tool-ink-muted: var(--color-brand-caramel-text);
   --tool-ink-faint: #96795F;
+  /* Placeholder ink is its own token rather than `--tool-ink-faint`: that brown
+     measures 3.4:1 on --tool-well, and a placeholder is text. Both tones
+     resolve from `currentColor`-safe values, so neither is a fixed hex that
+     can only pass on one of the two boards. */
+  --tool-ink-placeholder: var(--color-placeholder);
   --tool-accent-ink: var(--tool-accent);
   /* Before the hook measures, this is the answer for the default accent. */
   --tool-on-accent: var(--color-brand-cream-light);
@@ -298,6 +341,7 @@ body {
   --tool-edge-soft: color-mix(in oklab, currentColor 15%, transparent);
   --tool-ink-muted: color-mix(in oklab, currentColor 74%, transparent);
   --tool-ink-faint: color-mix(in oklab, currentColor 58%, transparent);
+  --tool-ink-placeholder: color-mix(in oklab, currentColor 62%, transparent);
   --tool-accent-ink: color-mix(in oklab, var(--tool-accent) 55%, currentColor);
   --tool-danger-ink: color-mix(in oklab, var(--tool-danger) 55%, currentColor);
   --tool-danger-wash: color-mix(in oklab, var(--tool-danger) 14%, transparent);
@@ -393,7 +437,7 @@ body {
 }
 
 .tool-well::placeholder {
-  color: var(--tool-ink-faint);
+  color: var(--tool-ink-placeholder);
   opacity: 1;
 }
 

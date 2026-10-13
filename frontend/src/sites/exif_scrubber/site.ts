@@ -5,6 +5,7 @@ const ExifScrubberSite: SiteModule = {
   toolId: 'exif_scrubber',
   path: 'exif_scrubber',
   accent: '#0000EE',
+  title: 'EXIF Scrubber — metadata wash',
   Component: lazy(() => import('./ExifScrubberSite')),
 }
 

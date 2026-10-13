@@ -27,5 +27,12 @@ export interface SiteModule {
    * of the set before you enter any of it. Read from the brief.
    */
   accent: string
+  /**
+   * The wording this route puts in `document.title` (WCAG 2.4.2). It lives here
+   * rather than inside the site component so the title is set the moment the
+   * route matches, before the lazily-loaded site renders, and so a site cannot
+   * quietly keep the shell's title.
+   */
+  title: string
   Component: ComponentType<SiteProps> | LazyExoticComponent<ComponentType<SiteProps>>
 }

@@ -127,14 +127,17 @@ function DeletableEdge({
     return (
       <div className={`${containerStyle} group`}>
         {/* Remove Node Button — reveal only on hover/selection so it never
-            collides with the edge handles users drag to rewire. */}
+            collides with the edge handles users drag to rewire. The button is
+            24px so it clears the WCAG 2.5.8 minimum; the offsets keep its
+            centre where the old 20px circle sat. */}
         <button
           type="button"
           onClick={handleDelete}
-          className={`absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-surface-white border border-brand-sage text-brand-caramel-text hover:bg-accent-contrast hover:text-surface-white hover:border-accent-contrast shadow-sm transition-all active:scale-90 ${
+          className={`absolute -top-2.5 -right-2.5 flex size-6 items-center justify-center rounded-full bg-surface-white border border-brand-sage text-brand-caramel-text hover:bg-accent-contrast hover:text-surface-white hover:border-accent-contrast shadow-sm transition-all active:scale-90 ${
             selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
           }`}
           title="Remove tool from canvas"
+          aria-label="Remove tool from canvas"
         >
           <X className="size-3" />
         </button>

@@ -21,6 +21,7 @@ import { useToolDeps } from '../../hooks/useToolDeps'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import DownloaderForm from '../../components/tools/DownloaderForm'
 import DynamicForm from '../../components/common/DynamicForm'
+import RequiredFieldError from '../../components/common/RequiredFieldError'
 import type { ToolPageProps, ToolExecutionState } from '../../lib/toolPageTypes'
 
 const DOWNLOADER_ID = 'media.download.yt-dlp'
@@ -657,6 +658,14 @@ export default function DownloaderPage({
   const urlValue = String(params.url ?? '')
   const canProbe = /^https?:\/\//i.test(urlValue.trim())
 
+  // The URL is a required parameter the backend rejects when empty, so the
+  // console says so itself instead of only describing what the backend will
+  // say. It reports on blur and clears as soon as there is something to send.
+  const [urlTouched, setUrlTouched] = useState(false)
+  const urlMissing = urlValue.trim() === ''
+  const urlInvalid = urlTouched && urlMissing
+  const urlErrorId = 'downloader-url-required'
+
   // ---- render --------------------------------------------------------------
   return (
     // The console's accent, handed to the shared forms it hosts so the yt-dlp
@@ -701,6 +710,11 @@ export default function DownloaderPage({
                     type="url"
                     value={urlValue}
                     onChange={(event) => setParams((prev) => ({ ...prev, url: event.target.value }))}
+                    onBlur={() => setUrlTouched(true)}
+                    required
+                    aria-required="true"
+                    aria-invalid={urlInvalid || undefined}
+                    aria-describedby={urlInvalid ? urlErrorId : undefined}
                     placeholder="https://www.youtube.com/watch?v=..."
                     className="mt-1 w-full border border-slate-700 bg-[#05090e] px-2.5 py-2 text-[12px] text-slate-100 outline-none placeholder:text-slate-700 focus:border-emerald-500/60"
                   />
@@ -749,7 +763,13 @@ export default function DownloaderPage({
                   </button>
                   <span className="text-[12px] text-slate-600">POST /api/downloads</span>
                 </div>
-                {!urlValue.trim() && <p className="text-[12px] text-slate-600">a url is required before the backend will accept the task</p>}
+                {urlInvalid && (
+                  <RequiredFieldError
+                    id={urlErrorId}
+                    message="a url is required before the backend will accept the task"
+                    className="text-rose-300"
+                  />
+                )}
                 {enqueueNote && <p className="text-[12px] text-emerald-300">{enqueueNote}</p>}
 
                 {/* Probe result: only the fields the endpoint actually sent. */}

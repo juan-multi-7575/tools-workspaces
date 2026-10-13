@@ -21,6 +21,7 @@ import {
   type DepsInventory,
 } from '../../lib/depsApi'
 import { deriveDepByteProgress, deriveDepProgress } from '../../hooks/useToolDeps'
+import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 
 /**
  * Managed dependency console.
@@ -56,6 +57,7 @@ function Readout({ label, value, tone }: { label: string; value: string; tone?: 
 }
 
 export default function DependencyManagerPanel() {
+  useDocumentTitle('Tools Garage — dependencies')
   const [inventory, setInventory] = useState<DepsInventory | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)

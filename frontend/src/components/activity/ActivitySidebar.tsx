@@ -10,6 +10,7 @@ import {
   Check,
 } from 'lucide-react'
 import { api, type DownloadTask } from '../../lib/api'
+import { useEscapeToClose } from '../../hooks/useEscapeToClose'
 import {
   artifactsStore,
   activityStreamCoordinator,
@@ -45,6 +46,11 @@ export default function ActivitySidebar({
     clearToolExecutions,
     removeToolExecution,
   } = useActivityTracker()
+
+  // The drawer covers the app and dismisses on a backdrop click, so it is a
+  // dialog: it needs the name, role and Escape key the shell's other overlays
+  // already have.
+  useEscapeToClose(open, () => setOpen(false))
 
   // Downloads tasks subscribed via singleton coordinator
   const downloadTasks = useSyncExternalStore<DownloadTask[]>(
@@ -161,6 +167,8 @@ export default function ActivitySidebar({
       {/* Floating Bottom-Right Combined Activity & Downloads Pill */}
       <button
         onClick={() => setOpen(!open)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         className="fixed bottom-5 right-5 z-drawer inline-flex items-center gap-2.5 rounded-full border border-brand-sage bg-brand-cream px-4 py-2.5 text-xs font-semibold text-brand-espresso shadow-xl transition-all duration-150 hover:bg-brand-cream-dark hover:border-brand-caramel active:scale-[0.98] group cursor-pointer"
         title="Open Activity & Downloads Panel"
       >
@@ -184,8 +192,14 @@ export default function ActivitySidebar({
       {/* Slide-over Drawer */}
       {open && (
         <div className="fixed inset-0 z-modal flex justify-end bg-brand-espresso/20 backdrop-blur-[2px]">
-          <div className="absolute inset-0" onClick={() => setOpen(false)} />
-          <aside className="relative flex h-full w-[560px] max-w-[95vw] flex-col border-l border-brand-sage bg-brand-cream text-brand-espresso shadow-2xl">
+          <div className="absolute inset-0" onClick={() => setOpen(false)} aria-hidden="true" />
+          <aside
+            aria-labelledby="activity-drawer-title"
+            aria-modal="true"
+            role="dialog"
+            tabIndex={-1}
+            className="relative flex h-full w-[560px] max-w-[95vw] flex-col border-l border-brand-sage bg-brand-cream text-brand-espresso shadow-2xl outline-none"
+          >
             {/* Drawer Header */}
             <header className="flex items-center justify-between border-b border-brand-sage/60 px-5 py-3.5 bg-brand-cream-dark/70 shrink-0">
               <div className="flex items-center gap-2.5">
@@ -193,7 +207,7 @@ export default function ActivitySidebar({
                   <ArrowDownToLine className="size-4" />
                 </div>
                 <div>
-                  <h2 className="text-xs font-bold uppercase tracking-wider text-brand-espresso">
+                  <h2 id="activity-drawer-title" className="text-xs font-bold uppercase tracking-wider text-brand-espresso">
                     Activity & Records
                   </h2>
                   <p className="font-mono text-xs text-brand-caramel-text">
@@ -337,7 +351,7 @@ export default function ActivitySidebar({
                   placeholder="Filter records by name, URL, or status..."
                   value={filterQuery}
                   onChange={(e) => setFilterQuery(e.target.value)}
-                  className="w-full rounded-lg border border-brand-sage bg-brand-cream-dark/50 pl-8 pr-3 py-1.5 font-mono text-xs text-brand-espresso placeholder:text-brand-caramel-text/60 focus:border-brand-caramel focus:bg-surface-white focus:outline-none transition-all"
+                  className="w-full rounded-lg border border-brand-sage bg-brand-cream-dark/50 pl-8 pr-3 py-1.5 font-mono text-xs text-brand-espresso placeholder:text-placeholder focus:border-brand-caramel focus:bg-surface-white focus:outline-none transition-all"
                 />
                 {filterQuery && (
                   <button

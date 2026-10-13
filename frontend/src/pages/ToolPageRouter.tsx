@@ -5,6 +5,7 @@ import { api, errorMessage, type ToolManifest } from '../lib/api'
 import { canonicalId } from '../lib/toolIds'
 import { getToolPage } from '../lib/toolPages'
 import { initialParamsFromManifest } from '../hooks/useToolExecute'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import GenericToolPage from './tools/GenericToolPage'
 import ErrorBoundary from '../components/common/ErrorBoundary'
 
@@ -51,6 +52,10 @@ export default function ToolPageRouter({
 
   const Page = useMemo(() => (manifest ? getToolPage(manifest.id) ?? GenericToolPage : null), [manifest])
   const inputPath = searchParams.get('input') ?? undefined
+
+  // WCAG 2.4.2: the tool pages are a route of their own, so they name themselves
+  // rather than leaving the shell's static title in the tab.
+  useDocumentTitle(manifest ? `Tools Garage — ${manifest.name}` : `Tools Garage — ${canonical || 'tool'}`)
 
   const sendToTool = (nextId: string, path: string) => {
     navigate(`/tools/${encodeURIComponent(nextId)}?input=${encodeURIComponent(path)}`)

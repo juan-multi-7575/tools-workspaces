@@ -8,7 +8,6 @@ export default function StreamlinkSite({ siteState, initialInputPath }: SiteProp
   const [manifest, setManifest] = useState<ToolManifest | null>(null)
   const [error, setError] = useState<string | null>(null)
   useEffect(() => {
-    document.title = 'Streamlink — Live capture'
     let active = true
     api.getTool('streamlink').then(value => { if (active) setManifest(value) }).catch(cause => { if (active) setError(errorMessage(cause)) })
     return () => { active = false }

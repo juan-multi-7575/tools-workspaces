@@ -646,7 +646,7 @@ export default function UnifiedMediaRunsHub({
                 value={fileSearch}
                 onChange={(e) => { setFileSearch(e.target.value); setFilesPage(1) }}
                 placeholder="Search files..."
-                className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 pl-8 pr-3 py-1.5 text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none font-medium"
+                className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 pl-8 pr-3 py-1.5 text-xs text-brand-espresso placeholder-placeholder focus:border-brand-caramel focus:outline-none font-medium"
               />
             </div>
           </div>

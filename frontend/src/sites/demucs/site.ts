@@ -13,6 +13,7 @@ const DemucsSite: SiteModule = {
   // restrained accent, held against the reference's measured
   // rgb(255,255,255) / rgb(29,30,32).
   accent: '#7A6A53',
+  title: 'Demucs — stem separation',
   Component: lazy(() => import('./DemucsSite')),
 }
 

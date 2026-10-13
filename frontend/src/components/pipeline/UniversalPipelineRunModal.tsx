@@ -796,7 +796,7 @@ export default function UniversalPipelineRunModal({
                                   : undefined
                               }
                               placeholder={inp.isUrl ? 'https://www.youtube.com/watch?v=...' : `Enter ${inp.title}...`}
-                              className="w-full rounded-xl border border-brand-sage bg-surface-white px-3.5 py-2 text-xs text-brand-espresso font-medium placeholder-brand-caramel-text/50 focus:border-brand-caramel focus:outline-none"
+                              className="w-full rounded-xl border border-brand-sage bg-surface-white px-3.5 py-2 text-xs text-brand-espresso font-medium placeholder-placeholder focus:border-brand-caramel focus:outline-none"
                             />
                             {/* Reserved inline status slot: always mounted so the
                                 input block never shifts height when an error or

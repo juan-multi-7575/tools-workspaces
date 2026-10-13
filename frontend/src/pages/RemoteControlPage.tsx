@@ -7,6 +7,7 @@ import {
   Radio,
 } from 'lucide-react'
 import { api, resolveUrl, type DownloadTask } from '../lib/api'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const STATUS_LABEL: Record<string, string> = {
   queued: 'Queued',
@@ -17,6 +18,8 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 export default function RemoteControlPage() {
+  useDocumentTitle('Tools Garage — remote control')
+
   const [token, setToken] = useState('')
   const [connectUrl, setConnectUrl] = useState('')
   const [tasks, setTasks] = useState<DownloadTask[]>([])
@@ -147,7 +150,15 @@ export default function RemoteControlPage() {
           <div className="flex flex-col items-center gap-2">
             <div className="rounded-2xl border-2 border-brand-sage bg-brand-cream p-4 shadow-sm">
               {connectUrl ? (
-                <QRCodeSVG value={connectUrl} size={140} fgColor="var(--color-brand-espresso)" bgColor="var(--color-brand-cream)" />
+                <QRCodeSVG
+                  value={connectUrl}
+                  size={140}
+                  fgColor="var(--color-brand-espresso)"
+                  bgColor="var(--color-brand-cream)"
+                  title={`QR code for the remote client at ${connectUrl}`}
+                  role="img"
+                  aria-label={`QR code for the remote client at ${connectUrl}`}
+                />
               ) : (
                 <div className="size-[140px] bg-brand-cream-dark flex items-center justify-center text-brand-caramel-text font-mono text-xs">
                   Generating…

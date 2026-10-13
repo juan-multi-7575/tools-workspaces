@@ -32,7 +32,7 @@ export function ToolForm({ toolId, schema, disabled, ...props }: FormProps & {
   const Form = getToolForm(toolId)
   return (
     <fieldset disabled={disabled} className="min-w-0">
-      {Form ? <Form {...props} /> : <DynamicForm schema={schema} {...props} />}
+      {Form ? <Form {...props} /> : <DynamicForm schema={schema} toolId={toolId} {...props} />}
     </fieldset>
   )
 }

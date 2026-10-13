@@ -9,6 +9,7 @@ import {
   Search,
 } from 'lucide-react'
 import { api, type Workspace } from '../../lib/api'
+import { useEscapeToClose } from '../../hooks/useEscapeToClose'
 
 export default function WorkspaceSwitcherDropdown({
   currentWorkspaceId,
@@ -34,6 +35,10 @@ export default function WorkspaceSwitcherDropdown({
   useEffect(() => {
     refreshWorkspaces()
   }, [])
+
+  // Outside clicks are not the only way this closes; Escape has to work too,
+  // and the trigger has to say what it opens.
+  useEscapeToClose(open, () => setOpen(false))
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -80,6 +85,9 @@ export default function WorkspaceSwitcherDropdown({
       {/* Switcher Trigger Button */}
       <button
         onClick={() => setOpen(!open)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls="workspace-switcher-panel"
         className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-brand-sage bg-brand-cream-dark/90 hover:bg-brand-cream-dark text-brand-espresso text-xs font-bold transition-all shadow-2xs group"
         title="Switch active workspace session"
       >
@@ -92,7 +100,10 @@ export default function WorkspaceSwitcherDropdown({
 
       {/* Dropdown Menu */}
       {open && (
-        <div className="absolute left-0 mt-1.5 w-72 origin-top-left rounded-2xl border border-brand-sage bg-surface-white shadow-xl z-modal overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div
+          id="workspace-switcher-panel"
+          className="absolute left-0 mt-1.5 w-72 origin-top-left rounded-2xl border border-brand-sage bg-surface-white shadow-xl z-modal overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        >
           <div className="p-2.5 border-b border-brand-sage/40 bg-brand-cream/60 flex items-center justify-between">
             <span className="font-mono text-xs font-bold uppercase tracking-wider text-brand-caramel-text">
               Workspace Sessions ({workspaces.length})
@@ -114,13 +125,13 @@ export default function WorkspaceSwitcherDropdown({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search workspaces..."
-                className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-brand-sage/60 bg-brand-cream/30 text-brand-espresso placeholder-brand-caramel-text/60 outline-none focus:border-brand-caramel font-mono"
+                className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-brand-sage/60 bg-brand-cream/30 text-brand-espresso placeholder-placeholder outline-none focus:border-brand-caramel font-mono"
               />
             </div>
           </div>
 
           {/* Workspace List */}
-          <div className="max-h-56 overflow-y-auto p-1.5 space-y-0.5">
+          <div role="menu" aria-label="Workspace sessions" className="max-h-56 overflow-y-auto p-1.5 space-y-0.5">
             {filtered.length === 0 ? (
               <div className="py-4 text-center text-xs text-brand-caramel-text">
                 No workspace found
@@ -131,6 +142,7 @@ export default function WorkspaceSwitcherDropdown({
                 return (
                   <button
                     key={w.id}
+                    role="menuitem"
                     onClick={() => handleSelect(w.id)}
                     className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-left text-xs transition-colors ${
                       isSelected

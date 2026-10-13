@@ -17,6 +17,7 @@ const ImageMagickSite: SiteModule = {
   path: 'imagemagick',
   // Brief #10, reference `figma`. Blue accent on a near-white ground.
   accent: '#0D99FF',
+  title: 'ImageMagick — image bench',
   Component: lazy(() => import('./ImageMagickSite')),
 }
 

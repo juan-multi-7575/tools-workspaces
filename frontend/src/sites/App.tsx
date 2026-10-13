@@ -1,9 +1,10 @@
 import { Suspense, lazy } from 'react'
 import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
-import { BUILT_SITE_IDS, SITE_COMPONENTS } from './siteModules'
+import { BUILT_SITE_IDS, SITE_COMPONENTS, SITE_TITLES } from './siteModules'
 import type { SiteState } from './types'
 import ErrorBoundary from '../components/common/ErrorBoundary'
 import AppShell from './AppShell'
+import { DEFAULT_DOCUMENT_TITLE, useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const HomeSite = lazy(() => import('./home/HomeSite'))
 
@@ -16,6 +17,10 @@ function ToolSiteRoute({ siteState }: { siteState: SiteState }) {
   const location = useLocation()
   const Site = SITE_COMPONENTS[toolId]
   const carried = (location.state as CarriedState | null)?.inputPath
+
+  // WCAG 2.4.2: every tool route names itself. The registration is what
+  // carries the wording, so a site cannot keep the shell's title.
+  useDocumentTitle(SITE_TITLES[toolId] ?? DEFAULT_DOCUMENT_TITLE)
 
   // An unregistered id is a dead route, so it goes to the index rather than
   // rendering an empty page.

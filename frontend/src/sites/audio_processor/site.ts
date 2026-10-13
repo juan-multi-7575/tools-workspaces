@@ -11,6 +11,7 @@ const AudioProcessorSite: SiteModule = {
   path: 'audio_processor',
   // Brief #4, reference `arc`. Warm brown on a cream ground.
   accent: '#B4763A',
+  title: 'Audio Processor — waveform workbench',
   Component: lazy(() => import('./AudioProcessorSite')),
 }
 

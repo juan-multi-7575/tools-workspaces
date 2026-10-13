@@ -116,7 +116,7 @@ export default function ToolPaletteDrawer({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search tools & engines..."
-            className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-brand-sage bg-surface-white text-brand-espresso placeholder-brand-caramel-text/60 outline-none focus:border-brand-caramel font-mono shadow-2xs"
+            className="w-full pl-7 pr-3 py-1.5 text-xs rounded-xl border border-brand-sage bg-surface-white text-brand-espresso placeholder-placeholder outline-none focus:border-brand-caramel font-mono shadow-2xs"
           />
         </div>
       </div>

@@ -8,7 +8,6 @@ export default function MediainfoSite({ siteState, initialInputPath }: SiteProps
   const [manifest, setManifest] = useState<ToolManifest | null>(null)
   const [error, setError] = useState<string | null>(null)
   useEffect(() => {
-    document.title = 'MediaInfo — Stream inspector'
     let active = true
     api.getTool('mediainfo').then(value => { if (active) setManifest(value) }).catch(cause => { if (active) setError(errorMessage(cause)) })
     return () => { active = false }

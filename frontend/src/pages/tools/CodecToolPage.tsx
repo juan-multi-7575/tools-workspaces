@@ -149,7 +149,7 @@ export default function CodecToolPage({
             spellCheck={false}
             rows={8}
             placeholder={schema.text?.placeholder ?? 'Enter text to encode or decode...'}
-            className="w-full resize-y rounded-lg border border-brand-sage bg-surface-white px-3 py-2.5 font-mono text-sm leading-relaxed text-brand-espresso placeholder:text-brand-caramel-text/40 focus:border-brand-espresso focus:outline-none"
+            className="w-full resize-y rounded-lg border border-brand-sage bg-surface-white px-3 py-2.5 font-mono text-sm leading-relaxed text-brand-espresso placeholder:text-placeholder focus:border-brand-espresso focus:outline-none"
           />
           <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[12px] text-brand-caramel-text">
             <span>

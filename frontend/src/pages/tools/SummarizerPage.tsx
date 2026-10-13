@@ -239,7 +239,7 @@ export default function SummarizerPage({
                 disabled={execute.busy}
                 rows={14}
                 placeholder={schema.text?.placeholder ?? 'Paste transcript, lecture notes, or document excerpt here...'}
-                className="w-full resize-y rounded-xl border border-brand-sage bg-brand-cream/40 px-4 py-3 font-serif text-[15px] leading-[1.75] text-brand-espresso placeholder:text-brand-caramel-text/50 focus:border-brand-caramel focus:outline-none"
+                className="w-full resize-y rounded-xl border border-brand-sage bg-brand-cream/40 px-4 py-3 font-serif text-[15px] leading-[1.75] text-brand-espresso placeholder:text-placeholder focus:border-brand-caramel focus:outline-none"
               />
               <p className="font-mono text-[12px] text-brand-caramel-text">
                 {typedText.length} chars · {typedText.trim() ? typedText.trim().split(/\s+/).length : 0} words

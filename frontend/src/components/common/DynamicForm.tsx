@@ -17,7 +17,13 @@ import {
   FileCode,
 } from 'lucide-react'
 import UniversalFileInput from './UniversalFileInput'
+import RequiredFieldError from './RequiredFieldError'
 import { useHostSkin } from '../../lib/hostSkin'
+import {
+  isRequiredKey,
+  isRequiredValueMissing,
+  missingRequiredMessage,
+} from '../../lib/requiredFields'
 
 export interface SchemaField {
   type?: string
@@ -32,6 +38,13 @@ export interface SchemaField {
   unit?: string
   widget?: 'text' | 'textarea' | 'secret' | 'select' | 'artifact_picker' | 'code' | 'url'
   placeholder?: string
+  /**
+   * The manifest's own declaration that the backend refuses an empty value.
+   * It is read only from the schema — never inferred from the type or the key
+   * name — and it drives the client-side gate: `required`, `aria-required`,
+   * `aria-invalid` and the per-field error.
+   */
+  required?: boolean
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,15 +92,22 @@ export default function DynamicForm({
   value = {},
   onChange,
   availableArtifacts = [],
+  toolId,
 }: {
   schema?: ToolSchema
   value?: Record<string, unknown>
   onChange: (nextValue: Record<string, unknown>) => void
   availableArtifacts?: { name: string; path: string; kind?: string }[]
+  /** Needed to know which parameters the backend actually rejects when empty. */
+  toolId?: string
 }) {
   const [search, setSearch] = useState('')
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({})
   const [activeTab, setActiveTab] = useState<string>('all')
+  // A required field only reports itself once the user has been in it: marking
+  // every empty required field on mount would shout at someone who has not
+  // typed anything yet.
+  const [touchedRequired, setTouchedRequired] = useState<Record<string, boolean>>({})
 
   // Every tool page routes its manifest through this form, so none of them can
   // be asked to theme it: it reads the board it was mounted in instead.
@@ -121,6 +141,26 @@ export default function DynamicForm({
 
   const hasDownloadMode = 'download_mode' in schema
   const currentMode = (value.download_mode as string) || 'video_audio'
+
+  const markTouchedRequired = (key: string) =>
+    setTouchedRequired((prev) => (prev[key] ? prev : { ...prev, [key]: true }))
+  const clearTouchedRequired = (key: string) =>
+    setTouchedRequired((prev) => (prev[key] ? { ...prev, [key]: false } : prev))
+
+  const requiredErrorId = (key: string) => `required-${key}`
+
+  /** Whether the field is required, and whether it is empty *and* already faulted. */
+  const requiredState = (key: string, rawField: unknown) => {
+    const field = (rawField ?? {}) as SchemaField
+    const required = isRequiredKey(toolId ?? '', key, field)
+    const missing = isRequiredValueMissing(value[key])
+    return { required, invalid: required && missing && Boolean(touchedRequired[key]) }
+  }
+
+  const urlField = urlKey ? ((schema[urlKey] ?? {}) as SchemaField) : undefined
+  const urlRequired = Boolean(urlKey) && isRequiredKey(toolId ?? '', urlKey as string, urlField)
+  const urlLabel = urlField?.title ? String(urlField.title) : 'Target media URL'
+  const urlInvalid = Boolean(urlKey) && requiredState(urlKey as string, urlField).invalid
 
   const handleModeChange = (mode: string) => {
     const next: Record<string, unknown> = { ...value, download_mode: mode }
@@ -195,16 +235,17 @@ export default function DynamicForm({
       {/* 1. HERO URL INSERTION BAR (High-Priority Primary Control)                */}
       {/* ========================================================================= */}
       {urlKey && (
-        <div data-param-key={urlKey} className="tool-panel relative rounded-2xl border-2 p-4 transition-all">
-          <div className="flex items-center justify-between mb-2">
+        <div data-param-key={urlKey} className="tool-panel relative rounded-2xl border-2 p-4 transition-all">          <div className="flex items-center justify-between mb-2">
             <label className="flex items-center gap-2 text-xs font-bold">
               <span className="tool-on-accent flex size-5 items-center justify-center rounded-md">
                 <Link2 className="size-3" />
               </span>
-              <span>{schema[urlKey]?.title ? String(schema[urlKey].title) : 'Target Media URL'}</span>
-              <span className="tool-accent-chip font-mono text-xs font-bold px-2 py-0.5 rounded-full">
-                REQUIRED
-              </span>
+              <span>{urlLabel}</span>
+              {urlRequired && (
+                <span className="tool-accent-chip font-mono text-xs font-bold px-2 py-0.5 rounded-full">
+                  REQUIRED
+                </span>
+              )}
             </label>
 
             {value[urlKey] !== undefined && value[urlKey] !== '' && (
@@ -223,7 +264,17 @@ export default function DynamicForm({
               type="text"
               autoFocus
               value={String(value[urlKey] ?? '')}
-              onChange={(e) => setField(urlKey, e.target.value)}
+              onChange={(e) => {
+                setField(urlKey, e.target.value)
+                // Typing clears the complaint: the gate re-arms on the next
+                // blur, but never shouts over someone who is fixing it.
+                if (urlInvalid) clearTouchedRequired(urlKey)
+              }}
+              onBlur={() => markTouchedRequired(urlKey)}
+              required={urlRequired}
+              aria-required={urlRequired || undefined}
+              aria-invalid={urlInvalid || undefined}
+              aria-describedby={urlInvalid ? requiredErrorId(urlKey) : undefined}
               placeholder={
                 schema[urlKey]?.placeholder
                   ? String(schema[urlKey].placeholder)
@@ -241,6 +292,14 @@ export default function DynamicForm({
               <span>Paste</span>
             </button>
           </div>
+
+          {urlInvalid && (
+            <RequiredFieldError
+              id={requiredErrorId(urlKey)}
+              message={missingRequiredMessage([{ key: urlKey, label: urlLabel }])}
+              className="tool-alert-ink mt-2"
+            />
+          )}
 
           {schema[urlKey]?.description && (
             <p className="mt-2 text-xs tool-muted flex items-center gap-1.5">
@@ -422,6 +481,18 @@ export default function DynamicForm({
           }
           return parts.join(' · ')
         })()
+        // One required-field gate for every control in the card, so a schema
+        // that declares a required parameter behaves the same wherever the
+        // field lands in this grid.
+        const { required, invalid } = requiredState(key, field)
+        const requiredErrorIdValue = requiredErrorId(key)
+        const requiredControlProps = {
+          required,
+          'aria-required': required || undefined,
+          'aria-invalid': invalid || undefined,
+          'aria-describedby': invalid ? requiredErrorIdValue : undefined,
+          onBlur: required ? () => markTouchedRequired(key) : undefined,
+        }
         return (
           <div key={key} data-param-key={key} className={`tool-card space-y-2 rounded-2xl border p-3.5 ${
             isFullWidth ? '@min-[26rem]:col-span-2' : ''
@@ -429,6 +500,7 @@ export default function DynamicForm({
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold flex items-center gap-1.5">
                 {field.title || key}
+                {required && <span className="tool-alert-ink">*</span>}
               </label>
               {val !== undefined && (
                 <button
@@ -461,12 +533,14 @@ export default function DynamicForm({
                       : `Select file or enter path for ${field.title || key}...`
                   }
                   availableArtifacts={availableArtifacts}
+                  {...requiredControlProps}
                 />
               ) : field.enum ? (
                 <select
                   value={String(val ?? field.default ?? '')}
                   onChange={(e) => setField(key, e.target.value || undefined)}
                   className="tool-well w-full rounded-xl px-3 py-2 text-xs font-mono font-medium"
+                  {...requiredControlProps}
                 >
                   <option value="">— select option —</option>
                   {field.enum.map((opt) => (
@@ -496,6 +570,7 @@ export default function DynamicForm({
                     onChange={(e) => setField(key, e.target.value)}
                     placeholder="Enter secret key..."
                     className="tool-well w-full rounded-xl pl-3 pr-8 py-2 font-mono text-xs"
+                    {...requiredControlProps}
                   />
                   <button
                     type="button"
@@ -513,6 +588,7 @@ export default function DynamicForm({
                     onChange={(e) => setField(key, e.target.value)}
                     placeholder={field.placeholder || 'Enter code or command arguments…'}
                     className="tool-well w-full rounded-xl px-3 py-2 font-mono text-xs leading-relaxed"
+                    {...requiredControlProps}
                   />
                   {key === 'raw_args' && (
                     <FileCode className="absolute right-2.5 bottom-2.5 size-3.5 tool-muted pointer-events-none" />
@@ -536,6 +612,16 @@ export default function DynamicForm({
                   }
                   placeholder={field.placeholder || `Enter ${key}…`}
                   className="tool-well w-full rounded-xl px-3 py-2 text-xs font-mono font-medium"
+                  {...requiredControlProps}
+                />
+              )}
+              {/* The announced half of the gate. Rendered only once the field
+                  has been left empty, so the card is quiet until it is not. */}
+              {invalid && (
+                <RequiredFieldError
+                  id={requiredErrorIdValue}
+                  message={missingRequiredMessage([{ key, label: field.title || key }])}
+                  className="tool-alert-ink"
                 />
               )}
             </div>

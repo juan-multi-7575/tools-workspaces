@@ -199,7 +199,7 @@ export default function DownloadsPage({
               onChange={(e) => setUrl(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && add()}
               placeholder="https://www.youtube.com/watch?v=... or Soundcloud / Vimeo link"
-              className="flex-1 rounded-lg border border-brand-sage bg-surface-white px-3.5 py-2 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none shadow-xs"
+              className="flex-1 rounded-lg border border-brand-sage bg-surface-white px-3.5 py-2 font-mono text-xs text-brand-espresso placeholder-placeholder focus:border-brand-caramel focus:outline-none shadow-xs"
             />
             <button
               type="button"
@@ -344,7 +344,7 @@ export default function DownloadsPage({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search downloaded tasks..."
-                className="w-full rounded-lg border border-brand-sage bg-brand-cream/60 pl-8 pr-3 py-1.5 text-xs text-brand-espresso placeholder-brand-caramel-text/60 font-mono focus:border-brand-caramel focus:bg-surface-white focus:outline-none"
+                className="w-full rounded-lg border border-brand-sage bg-brand-cream/60 pl-8 pr-3 py-1.5 text-xs text-brand-espresso placeholder-placeholder font-mono focus:border-brand-caramel focus:bg-surface-white focus:outline-none"
               />
             </div>
           </div>

@@ -8,7 +8,6 @@ export default function SoxSite({ siteState, initialInputPath }: SiteProps) {
   const [manifest, setManifest] = useState<ToolManifest | null>(null)
   const [error, setError] = useState<string | null>(null)
   useEffect(() => {
-    document.title = 'SoX — DSP effect rack'
     let active = true
     api.getTool('sox').then(value => { if (active) setManifest(value) }).catch(cause => { if (active) setError(errorMessage(cause)) })
     return () => { active = false }

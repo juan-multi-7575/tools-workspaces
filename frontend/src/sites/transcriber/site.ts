@@ -11,6 +11,7 @@ const TranscriberSite: SiteModule = {
   path: 'transcriber',
   // Brief #3, reference `practicaltype`. A typeset transcript on a book ground.
   accent: '#8A5A2B',
+  title: 'Transcriber — speech to text',
   Component: lazy(() => import('./TranscriberSite')),
 }
 
