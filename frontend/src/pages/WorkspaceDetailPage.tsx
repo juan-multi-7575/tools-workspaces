@@ -4,6 +4,7 @@ import { useCanvasPersistence } from '../hooks/useCanvasPersistence'
 import { branchGraph } from '../lib/canvasBranch'
 import { canonicalId } from '../lib/toolIds'
 import ErrorBoundary from '../components/common/ErrorBoundary'
+import Modal from '../components/common/Modal'
 import { useHealth } from '../hooks/useHealth'
 import { useCallback, useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
@@ -260,7 +261,7 @@ export default function WorkspaceDetailPage() {
             >
               View Outputs
             </button>
-            <button onClick={() => setOutputBanner(null)} className="text-brand-cream-light/80 hover:text-brand-cream-light p-1">
+            <button onClick={() => setOutputBanner(null)} aria-label="Dismiss output banner" className="text-brand-cream-light/80 hover:text-brand-cream-light p-1">
               <X className="size-4" />
             </button>
           </div>
@@ -439,15 +440,19 @@ export default function WorkspaceDetailPage() {
 
       {/* Trim Waveform Modal */}
       {trimTarget && id && selectedRun && (
-        <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-brand-espresso/30 backdrop-blur-[3px]">
-          <div className="relative w-full max-w-3xl rounded-2xl border-2 border-brand-sage bg-brand-cream p-6 shadow-2xl space-y-4 text-brand-espresso">
+        <Modal
+          labelledBy="trim-studio-title"
+          onClose={() => setTrimTarget(null)}
+          className="p-4 bg-brand-espresso/30 backdrop-blur-[3px]"
+          panelClassName="relative w-full max-w-3xl rounded-2xl border-2 border-brand-sage bg-brand-cream p-6 shadow-2xl space-y-4 text-brand-espresso"
+        >
             <div className="flex items-center justify-between border-b border-brand-sage/60 pb-3">
               <div className="flex items-center gap-2">
                 <div className="flex size-8 items-center justify-center rounded-xl bg-brand-caramel text-brand-cream-light">
                   <Scissors className="size-4" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-brand-espresso">
+                  <h3 id="trim-studio-title" className="text-xs font-bold uppercase tracking-wider text-brand-espresso">
                     Trim & Split Studio
                   </h3>
                   <p className="font-mono text-xs text-brand-caramel-text">{trimTarget}</p>
@@ -455,6 +460,7 @@ export default function WorkspaceDetailPage() {
               </div>
               <button
                 onClick={() => setTrimTarget(null)}
+                aria-label="Close"
                 className="rounded-lg p-1.5 text-brand-caramel-text hover:bg-brand-sage/30 hover:text-brand-espresso transition-colors"
               >
                 <X className="size-4" />
@@ -472,8 +478,7 @@ export default function WorkspaceDetailPage() {
                 refreshRuns()
               }}
             />
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Custom delete confirmation (replaces native confirm) */}

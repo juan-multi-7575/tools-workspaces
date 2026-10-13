@@ -13,6 +13,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import { api, type MediaItem } from '../../lib/api'
+import Modal from '../common/Modal'
 
 interface SubtitleCue {
   id: number
@@ -167,8 +168,12 @@ export default function VideoSubtitlePlayerModal({
   }
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-5 bg-brand-espresso/50 backdrop-blur-xs">
-      <div className="relative flex flex-col w-full max-w-6xl max-h-[92vh] rounded-2xl border-2 border-brand-sage bg-brand-cream shadow-2xl overflow-hidden text-brand-espresso">
+    <Modal
+      labelledBy="video-subtitle-title"
+      onClose={onClose}
+      className="p-3 sm:p-5 bg-brand-espresso/50 backdrop-blur-xs"
+      panelClassName="relative flex flex-col w-full max-w-6xl max-h-[92vh] rounded-2xl border-2 border-brand-sage bg-brand-cream shadow-2xl overflow-hidden text-brand-espresso"
+    >
         {/* Header Bar */}
         <div className="flex items-center justify-between border-b border-brand-sage/60 px-5 py-3 bg-brand-cream-dark/90">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -176,7 +181,7 @@ export default function VideoSubtitlePlayerModal({
               <Play className="size-4 fill-current" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-xs font-bold text-brand-espresso font-mono truncate">{video.name}</h3>
+              <h3 id="video-subtitle-title" className="text-xs font-bold text-brand-espresso font-mono truncate">{video.name}</h3>
               <p className="text-xs text-brand-caramel-text font-mono">
                 {(video.size / (1024 * 1024)).toFixed(1)} MB • Synchronized Video & Subtitles Studio
               </p>
@@ -216,6 +221,7 @@ export default function VideoSubtitlePlayerModal({
 
             <button
               onClick={onClose}
+              aria-label="Close"
               className="rounded-lg p-1.5 text-brand-caramel-text hover:bg-brand-sage/30 hover:text-brand-espresso transition-colors"
             >
               <X className="size-4" />
@@ -371,7 +377,6 @@ export default function VideoSubtitlePlayerModal({
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

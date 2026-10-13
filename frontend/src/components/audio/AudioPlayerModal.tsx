@@ -12,6 +12,7 @@ import {
   Music,
   Sparkles,
 } from 'lucide-react'
+import Modal from '../common/Modal'
 
 export interface AudioPlayerMedia {
   name: string
@@ -104,8 +105,12 @@ export default function AudioPlayerModal({
   }
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-brand-espresso/30 backdrop-blur-[3px]">
-      <div className="relative w-full max-w-xl rounded-2xl border-2 border-brand-sage bg-brand-cream shadow-2xl p-6 text-brand-espresso">
+    <Modal
+      labelledBy="audio-player-title"
+      onClose={onClose}
+      className="p-4 bg-brand-espresso/30 backdrop-blur-[3px]"
+      panelClassName="relative w-full max-w-xl rounded-2xl border-2 border-brand-sage bg-brand-cream shadow-2xl p-6 text-brand-espresso"
+    >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-brand-sage/60 pb-3.5 mb-4">
           <div className="flex items-center gap-2.5">
@@ -113,7 +118,7 @@ export default function AudioPlayerModal({
               <Music className="size-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-brand-espresso truncate max-w-sm">
+              <h3 id="audio-player-title" className="text-sm font-bold text-brand-espresso truncate max-w-sm">
                 {media.name}
               </h3>
               <p className="font-mono text-xs text-brand-caramel-text">
@@ -123,6 +128,7 @@ export default function AudioPlayerModal({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="rounded-lg p-1.5 text-brand-caramel-text hover:bg-brand-sage/30 hover:text-brand-espresso transition-colors"
           >
             <X className="size-4" />
@@ -291,7 +297,6 @@ export default function AudioPlayerModal({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
