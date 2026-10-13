@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { X, Copy, Check, FileTerminal, Layers, GitBranch } from 'lucide-react'
 import { api } from '../../lib/api'
+import Modal from '../common/Modal'
 
 export default function RunDetailsModal({
   workspaceId,
@@ -40,8 +41,12 @@ export default function RunDetailsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-brand-espresso/30 backdrop-blur-[3px]">
-      <div className="relative flex flex-col w-full max-w-3xl max-h-[85vh] rounded-2xl border-2 border-brand-sage bg-brand-cream shadow-2xl overflow-hidden text-brand-espresso">
+    <Modal
+      labelledBy="run-details-title"
+      onClose={onClose}
+      className="p-4 bg-brand-espresso/30 backdrop-blur-[3px]"
+      panelClassName="relative flex flex-col w-full max-w-3xl max-h-[85vh] rounded-2xl border-2 border-brand-sage bg-brand-cream shadow-2xl overflow-hidden text-brand-espresso"
+    >
         {/* Modal Header */}
         <div className="flex items-center justify-between border-b border-brand-sage/60 px-5 py-3.5 bg-brand-cream-dark/80">
           <div className="flex items-center gap-2.5">
@@ -49,7 +54,7 @@ export default function RunDetailsModal({
               <FileTerminal className="size-4" />
             </div>
             <div>
-              <h3 className="text-xs font-bold text-brand-espresso font-mono flex items-center gap-2">
+              <h3 id="run-details-title" className="text-xs font-bold text-brand-espresso font-mono flex items-center gap-2">
                 Run Details: {runId}
                 {manifest?.status ? (
                   <span
@@ -83,6 +88,7 @@ export default function RunDetailsModal({
             )}
             <button
               onClick={onClose}
+              aria-label="Close"
               className="rounded-lg p-1.5 text-brand-caramel-text hover:bg-brand-sage/30 hover:text-brand-espresso transition-colors"
             >
               <X className="size-4" />
@@ -132,7 +138,6 @@ export default function RunDetailsModal({
             </>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
