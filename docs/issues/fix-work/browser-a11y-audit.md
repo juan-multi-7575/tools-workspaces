@@ -1,5 +1,7 @@
 # Browser accessibility & UI/UX audit — 2026-10-02
 
+> **⚠ STALE — pre-dates redesign merge `b8234442`.** This first-pass CDP audit ran on 2026-10-02, *before* the batch A–E UX redesign merge (`b8234442`) re-landed sub-12px text and raw hex. Its passing typography/overflow/#14 readings describe the **pre-redesign** UI and must not be cited as current-UI evidence. Since this pass: the icon-only close buttons, canvas-node `aria-label`s (`PipelineCanvas.tsx:204`), and the three Settings input labels (`SettingsPage.tsx:164,289,308`) listed as defects 2–4 below are **fixed** (confirmed in the second pass); the standalone-modal focus-trap and WCAG 2.2 gaps remain and are now tracked in GitHub [#2](https://github.com/juan-multi-7575/tools-workspaces/issues/2) / [#3](https://github.com/juan-multi-7575/tools-workspaces/issues/3). **No post-redesign browser audit exists.** Companion second pass: [`browser-a11y-audit-2.md`](browser-a11y-audit-2.md). Standing correction: [`2026-10-13-verification-corrections.md`](2026-10-13-verification-corrections.md) (Correction 3).
+
 Method: browser-harness (CDP) against the dev servers at 1440×900. Real Tab/Enter/Escape key dispatch, accessibility-tree queries, computed-style and contrast measurements, and a backend stop/restart cycle. Screenshots in `/tmp/opencode/a11y-*.png`.
 
 ## Verified passing (browser evidence)

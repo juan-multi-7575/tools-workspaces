@@ -2,7 +2,42 @@
 
 Reviewed on 2026-10-02 against the current workspace. This is a code review and local verification, not a completed browser accessibility or backend-disconnect test. No application fixes were made.
 
-## Current status
+## Refresh — merged state of Tasks 1–5 (2026-10-13)
+
+> **This refresh supersedes the 2026-10-02 baseline below.** Tasks 1–5 of [`fix-work/PLAN.md`](fix-work/PLAN.md) are now **merged to `main`** (through the batch A–E redesign merge `b8234442` and Tasks 4–5). The sections further down are retained verbatim as the *pre-merge baseline* — read them as "what the review found, before the fixes", not the current state. Authoritative current evidence: [`fix-work/review-report.md`](fix-work/review-report.md) (Task 5) and [`fix-work/design-tokens-report.md`](fix-work/design-tokens-report.md) (Task 4), corrected by [`fix-work/2026-10-13-verification-corrections.md`](fix-work/2026-10-13-verification-corrections.md). The backlog rows this review feeds are in [`UI_UX_ARCHITECTURE_ISSUES.md`](UI_UX_ARCHITECTURE_ISSUES.md).
+
+**Gate results (Task 5, `wt-batch-E` = merged Tasks 1–3 + 4.5):** frontend `npm run verify` → **305 passed / 0 failed**, `tsc -b` clean, oxlint **0 errors**; `npm run build` → exit 0 (only the >500 kB chunk warning); backend `pytest` → **239 passed, 1 skipped, 0 failed** (`test_09_cli.py` excluded — environment `click` mismatch; the 1 skip is `sox`-not-installed in `test_11_catalog.py`).
+
+**Per-issue merged status** ("Met (code)" = source-verified + covered by automated tests; browser/pixel gates called out explicitly):
+
+| # | Merged state | Notes / remaining gates |
+|---|---|---|
+| #1 | Met (deviation) | `test`+`verify` wired, 305 assertions; `node:test` runner preserved, Vitest **not** adopted; `_dbg.test.ts` excluded. |
+| #2 | Met (functional) | Shared `lib/toolForms.tsx`/`lib/toolIds.ts`; catalog + inspector resolve one registry; canonical IDs `media.download.yt-dlp`, `subtitle.translate.srt`, `sys.health.check`. |
+| #3 | Met (code) | `AbortSignal` + idle timeout (default **45 s**, deviation from ~30 s) + heartbeats + terminal gating + reader cleanup; **no SSE replay** (Reconnect reconciles status/outputs). Manual check: kill backend mid-run. |
+| #4 | Met (code) | `{code,message}` at every boundary; `ApiError(status,code,message)`; no Python-substring matching; artifact paths intentionally preserved. |
+| #5 | Met (code) | `ErrorBoundary` around app/catalog/modal/studio panes; narrow graph-renderer boundary preserves the toolbar. Manual check: browser render-throw recovery. |
+| #6 | Met (code) | Global `:focus-visible` on `--color-focus-ring` (`!important`) backs all **51** `focus:outline-none` sites; 18/18 sampled Tab stops showed the caramel ring (pre-redesign CDP audit). **Full keyboard pass + modal dialog-semantics/focus-trap/Escape/named-close open → GitHub #2.** |
+| #7 | Met (code + audited) | `/api/health` → `{status,version}`; shared `useHealth` poller; host from `API_BASE`; OFFLINE→retry→ONLINE browser-verified. |
+| #8 | Met (functional) | `PipelineCanvas.tsx` 1,523 → **616** lines; layout/history/persistence/graph/run extracted + tested. |
+| #9 | Met | Single graph reducer owns graph/selection/history; mutable command refs and the internal/external selection merge removed. |
+| #10 | Met | Changing `selectedRun` = **0 requests**; workspace-switch aborts + stale-response guards; session-shared catalog cache. No server-state library (not a prerequisite). |
+| #11 | Met | Debounced (400 ms) auto-validation; Run disabled with inline reason; invalid/cycle edges highlighted; execution re-validates. |
+| #12 | Met | Bounded Kahn + DFS cycle detection returns the path + offending edges; Run blocked; diamond has no false positive. |
+| #13 | Met (code) | `onBranch` → `api.branchRun`; params/artifacts restored; source/upstream excluded; `RUN_NOT_FOUND` 404. Multi-parent resume reported unsupported. Manual check: real failed 3-step branch rerun. |
+| #14 | **Partially met** | Tailwind-utility floor **done** (373 → 0 `text-[9/10/11]px`); `index.html` metas added. **Stylesheet floor UNMET** — 209 sub-12px declarations remain across 18 site-CSS files → **GitHub #1**. Pixel overflow/legibility gate (1440×900 / 768×1024 / 390×844) **unrun** → **GitHub #4**. The old "catalog browser check passed" evidence pre-dates `b8234442`. |
+| #15 | **Partially met** | z-index scale **met** (`--z-panel/sticky/overlay/drawer/modal`, 0 ad-hoc `z-*`). Strict "zero raw hex outside `index.css`" **UNMET by design** (approved Option A): 406 non-test hex lines / 601 occurrences remain (per-site palette in `sites/registry.ts`; `lib/hostSkin.ts` runtime-contrast + Canvas 2D; literal SVG/QR consumers). Only 11 exact brand-token matches tokenized. Before/after screenshot gate → **GitHub #4**. |
+| #16 | Met | Dead `setArtifacts` state + both fetch paths removed; dock/media consumers refresh via `mediaRefreshKey`. |
+
+**Where the remaining work is tracked (GitHub):**
+
+- residual 12px stylesheet floor (209 site-CSS declarations) → [#1](https://github.com/juan-multi-7575/tools-workspaces/issues/1)
+- modal dialog semantics / focus-trap / Escape / named-close (no shared modal primitive) → [#2](https://github.com/juan-multi-7575/tools-workspaces/issues/2)
+- residual WCAG 2.2 gaps (2.59:1 placeholder contrast, sub-24px touch targets, no skip link, overlay dialog semantics, unnamed QR) → [#3](https://github.com/juan-multi-7575/tools-workspaces/issues/3)
+- unrun #14 pixel + #15 screenshot acceptance gates → [#4](https://github.com/juan-multi-7575/tools-workspaces/issues/4)
+- (this documentation record is itself corrected under #5)
+
+## Current status — 2026-10-02 baseline (retained as history; superseded by the refresh above)
 
 All 16 entries still have outstanding work. Several descriptions or proposed implementations need correction before implementation.
 
