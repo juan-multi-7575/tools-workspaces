@@ -1,5 +1,20 @@
 import { useEffect } from 'react'
 
+export interface EscapeKeyEventLike {
+  key?: string
+  /** The legacy spelling, still carried by some synthetic keyboard events. */
+  keyCode?: number
+}
+
+/**
+ * Whether a key event is an Escape. Split out of the hook so the decision is
+ * a pure function the tests can drive with the same shape a browser hands a
+ * `keydown` listener, instead of re-stating the guard in an assertion.
+ */
+export function isEscapeKey(event: EscapeKeyEventLike): boolean {
+  return event.key === 'Escape' || event.key === 'Esc' || event.keyCode === 27
+}
+
 /**
  * Closes whatever transient surface is open when the user presses Escape.
  *
@@ -16,11 +31,7 @@ export function useEscapeToClose(active: boolean, onEscape: () => void): void {
   useEffect(() => {
     if (!active) return
     const handleKeyDown = (event: KeyboardEvent) => {
-      // `key` is the modern spelling; `keyCode` is the one older browsers and
-      // some synthetic keyboard events still use.
-      if (event.key === 'Escape' || event.key === 'Esc' || event.keyCode === 27) {
-        onEscape()
-      }
+      if (isEscapeKey(event)) onEscape()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
