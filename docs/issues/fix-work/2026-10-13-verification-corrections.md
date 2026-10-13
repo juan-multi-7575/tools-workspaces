@@ -26,7 +26,9 @@ batch A–E redesign actually sizes the per-tool site text.
 |---|---|
 | `text-[9\|10\|11]px` in `.tsx` | **0** (what `9992fab6` measured) |
 | `font-size: <12px` in `index.css` | **0** — why the utility grep looked clean |
-| `font-size: <12px` in **site CSS** | **209 declarations across 18 files** |
+| `font-size: <12px` in **site CSS** | **138 declarations across 18 site stylesheets** (`git grep -hoE 'font-size:\s*([0-9]\|1[11])px' cd8ed966 -- 'frontend/src/**/*.css'`) |
+| `text-[8\|9\|10\|11]px` in `.tsx` | **2** (the `ModelHealthCheckForm.tsx` sites) |
+| **Total** | **140 sub-12px information sites before → 0 after** (`git grep` @ `462ad591`: 0 / 0) |
 
 Per-file leaders: `sites/downloader/downloader.css` (42), `sites/summarizer/summarizer.css`
 (21), `sites/imagemagick/imagemagick.css` (21), `sites/text-translator/text-translator.css`
@@ -90,6 +92,28 @@ fixed).
   390×844 has never been browser-verified. 375 `text-[12px]` sites and 67 wide-tracked
   uppercase mono labels across 20 files are in scope. Tracked as issue #4.
 - **#15 screenshot gate** — before/after capture of the 11 tokenized hex values. Tracked as issue #4.
+
+## Count reconciliation (2026-10-13, post-fix)
+
+The "before" count circulated as 269 (issue #1), 209 (this file), and 197 (a second
+recount). All three came from different greps. Re-measured with **one consistent
+method** — `git grep -hoE` on the pre-fix commit vs the merged commit, same regex,
+same paths:
+
+| Metric | Before (`cd8ed966`) | After (`462ad591`) |
+|---|---|---|
+| site-CSS `font-size: <12px` | 138 | **0** |
+| `.tsx` `text-[8\|9\|10\|11]px` | 2 | **0** |
+
+The spread in the reported "before" numbers is a **counting-method artifact**, not
+disagreement about the defect: these stylesheets are minified with many declarations
+per line, so `grep -c` (lines) and `grep -o | wc -l` (occurrences) diverge, and a
+narrower `font-size:\s*Npx` token match counts fewer than a permissive `font-size:[^;]*Npx`
+span match. What is **unambiguous under every method is the after-count: 0.**
+
+Ground truth for the change itself: `4bb3df39` touched 19 files (18 of them site
+stylesheets), +276/−274, consistent with surfacing the raised font-sizes plus the
+letter-spacing rescaling used to hold rendered width constant.
 
 ## Hex-count discrepancy (reconciled)
 
