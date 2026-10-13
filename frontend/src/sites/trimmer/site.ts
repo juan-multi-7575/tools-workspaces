@@ -14,6 +14,7 @@ const TrimmerSite: SiteModule = {
   path: 'trimmer',
   // Brief #2, reference `type.method`. One accent dot on a navy ground.
   accent: '#3B82F6',
+  title: 'Trimmer — clip cutting',
   Component: lazy(() => import('./TrimmerSite')),
 }
 

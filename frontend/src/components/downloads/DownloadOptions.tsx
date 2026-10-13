@@ -319,7 +319,7 @@ export default function DownloadOptionsForm({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Filter options…"
-              className="w-full rounded-xl border border-brand-sage bg-surface-white pl-8 pr-3 py-1.5 text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none"
+              className="w-full rounded-xl border border-brand-sage bg-surface-white pl-8 pr-3 py-1.5 text-xs text-brand-espresso placeholder-placeholder focus:border-brand-caramel focus:outline-none"
             />
             {search && (
               <button
@@ -381,7 +381,7 @@ export default function DownloadOptionsForm({
                         onChange={(e) => set(f.key, e.target.value || undefined)}
                         rows={2}
                         placeholder={f.placeholder || '--no-mtime --embed-thumbnail'}
-                        className="w-full rounded-xl border border-brand-sage bg-surface-white px-2.5 py-1.5 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none"
+                        className="w-full rounded-xl border border-brand-sage bg-surface-white px-2.5 py-1.5 font-mono text-xs text-brand-espresso placeholder-placeholder focus:border-brand-caramel focus:outline-none"
                       />
                     ) : (
                       <input
@@ -389,7 +389,7 @@ export default function DownloadOptionsForm({
                         value={String(value[f.key] ?? '')}
                         onChange={(e) => set(f.key, e.target.value || undefined)}
                         placeholder={f.placeholder || 'Value…'}
-                        className="w-full rounded-xl border border-brand-sage bg-surface-white px-2.5 py-1.5 text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none font-mono"
+                        className="w-full rounded-xl border border-brand-sage bg-surface-white px-2.5 py-1.5 text-xs text-brand-espresso placeholder-placeholder focus:border-brand-caramel focus:outline-none font-mono"
                       />
                     )}
                   </div>

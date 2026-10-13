@@ -204,7 +204,7 @@ export default function WorkspaceMediaExplorer({
               placeholder="Search media & files..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-brand-sage bg-brand-cream/40 text-xs text-brand-espresso placeholder-brand-caramel-text/60 outline-none focus:border-brand-caramel font-mono"
+              className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-brand-sage bg-brand-cream/40 text-xs text-brand-espresso placeholder-placeholder outline-none focus:border-brand-caramel font-mono"
             />
           </div>
 

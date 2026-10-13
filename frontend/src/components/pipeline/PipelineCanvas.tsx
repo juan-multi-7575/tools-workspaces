@@ -561,7 +561,7 @@ function PipelineCanvasInner({workspaceId,tools:initialTools,execution,graph,per
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
               placeholder="e.g. YouTube to English Translated Subtitles"
-              className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 px-3.5 py-2 text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none font-medium"
+              className="w-full rounded-xl border border-brand-sage bg-brand-cream/70 px-3.5 py-2 text-xs text-brand-espresso placeholder-placeholder focus:border-brand-caramel focus:outline-none font-medium"
               autoFocus
             />
             <div className="flex items-center justify-end gap-2 pt-2">

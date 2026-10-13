@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import { api, errorMessage, type ToolManifest } from '../../lib/api'
 import { AVAILABILITY_LABEL, AVAILABILITY_LEGEND, describeSite } from '../registry'
+import { useDocumentTitle } from '../../hooks/useDocumentTitle'
 import './home.css'
 
 const NO_SITES: ReadonlySet<string> = new Set()
@@ -21,6 +22,8 @@ const NO_SITES: ReadonlySet<string> = new Set()
 export default function HomeSite({ built = NO_SITES }: { built?: ReadonlySet<string> } = {}) {
   const [tools, setTools] = useState<ToolManifest[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  useDocumentTitle('Tools Garage — tool index')
 
   useEffect(() => {
     const controller = new AbortController()

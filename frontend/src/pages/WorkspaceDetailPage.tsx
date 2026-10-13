@@ -34,9 +34,11 @@ import WorkspaceSwitcherDropdown from '../components/workspaces/WorkspaceSwitche
 import ToolPaletteDrawer from '../components/studio/ToolPaletteDrawer'
 import NodeInspectorPanel from '../components/studio/NodeInspectorPanel'
 import BottomArtifactsDock from '../components/studio/BottomArtifactsDock'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export default function WorkspaceDetailPage() {
   const { id } = useParams<{ id: string }>()
+  useDocumentTitle('Tools Garage — workspace pipeline')
   const [view, setView] = useState<'pipeline' | 'media_hub'>('pipeline')
   const [tools, setTools] = useState<ToolManifest[]>([])
   const [runs, setRuns] = useState<Run[]>([])
@@ -320,7 +322,9 @@ export default function WorkspaceDetailPage() {
       <div className="flex items-center gap-3 text-xs" role="status">
         <span>{execution.busy?'Pipeline monitor connected':`Backend run: ${execution.remoteState}`}</span>
         {(execution.busy||execution.remoteState!=='idle') && <button onClick={execution.stop} className="font-bold text-accent-contrast">Stop backend run</button>}
-        {!execution.busy && <button onClick={execution.reconnect} className="font-bold text-brand-caramel">Reconnect status</button>}
+        {/* WCAG 2.5.8: the row is `text-xs`, so the button is ~16px tall until it
+            carries padding; the negative margins keep the row from growing. */}
+        {!execution.busy && <button onClick={execution.reconnect} className="font-bold text-brand-caramel px-1.5 -mx-1.5 py-1 -my-1">Reconnect status</button>}
         {runStatus && <span>{runStatus.msg}</span>}
       </div>
       {/* 1. Integrated Studio Workbench View */}

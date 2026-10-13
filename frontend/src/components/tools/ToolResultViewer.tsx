@@ -337,7 +337,7 @@ export default function ToolResultViewer({
                   value={tableSearch}
                   onChange={(e) => setTableSearch(e.target.value)}
                   placeholder="Filter model name or diagnostic..."
-                  className="w-full rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none"
+                  className="w-full rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1 font-mono text-xs text-brand-espresso placeholder-placeholder focus:border-brand-caramel focus:outline-none"
                 />
                 {tableSearch && (
                   <button

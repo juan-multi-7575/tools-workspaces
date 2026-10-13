@@ -40,3 +40,14 @@ export const SITE_COMPONENTS: Record<string, SiteModule['Component']> = Object.f
 
 /** Tool ids that have a built site. The home index reads this for availability. */
 export const BUILT_SITE_IDS: ReadonlySet<string> = new Set(sites.map((site) => site.toolId))
+
+/**
+ * Tool id -> the wording its route puts in `document.title` (WCAG 2.4.2).
+ *
+ * `site.ts` files are imported eagerly (only their `Component` is lazy), so
+ * this map is ready before a site's chunk arrives — which is what lets the
+ * router title the window in the same tick it matches the route.
+ */
+export const SITE_TITLES: Readonly<Record<string, string>> = Object.freeze(
+  Object.fromEntries(sites.map((site) => [site.toolId, site.title])),
+)

@@ -14,8 +14,10 @@ import {
   RotateCcw,
 } from 'lucide-react'
 import { api, API_BASE, type Workspace } from '../lib/api'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export default function WorkspacesPage() {
+  useDocumentTitle('Tools Garage — workspaces')
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(true)
@@ -132,7 +134,7 @@ export default function WorkspacesPage() {
                 onKeyDown={(e) => e.key === 'Enter' && create()}
                 placeholder="New workspace name… (letters, numbers, dashes)"
                 maxLength={64}
-                className="w-full sm:w-64 rounded-xl border border-brand-sage bg-surface-white px-3.5 py-2 text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none shadow-xs font-medium"
+                className="w-full sm:w-64 rounded-xl border border-brand-sage bg-surface-white px-3.5 py-2 text-xs text-brand-espresso placeholder-placeholder focus:border-brand-caramel focus:outline-none shadow-xs font-medium"
               />
               <button
                 onClick={create}

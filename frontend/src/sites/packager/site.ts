@@ -5,6 +5,7 @@ const PackagerSite: SiteModule = {
   toolId: 'packager',
   path: 'packager',
   accent: '#D86C3C',
+  title: 'Packager — archive tools',
   Component: lazy(() => import('./PackagerSite')),
 }
 

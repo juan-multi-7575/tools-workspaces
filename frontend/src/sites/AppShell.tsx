@@ -44,6 +44,12 @@ function Shell() {
   return (
     <ActivityProvider>
       <div className="flex flex-col md:flex-row h-full w-full bg-brand-cream text-brand-espresso antialiased select-none font-sans overflow-hidden">
+        {/* WCAG 2.4.1: the sidebar is ~20 tab stops deep, so the first thing a
+            keyboard user reaches is a jump past all of it. It stays off-screen
+            until focused, so the design is untouched. */}
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         {/* Mobile Top Navigation Header */}
         <header className="md:hidden flex h-14 shrink-0 items-center justify-between border-b border-brand-sage bg-brand-cream-dark/90 px-4 z-sticky backdrop-blur-xs">
           <div className="flex items-center gap-2.5">
@@ -173,7 +179,11 @@ function Shell() {
         </aside>
 
         {/* Main Application Content Area */}
-        <main className="flex-1 h-full min-h-0 overflow-hidden flex flex-col bg-brand-cream text-brand-espresso min-w-0 w-full">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 h-full min-h-0 overflow-hidden flex flex-col bg-brand-cream text-brand-espresso min-w-0 w-full"
+        >
           <ErrorBoundary name="Application view" resetKey={location.pathname}>
           {/* The shell owns every surface except the standalone sites and the
               home index, which `src/App.tsx` routes before reaching here. Its

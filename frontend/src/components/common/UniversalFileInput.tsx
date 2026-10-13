@@ -22,6 +22,19 @@ export interface UniversalFileInputProps {
   availableArtifacts?: { name: string; path: string; kind?: string }[]
   title?: string
   filterExtensions?: string[]
+  /** Lets a host page's own `<label htmlFor>` name this picker's text input. */
+  id?: string
+  /**
+   * The required-field gate. The picker is a composite (drop target, browse
+   * button, recent-file list) around one text input, and that input is what
+   * carries the value, so it is where `required`, `aria-invalid` and the
+   * `aria-describedby` error reference belong.
+   */
+  required?: boolean
+  'aria-required'?: boolean
+  'aria-invalid'?: boolean
+  'aria-describedby'?: string
+  onBlur?: () => void
 }
 
 export default function UniversalFileInput({
@@ -31,6 +44,12 @@ export default function UniversalFileInput({
   accept,
   availableArtifacts = [],
   filterExtensions,
+  id,
+  required,
+  'aria-required': ariaRequired,
+  'aria-invalid': ariaInvalid,
+  'aria-describedby': ariaDescribedBy,
+  onBlur,
 }: UniversalFileInputProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -220,9 +239,15 @@ export default function UniversalFileInput({
       <div className="flex items-center gap-1.5">
         <div className="relative flex-1">
           <input
+            id={id}
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value || undefined)}
+            onBlur={onBlur}
+            required={required}
+            aria-required={ariaRequired}
+            aria-invalid={ariaInvalid}
+            aria-describedby={ariaDescribedBy}
             placeholder={placeholder}
             className="tool-well w-full rounded-xl pl-3 pr-8 py-2 font-mono text-xs transition-colors"
           />

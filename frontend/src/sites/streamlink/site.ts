@@ -4,6 +4,7 @@ const StreamlinkSite: SiteModule = {
   toolId: 'streamlink',
   path: 'streamlink',
   accent: '#FF4D00',
+  title: 'Streamlink — live capture',
   Component: lazy(() => import('./StreamlinkSite')),
 }
 export default StreamlinkSite

@@ -19,6 +19,7 @@ import {
 import { api, API_BASE, type ToolManifest } from '../lib/api'
 import { getCategoryIcon } from '../lib/utils'
 import ErrorBoundary, { BoundaryContent } from '../components/common/ErrorBoundary'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 type ViewFormat = 'grid' | 'table' | 'inspector'
 
@@ -30,6 +31,8 @@ export default function ToolsPage(
     onOpenAudioPlayer?: (artifact: { name: string; path: string; kind?: string }) => void
   },
 ) {
+  useDocumentTitle('Tools Garage — tool catalog')
+
   const [tools, setTools] = useState<ToolManifest[]>([])
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -185,7 +188,7 @@ export default function ToolsPage(
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search tools, ports..."
-              className="w-full rounded-xl border border-brand-sage bg-surface-white pl-8 pr-3 py-1.5 text-xs font-semibold text-brand-espresso placeholder-brand-caramel-text/60 transition-all focus:border-brand-caramel focus:ring-2 focus:ring-brand-caramel/20 focus:outline-none shadow-xs"
+              className="w-full rounded-xl border border-brand-sage bg-surface-white pl-8 pr-3 py-1.5 text-xs font-semibold text-brand-espresso placeholder-placeholder transition-all focus:border-brand-caramel focus:ring-2 focus:ring-brand-caramel/20 focus:outline-none shadow-xs"
             />
             {search && (
               <button

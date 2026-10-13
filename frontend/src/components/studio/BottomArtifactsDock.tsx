@@ -13,11 +13,8 @@ import {
   ChevronUp,
   RefreshCw,
 } from 'lucide-react'
-import {
-  api,
-  type WorkspaceMediaResponse,
-  type Run,
-} from '../../lib/api'
+import { api, type WorkspaceMediaResponse, type Run } from '../../lib/api'
+import { useEscapeToClose } from '../../hooks/useEscapeToClose'
 
 export default function BottomArtifactsDock({
   workspaceId,
@@ -81,6 +78,10 @@ export default function BottomArtifactsDock({
     }
   }
 
+  // The dock is the only thing between the user and the workbench, so it
+  // collapses on Escape like the confirmations beside it do.
+  useEscapeToClose(dockExpanded, onToggleExpand)
+
   return (
     <div className="border-t border-brand-sage bg-brand-cream-dark/80 flex flex-col shrink-0 transition-all">
       {/* Dock Bar Header */}
@@ -88,7 +89,13 @@ export default function BottomArtifactsDock({
         <div className="flex items-center gap-3">
           <button
             onClick={onToggleExpand}
-            className="flex items-center gap-1.5 text-xs font-bold text-brand-espresso hover:text-brand-caramel transition-colors"
+            /* WCAG 2.5.8 needs a 24px hit area. The bar's own height is set by
+               the icon and the `text-xs` label, so the padding that reaches
+               24px is backed out with an equal negative margin: the control
+               grows for the pointer without growing the dock header. */
+            aria-expanded={dockExpanded}
+            aria-controls={dockExpanded ? 'artifacts-dock-body' : undefined}
+            className="flex items-center gap-1.5 py-1 -my-1 text-xs font-bold text-brand-espresso hover:text-brand-caramel transition-colors"
           >
             <Package className="size-4 text-brand-caramel" />
             <span className="uppercase tracking-wider font-mono text-xs">
@@ -142,8 +149,11 @@ export default function BottomArtifactsDock({
           <button
             onClick={() => refresh()}
             disabled={loading}
-            className="p-1 rounded-lg border border-brand-sage/60 bg-surface-white text-brand-espresso hover:bg-brand-cream-dark shadow-2xs transition-all active:scale-95 disabled:opacity-40"
             title="Refresh artifacts"
+            aria-label="Refresh artifacts"
+            /* p-1.5 with a matching negative margin keeps the original 20px
+               footprint while giving the icon a 24px+ hit area. */
+            className="p-1.5 -m-0.5 rounded-lg border border-brand-sage/60 bg-surface-white text-brand-espresso hover:bg-brand-cream-dark shadow-2xs transition-all active:scale-95 disabled:opacity-40"
           >
             <RefreshCw className={`size-3 text-brand-caramel ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -155,7 +165,7 @@ export default function BottomArtifactsDock({
 
       {/* Expanded Dock Body */}
       {dockExpanded && (
-        <div className="h-52 overflow-y-auto p-3 bg-brand-cream/40">
+        <div id="artifacts-dock-body" className="h-52 overflow-y-auto p-3 bg-brand-cream/40">
           {tab === 'packages' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {!mediaData?.packages || mediaData.packages.length === 0 ? (

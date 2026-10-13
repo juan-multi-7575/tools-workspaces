@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { RefreshCw, Save, KeyRound, Server, PackageCheck, CheckCircle2, ArrowUpCircle, HardDrive } from 'lucide-react'
 import { api, type ProviderInfo } from '../lib/api'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export default function SettingsPage() {
+  useDocumentTitle('Tools Garage — settings')
   const [maxConcurrent, setMaxConcurrent] = useState(2)
   const [initialMaxConcurrent, setInitialMaxConcurrent] = useState<number | null>(null)
   const [providers, setProviders] = useState<Record<string, ProviderInfo>>({})
@@ -223,7 +225,7 @@ export default function SettingsPage() {
                     onChange={(e) => setKeyInputs((k) => ({ ...k, [pid]: e.target.value }))}
                     placeholder={info.needs_key ? (hasKey ? '•••••••••••••••• (replace)' : 'Paste API key…') : 'No key required'}
                     disabled={!info.needs_key}
-                    className="flex-1 rounded-xl border border-brand-sage bg-surface-white px-3.5 py-1.5 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none disabled:opacity-40 shadow-2xs"
+                    className="flex-1 rounded-xl border border-brand-sage bg-surface-white px-3.5 py-1.5 font-mono text-xs text-brand-espresso placeholder-placeholder focus:border-brand-caramel focus:outline-none disabled:opacity-40 shadow-2xs"
                   />
                   <button
                     onClick={() => saveKey(pid)}
@@ -324,7 +326,7 @@ export default function SettingsPage() {
               value={ytdlpSettings.cookies_file_path}
               onChange={(e) => setYtdlpSettings((s) => ({ ...s, cookies_file_path: e.target.value }))}
               placeholder="e.g. /home/<you>/downloads/cookies.txt"
-              className="w-full rounded-xl border border-brand-sage bg-surface-white px-3.5 py-1.5 font-mono text-xs text-brand-espresso placeholder-brand-caramel-text/60 focus:border-brand-caramel focus:outline-none"
+              className="w-full rounded-xl border border-brand-sage bg-surface-white px-3.5 py-1.5 font-mono text-xs text-brand-espresso placeholder-placeholder focus:border-brand-caramel focus:outline-none"
             />
           </div>
         </div>

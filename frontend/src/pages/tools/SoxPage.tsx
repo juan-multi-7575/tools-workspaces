@@ -15,6 +15,8 @@ import {
 import ToolPageShell from '../../components/tools/ToolPageShell'
 import ToolResultPanel from '../../components/tools/ToolResultPanel'
 import UniversalFileInput from '../../components/common/UniversalFileInput'
+import RequiredFieldError from '../../components/common/RequiredFieldError'
+import { isRequiredKey, missingRequiredMessage } from '../../lib/requiredFields'
 import { resolveUrl } from '../../lib/api'
 import { useToolExecute } from '../../hooks/useToolExecute'
 import DependencyGate from '../../components/deps/DependencyGate'
@@ -158,6 +160,13 @@ export default function SoxPage({
   const lastRackString = useRef<string | null>(null)
 
   const inputPath = String(params.input_path ?? '')
+
+  // `input_path` is not in the manifest schema but the backend refuses to run
+  // without it, so the rack carries the gate itself rather than describing what
+  // the backend will answer.
+  const [inputTouched, setInputTouched] = useState(false)
+  const inputInvalid = isRequiredKey('sox', 'input_path') && inputTouched && inputPath.trim() === ''
+  const inputErrorId = 'sox-input-required'
   const effectParam = String(params.effect ?? '')
 
   const rackString = useMemo(
@@ -297,19 +306,31 @@ export default function SoxPage({
               <CircleDot className="size-3.5 text-[#e0a96d]" /> patch input
             </h2>
             <label htmlFor="sox-input" className="block font-mono text-[12px] uppercase tracking-[0.18em] text-[#e0a96d]">
-              {schema.input_path?.title ?? 'input_path'}
+              {schema.input_path?.title ?? 'input_path'} <span className="text-rose-300">*</span>
             </label>
             <UniversalFileInput
+              id="sox-input"
               value={inputPath}
               onChange={(path) => setParams((prev) => ({ ...prev, input_path: path ?? '' }))}
+              onBlur={() => setInputTouched(true)}
+              required
+              aria-required={true}
+              aria-invalid={inputInvalid || undefined}
+              aria-describedby={inputInvalid ? inputErrorId : undefined}
               placeholder="/absolute/path/to/voice.wav"
               accept="audio/*,video/*"
             />
             <p className="font-mono text-[12px] leading-snug text-[#a08a76]">
               <code>input_path</code> is the audio or video file the rack reads. It is not declared in this
-              tool&apos;s manifest schema, but the run needs it: without a path the backend answers{' '}
-              <code>input_path is required</code>, which is shown here verbatim.
+              tool&apos;s manifest schema, but the run needs it.
             </p>
+            {inputInvalid && (
+              <RequiredFieldError
+                id={inputErrorId}
+                message={missingRequiredMessage([{ key: 'input_path', label: 'input_path' }])}
+                className="font-mono text-[12px] text-rose-300"
+              />
+            )}
           </div>
         </section>
 

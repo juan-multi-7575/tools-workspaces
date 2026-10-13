@@ -8,7 +8,6 @@ export default function GallerydlSite({ siteState, initialInputPath }: SiteProps
   const [manifest, setManifest] = useState<ToolManifest | null>(null)
   const [error, setError] = useState<string | null>(null)
   useEffect(() => {
-    document.title = 'gallery-dl — Gallery collector'
     let active = true
     api.getTool('gallery-dl').then(value => { if (active) setManifest(value) }).catch(cause => { if (active) setError(errorMessage(cause)) })
     return () => { active = false }
