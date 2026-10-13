@@ -104,18 +104,18 @@
 
 .dm-eyebrow {
   margin: 0 0 26px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--dm-accent);
 }
 
 .dm-label {
   display: block;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--dm-accent);
   margin-bottom: 9px;
@@ -188,7 +188,7 @@
 }
 
 .dm-btn--small {
-  font-size: 11.5px;
+  font-size: 12px;
   padding: 8px 14px;
   border-color: var(--dm-rule);
 }
@@ -220,7 +220,7 @@
   align-items: center;
   gap: 8px;
   font-family: var(--dm-sans);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -259,7 +259,7 @@
 
 .dm-bar__id {
   font-family: var(--dm-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.04em;
   color: var(--dm-ink-60);
 }
@@ -365,9 +365,9 @@
 
 .dm-plate__caption {
   margin: 0 0 20px;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--dm-accent);
 }
@@ -389,7 +389,7 @@
 
 .dm-plate__stem-index {
   font-family: var(--dm-mono);
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--dm-ink-60);
   flex: 0 0 auto;
 }
@@ -423,9 +423,9 @@
 .dm-plate__command-label {
   display: block;
   font-family: var(--dm-sans);
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--dm-accent);
   margin-bottom: 7px;
@@ -450,9 +450,9 @@
 
 .dm-hero__foot-label {
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  font-size: 10.5px;
+  font-size: 12px;
   color: var(--dm-accent);
   margin-right: 8px;
 }
@@ -504,7 +504,7 @@
 
 .dm-section__meta {
   font-family: var(--dm-mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--dm-ink-60);
 }
 
@@ -538,7 +538,7 @@
 
 .dm-source__size {
   font-family: var(--dm-mono);
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--dm-ink-60);
   white-space: nowrap;
 }
@@ -551,7 +551,7 @@
 
 .dm-source__clock {
   font-family: var(--dm-mono);
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--dm-ink-60);
   min-width: 58px;
 }
@@ -586,7 +586,7 @@
 
 .dm-entry__no {
   font-family: var(--dm-mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--dm-accent);
   flex: 0 0 auto;
   min-width: 26px;
@@ -605,7 +605,7 @@
 
 .dm-entry__size {
   font-family: var(--dm-mono);
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--dm-ink-60);
   white-space: nowrap;
 }
@@ -635,7 +635,7 @@
   align-items: center;
   gap: 7px;
   font-family: var(--dm-sans);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--dm-ink);
@@ -654,7 +654,7 @@
 
 .dm-entry__note {
   margin: 10px 0 0 42px;
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--dm-ink-60);
   max-width: 66ch;
@@ -726,7 +726,7 @@
   background: var(--dm-sunk);
   border-left: 2px solid var(--dm-accent);
   font-family: var(--dm-mono);
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.72;
   color: var(--dm-ink-80);
   white-space: pre-wrap;
@@ -820,7 +820,7 @@
 
 .dm-field__meta {
   margin: 10px 0 0;
-  font-size: 11.5px;
+  font-size: 12px;
   line-height: 1.55;
   color: var(--dm-ink-60);
   text-wrap: pretty;
@@ -1005,7 +1005,7 @@
   }
 
   .dm-failure__trace {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .dm-dock {

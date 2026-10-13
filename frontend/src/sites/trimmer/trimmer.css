@@ -156,7 +156,7 @@
 
 .tr-btn--ghost {
   padding: 6px 12px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--tr-ink-66);
   border-color: var(--tr-hair);
 }
@@ -256,16 +256,16 @@
 }
 
 .tr-label {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--tr-ink-56);
 }
 
 .tr-hint {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   color: var(--tr-ink-56);
 }
@@ -300,7 +300,7 @@
   border: 1px dashed var(--tr-hair-strong);
   border-radius: 10px;
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--tr-ink-66);
   cursor: pointer;
 }
@@ -311,7 +311,7 @@
   border: 1px solid var(--tr-bad);
   border-radius: 8px;
   background: rgba(255, 138, 138, 0.08);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   color: var(--tr-ink);
   white-space: pre-wrap;
@@ -351,7 +351,7 @@
   padding: 16px 14px;
   border: 1px solid var(--tr-hair);
   border-radius: 10px;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.7;
   color: var(--tr-ink-66);
 }
@@ -391,7 +391,7 @@
 
 .tr-region__len {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--tr-ink-56);
 }
 
@@ -421,7 +421,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 20px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--tr-ink-56);
   letter-spacing: 0.04em;
 }
@@ -638,7 +638,7 @@
   margin: 0;
   flex: 1 1 240px;
   min-width: 0;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   color: var(--tr-ink-66);
 }
@@ -711,8 +711,8 @@
 
 .tr-hero__eyebrow {
   margin: 0 0 14px;
-  font-size: 11px;
-  letter-spacing: 0.22em;
+  font-size: 12px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--tr-ink-56);
 }
@@ -793,7 +793,7 @@
 
 @media (max-width: 560px) {
   .tr-bar__mark {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .tr-band {
