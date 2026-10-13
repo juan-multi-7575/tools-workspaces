@@ -213,16 +213,16 @@ export default function SoxPage({
       manifest={manifest}
       gate={<DependencyGate toolId="sox" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded-md bg-[#2f2622] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[#e0a96d]">
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-[#2f2622] px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.22em] text-[#e0a96d]">
           <Waves className="size-3" /> {stages.length} module{stages.length === 1 ? '' : 's'}
         </span>
       }
       aside={
         <div className="sticky top-4 space-y-4 rounded-2xl bg-[#241d1a] p-4 text-[#efe4d8]">
-          <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#a08a76]">rack output</p>
+          <p className="font-mono text-[12px] uppercase tracking-[0.28em] text-[#a08a76]">rack output</p>
 
           <div data-param-key="effect" className="space-y-2">
-            <label htmlFor="sox-effect" className="flex items-center justify-between font-mono text-[10px] uppercase tracking-wider text-[#e0a96d]">
+            <label htmlFor="sox-effect" className="flex items-center justify-between font-mono text-[12px] uppercase tracking-wider text-[#e0a96d]">
               <span className="flex items-center gap-1.5"><Plug className="size-3" /> {schema.effect?.title ?? 'effect'}</span>
               <span className="rounded bg-[#3a2d26] px-1.5 py-0.5">{effectParam === '' ? 'empty' : `${effectParam.length} chars`}</span>
             </label>
@@ -238,7 +238,7 @@ export default function SoxPage({
               spellCheck={false}
               className="w-full rounded-lg border border-[#4a3a31] bg-[#171210] px-2.5 py-2 font-mono text-xs text-[#ffe0bd] placeholder-[#6b574a] focus:border-[#e0a96d] focus:outline-none"
             />
-            <p className="font-mono text-[10px] leading-snug text-[#a08a76]">
+            <p className="font-mono text-[12px] leading-snug text-[#a08a76]">
               {schema.effect?.description ?? 'SoX effect chain.'} Split on whitespace, and the tokens are appended
               to the <code>sox</code> command line in the order written.
             </p>
@@ -246,14 +246,14 @@ export default function SoxPage({
               <button
                 type="button"
                 onClick={() => { lastRackString.current = rackString; setParams((prev) => ({ ...prev, effect: rackString })) }}
-                className="w-full rounded-lg border border-[#e0a96d] px-2 py-1.5 font-mono text-[10px] uppercase tracking-wider text-[#e0a96d] hover:bg-[#3a2d26]"
+                className="w-full rounded-lg border border-[#e0a96d] px-2 py-1.5 font-mono text-[12px] uppercase tracking-wider text-[#e0a96d] hover:bg-[#3a2d26]"
               >
                 rebuild from the rack ({rackString || 'empty'})
               </button>
             )}
           </div>
 
-          <div className="space-y-1 rounded-xl bg-[#171210] p-3 font-mono text-[11px] leading-relaxed text-[#c9b6a4]">
+          <div className="space-y-1 rounded-xl bg-[#171210] p-3 font-mono text-[12px] leading-relaxed text-[#c9b6a4]">
             <p className="text-[#a08a76]">command the backend will build</p>
             <p className="break-all text-[#ffe0bd]">sox {inputPath || '\u003cinput\u003e'} &lt;output&gt; {effectParam || '(no effect tokens)'}</p>
           </div>
@@ -277,11 +277,11 @@ export default function SoxPage({
           </button>
 
           {execute.state.error && (
-            <div role="alert" className="rounded-xl border border-[#a83232] bg-[#2a1214] p-3">
-              <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-[#ff9d9d]">
+            <div role="alert" className="rounded-xl border border-accent-contrast bg-[#2a1214] p-3">
+              <p className="flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-wider text-[#ff9d9d]">
                 <AlertTriangle className="size-3" /> sox reported
               </p>
-              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-[#ffd7d7]">
+              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-[#ffd7d7]">
                 {execute.state.error}
               </pre>
             </div>
@@ -293,10 +293,10 @@ export default function SoxPage({
         {/* ── SOURCE ────────────────────────────────────────────────────────── */}
         <section className="rounded-2xl border border-[#4a3a31] bg-[#241d1a] p-4 text-[#efe4d8]">
           <div data-param-key="input_path" className="space-y-2">
-            <h2 className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-[#a08a76]">
+            <h2 className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.24em] text-[#a08a76]">
               <CircleDot className="size-3.5 text-[#e0a96d]" /> patch input
             </h2>
-            <label htmlFor="sox-input" className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#e0a96d]">
+            <label htmlFor="sox-input" className="block font-mono text-[12px] uppercase tracking-[0.18em] text-[#e0a96d]">
               {schema.input_path?.title ?? 'input_path'}
             </label>
             <UniversalFileInput
@@ -305,7 +305,7 @@ export default function SoxPage({
               placeholder="/absolute/path/to/voice.wav"
               accept="audio/*,video/*"
             />
-            <p className="font-mono text-[10px] leading-snug text-[#a08a76]">
+            <p className="font-mono text-[12px] leading-snug text-[#a08a76]">
               <code>input_path</code> is the audio or video file the rack reads. It is not declared in this
               tool&apos;s manifest schema, but the run needs it: without a path the backend answers{' '}
               <code>input_path is required</code>, which is shown here verbatim.
@@ -316,10 +316,10 @@ export default function SoxPage({
         {/* ── RACK ──────────────────────────────────────────────────────────── */}
         <section className="rounded-2xl border border-[#4a3a31] bg-[#241d1a] p-4 text-[#efe4d8]">
           <header className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-[#a08a76]">
+            <h2 className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.24em] text-[#a08a76]">
               <Plug className="size-3.5 text-[#e0a96d]" /> signal path · in order
             </h2>
-            <p className="font-mono text-[10px] text-[#a08a76]">
+            <p className="font-mono text-[12px] text-[#a08a76]">
               {stages.length === 0 ? 'no modules patched in yet' : `${stages.length} module(s), applied top to bottom`}
             </p>
           </header>
@@ -339,13 +339,14 @@ export default function SoxPage({
               return (
                 <li key={stage.id}>
                   <div
+                    data-valid={valid ? 'true' : 'false'}
                     className={`flex gap-3 rounded-xl border p-3 ${
-                      valid ? 'border-[#4a3a31] bg-[#2e2521]' : 'border-[#a83232] bg-[#2a1214]'
+                      valid ? 'border-[#4a3a31] bg-[#2e2521]' : 'border-accent-contrast bg-[#2a1214]'
                     }`}
                   >
                     {/* patch rail */}
                     <div className="flex shrink-0 flex-col items-center gap-1">
-                      <span className="flex size-6 items-center justify-center rounded-full border border-[#e0a96d] bg-[#171210] font-mono text-[10px] text-[#e0a96d]">
+                      <span className="flex size-6 items-center justify-center rounded-full border border-[#e0a96d] bg-[#171210] font-mono text-[12px] text-[#e0a96d]">
                         {index + 1}
                       </span>
                       {index < stages.length - 1 && <span className="h-full w-px flex-1 bg-[#4a3a31]" aria-hidden="true" />}
@@ -355,7 +356,7 @@ export default function SoxPage({
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="font-mono text-sm font-bold text-[#ffe0bd]">{def.name}</p>
-                          <p className="font-mono text-[10px] text-[#a08a76]">{def.hint}</p>
+                          <p className="font-mono text-[12px] text-[#a08a76]">{def.hint}</p>
                         </div>
                         <div className="flex items-center gap-1">
                           <button
@@ -381,7 +382,7 @@ export default function SoxPage({
                             onClick={() => removeStage(stage.id)}
                             disabled={execute.busy}
                             aria-label={`Remove the ${def.name} module`}
-                            className="rounded border border-[#4a3a31] p-1 font-mono text-[#c9b6a4] hover:border-[#a83232] hover:text-[#ff9d9d] disabled:opacity-30"
+                            className="rounded border border-[#4a3a31] p-1 font-mono text-[#c9b6a4] hover:border-accent-contrast hover:text-[#ff9d9d] disabled:opacity-30"
                           >
                             <Trash2 className="size-3" />
                           </button>
@@ -391,7 +392,7 @@ export default function SoxPage({
                       {def.fields.length > 0 && (
                         <div className="grid gap-2 sm:grid-cols-2">
                           {def.fields.map((field) => (
-                            <label key={field.key} className="block font-mono text-[10px] uppercase tracking-wider text-[#a08a76]">
+                            <label key={field.key} className="block font-mono text-[12px] uppercase tracking-wider text-[#a08a76]">
                               <span className="block">{field.label}</span>
                               <input
                                 type="text"
@@ -407,13 +408,13 @@ export default function SoxPage({
                         </div>
                       )}
 
-                      <p className={`font-mono text-[11px] ${valid ? 'text-[#9fd4b4]' : 'text-[#ff9d9d]'}`}>
+                      <p className={`font-mono text-[12px] ${valid ? 'text-[#9fd4b4]' : 'text-[#ff9d9d]'}`}>
                         {valid ? `contributes: ${token}` : 'incomplete — fill every field with a number, or it is left out of the chain'}
                       </p>
                     </div>
                   </div>
                   {index < stages.length - 1 && (
-                    <div className="flex items-center gap-1.5 pl-8 py-1 font-mono text-[10px] text-[#6b574a]">
+                    <div className="flex items-center gap-1.5 pl-8 py-1 font-mono text-[12px] text-[#6b574a]">
                       <span className="h-3 w-px bg-[#4a3a31]" aria-hidden="true" /> into
                     </div>
                   )}
@@ -423,7 +424,7 @@ export default function SoxPage({
           </ol>
 
           <div className="mt-4 border-t border-[#4a3a31] pt-3">
-            <p className="mb-2 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-[#a08a76]">
+            <p className="mb-2 flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.18em] text-[#a08a76]">
               <Plus className="size-3" /> patch in a module
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -440,7 +441,7 @@ export default function SoxPage({
               ))}
             </div>
             {invalidStages.length > 0 && (
-              <p className="mt-3 flex items-center gap-1.5 font-mono text-[11px] text-[#ff9d9d]">
+              <p className="mt-3 flex items-center gap-1.5 font-mono text-[12px] text-[#ff9d9d]">
                 <AlertTriangle className="size-3" />
                 {invalidStages.length} module(s) incomplete and therefore excluded from the <code>effect</code> string.
               </p>
@@ -451,7 +452,7 @@ export default function SoxPage({
         {/* ── OUTPUT ────────────────────────────────────────────────────────── */}
         {output && (
           <section className="rounded-2xl border border-[#4a3a31] bg-[#241d1a] p-4 text-[#efe4d8]">
-            <h2 className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.24em] text-[#9fd4b4]">
+            <h2 className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.24em] text-[#9fd4b4]">
               <Play className="size-3.5" /> processed file
             </h2>
             <p className="mt-1 break-all font-mono text-xs text-[#c9b6a4]">{output.path}</p>
@@ -466,7 +467,7 @@ export default function SoxPage({
               <a
                 href={resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(output.path)}`)}
                 download={output.name}
-                className="rounded-lg bg-[#9fd4b4] px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[#0f2018]"
+                className="rounded-lg bg-[#9fd4b4] px-3 py-1.5 font-mono text-[12px] font-bold uppercase tracking-wider text-[#0f2018]"
               >
                 download {output.name}
               </a>
@@ -474,7 +475,7 @@ export default function SoxPage({
                 <button
                   type="button"
                   onClick={() => onOpenAudioPlayer({ name: output.name, path: output.path })}
-                  className="rounded-lg border border-[#4a3a31] px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-[#c9b6a4] hover:border-[#e0a96d] hover:text-[#ffe0bd]"
+                  className="rounded-lg border border-[#4a3a31] px-3 py-1.5 font-mono text-[12px] uppercase tracking-wider text-[#c9b6a4] hover:border-[#e0a96d] hover:text-[#ffe0bd]"
                 >
                   open in the workspace player
                 </button>

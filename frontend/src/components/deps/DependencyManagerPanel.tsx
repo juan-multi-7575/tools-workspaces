@@ -47,7 +47,7 @@ const STATUS_STYLE: Record<DepEntry['status'], { label: string; color: string }>
 function Readout({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="min-w-0">
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#7C8F99]">{label}</p>
+      <p className="font-mono text-[12px] uppercase tracking-[0.18em] text-[#7C8F99]">{label}</p>
       <p className="mt-0.5 truncate font-mono text-sm tabular-nums font-semibold" style={tone ? { color: tone } : { color: '#DCE7EC' }}>
         {value}
       </p>
@@ -198,7 +198,7 @@ export default function DependencyManagerPanel() {
           }
           void startInstall([entry.dep_id])
         }}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 font-mono text-[12px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
         style={{ border: `1px solid ${CONTROL_BORDER}`, color: needsConsent ? '#FCD34D' : '#5EEAD4' }}
       >
         {needsConsent ? <TriangleAlert className="size-3.5" aria-hidden="true" /> : <Download className="size-3.5" aria-hidden="true" />}
@@ -228,7 +228,7 @@ export default function DependencyManagerPanel() {
               breaks the tools listed against it, so this board always shows the blast radius before anything is deleted.
             </p>
             {inventory && (
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-[#7C8F99]">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[12px] text-[#7C8F99]">
                 <span className="flex items-center gap-1.5">
                   <Terminal className="size-3" aria-hidden="true" />
                   deps_root <span className="text-[#93A7B1]">{inventory.deps_root}</span>
@@ -248,7 +248,7 @@ export default function DependencyManagerPanel() {
               type="button"
               onClick={() => void refresh()}
               disabled={loading || installing}
-              className="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
+              className="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 font-mono text-[12px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
               style={{ border: `1px solid ${CONTROL_BORDER}`, color: '#DCE7EC' }}
             >
               <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
@@ -267,7 +267,7 @@ export default function DependencyManagerPanel() {
               <CircleAlert className="size-4" aria-hidden="true" />
               The dependency inventory could not be read
             </p>
-            <pre className="mt-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-[#93A7B1]">
+            <pre className="mt-1.5 whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-[#93A7B1]">
               {loadError}
             </pre>
           </div>
@@ -283,7 +283,7 @@ export default function DependencyManagerPanel() {
               <CircleAlert className="size-4" aria-hidden="true" />
               The backend refused the last action
             </p>
-            <pre className="mt-1.5 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-[#93A7B1]">
+            <pre className="mt-1.5 whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-[#93A7B1]">
               {actionError}
             </pre>
           </div>
@@ -321,7 +321,7 @@ export default function DependencyManagerPanel() {
                 type="button"
                 onClick={() => progress.jobId && void depsApi.cancelInstall(progress.jobId)}
                 disabled={!progress.jobId}
-                className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
+                className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[12px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
                 style={{ border: `1px solid ${CONTROL_BORDER}`, color: '#DCE7EC' }}
               >
                 <Ban className="size-3.5" aria-hidden="true" />
@@ -351,7 +351,7 @@ export default function DependencyManagerPanel() {
                 <span className="dep-progress-sheen pointer-events-none absolute inset-0" aria-hidden="true" />
               )}
             </div>
-            <p className="mt-2 font-mono text-[11px] tabular-nums text-[#93A7B1]">
+            <p className="mt-2 font-mono text-[12px] tabular-nums text-[#93A7B1]">
               {byteProgress.totalBytes === 0
                 ? 'byte totals not reported for this job'
                 : `${formatBytes(byteProgress.completedBytes)} of ${formatBytes(byteProgress.totalBytes)} installed${
@@ -364,7 +364,7 @@ export default function DependencyManagerPanel() {
                 const stage = progress.stageByDep[depId]
                 const message = progress.messageByDep[depId]
                 return (
-                  <li key={depId} className="flex flex-wrap items-baseline justify-between gap-2 text-[11px]">
+                  <li key={depId} className="flex flex-wrap items-baseline justify-between gap-2 text-[12px]">
                     <span className="font-mono">{depId}</span>
                     <span
                       className="font-mono font-semibold"
@@ -382,7 +382,7 @@ export default function DependencyManagerPanel() {
                       {stage ?? 'queued'}
                     </span>
                     {message && stage !== 'done' && (
-                      <pre className="w-full whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-[#7C8F99]">
+                      <pre className="w-full whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-[#7C8F99]">
                         {message}
                       </pre>
                     )}
@@ -397,7 +397,7 @@ export default function DependencyManagerPanel() {
         <section className="space-y-2">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-sm font-semibold">Catalog</h2>
-            <p className="font-mono text-[11px] text-[#7C8F99]">
+            <p className="font-mono text-[12px] text-[#7C8F99]">
               {deps.length} entr{deps.length === 1 ? 'y' : 'ies'}
             </p>
           </div>
@@ -430,20 +430,20 @@ export default function DependencyManagerPanel() {
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-mono text-sm font-bold">{entry.dep_id}</h3>
                       <span
-                        className="rounded-md border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider"
+                        className="rounded-md border px-1.5 py-0.5 font-mono text-[12px] uppercase tracking-wider"
                         style={{ borderColor: CONTROL_BORDER, color: '#93A7B1' }}
                       >
                         {entry.kind}
                       </span>
                       <span
-                        className="rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider"
+                        className="rounded-md border px-1.5 py-0.5 font-mono text-[12px] font-bold uppercase tracking-wider"
                         style={{ borderColor: 'currentColor', color: style.color }}
                       >
                         {style.label}
                       </span>
                       {entry.heavy && (
                         <span
-                          className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider"
+                          className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-[12px] font-bold uppercase tracking-wider"
                           style={{ borderColor: '#FCD34D', color: '#FCD34D' }}
                         >
                           <TriangleAlert className="size-3" aria-hidden="true" />
@@ -473,7 +473,7 @@ export default function DependencyManagerPanel() {
                     </dl>
 
                     {entry.provides.length > 0 && (
-                      <p className="font-mono text-[11px] text-[#7C8F99]">
+                      <p className="font-mono text-[12px] text-[#7C8F99]">
                         provides <span className="text-[#93A7B1]">{entry.provides.join(', ')}</span>
                         {entry.missing_commands.length > 0 && (
                           <>
@@ -484,7 +484,7 @@ export default function DependencyManagerPanel() {
                     )}
 
                     {entry.reason && (
-                      <p className="font-mono text-[11px]" style={{ color: '#FCD34D' }}>
+                      <p className="font-mono text-[12px]" style={{ color: '#FCD34D' }}>
                         backend reason: {entry.reason}
                       </p>
                     )}
@@ -510,7 +510,7 @@ export default function DependencyManagerPanel() {
                       type="button"
                       disabled={installing || removing || entry.status === 'missing'}
                       onClick={() => setConfirmRemove(entry.dep_id)}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 font-mono text-[12px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
                       style={{ border: `1px solid ${CONTROL_BORDER}`, color: '#FCA5A5' }}
                     >
                       <Trash2 className="size-3.5" aria-hidden="true" />
@@ -540,7 +540,7 @@ export default function DependencyManagerPanel() {
                         type="button"
                         onClick={() => void removeOne(entry)}
                         disabled={removing}
-                        className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider disabled:opacity-40"
+                        className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[12px] font-bold uppercase tracking-wider disabled:opacity-40"
                         style={{ backgroundColor: '#FCA5A5', color: '#3B0A0A' }}
                       >
                         <Trash2 className="size-3.5" aria-hidden="true" />
@@ -550,7 +550,7 @@ export default function DependencyManagerPanel() {
                         type="button"
                         onClick={() => setConfirmRemove(null)}
                         disabled={removing}
-                        className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
+                        className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[12px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
                         style={{ border: `1px solid ${CONTROL_BORDER}`, color: '#DCE7EC' }}
                       >
                         Keep it
@@ -588,7 +588,7 @@ export default function DependencyManagerPanel() {
                   type="button"
                   disabled={installing || nuking}
                   onClick={() => setNukeStep(1)}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
+                  className="inline-flex shrink-0 items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[12px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
                   style={{ border: `1px solid ${CONTROL_BORDER}`, color: '#FCA5A5' }}
                 >
                   <Trash2 className="size-3.5" aria-hidden="true" />
@@ -602,7 +602,7 @@ export default function DependencyManagerPanel() {
                     type="button"
                     disabled={nuking}
                     onClick={() => void nuke()}
-                    className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider disabled:opacity-40"
+                    className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[12px] font-bold uppercase tracking-wider disabled:opacity-40"
                     style={{ backgroundColor: '#FCA5A5', color: '#3B0A0A' }}
                   >
                     {nuking ? <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> : <Trash2 className="size-3.5" aria-hidden="true" />}
@@ -612,7 +612,7 @@ export default function DependencyManagerPanel() {
                     type="button"
                     disabled={nuking}
                     onClick={() => setNukeStep((step) => (step === 2 ? 1 : 0))}
-                    className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
+                    className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 font-mono text-[12px] font-bold uppercase tracking-wider transition-colors hover:bg-white/10 disabled:opacity-40"
                     style={{ border: `1px solid ${CONTROL_BORDER}`, color: '#DCE7EC' }}
                   >
                     Cancel

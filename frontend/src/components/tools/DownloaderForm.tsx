@@ -197,7 +197,7 @@ export default function DownloaderForm({ value, onChange }: DownloaderFormProps)
           )}
           {/* The full wording lives here, where it can wrap, rather than in a
               placeholder that an input can only ever cut off mid-word. */}
-          <p className="text-[10px] tool-muted">
+          <p className="text-[12px] tool-muted">
             YouTube, Vimeo, Twitch, or any other direct video link.
           </p>
         </div>

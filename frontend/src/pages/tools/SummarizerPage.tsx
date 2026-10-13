@@ -114,7 +114,7 @@ export default function SummarizerPage({
       manifest={manifest}
       gate={<DependencyGate toolId="summarizer" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-sage bg-brand-cream-dark px-3 py-1 font-mono text-[10px] uppercase tracking-[0.24em] text-brand-caramel-text">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-sage bg-brand-cream-dark px-3 py-1 font-mono text-[12px] uppercase tracking-[0.24em] text-brand-caramel-text">
           <BookOpen className="size-3" /> reading view
         </span>
       }
@@ -130,7 +130,7 @@ export default function SummarizerPage({
               placeholder="/path/to/document.txt"
               accept=".txt,.md,.srt,.vtt"
             />
-            <p className="text-[11px] leading-snug text-brand-caramel-text">
+            <p className="text-[12px] leading-snug text-brand-caramel-text">
               {schema.input_path?.description ?? 'Path to document file to summarize.'}
             </p>
           </div>
@@ -151,7 +151,7 @@ export default function SummarizerPage({
               disabled={execute.busy}
               className="w-full accent-brand-caramel"
             />
-            <p className="text-[11px] leading-snug text-brand-caramel-text">
+            <p className="text-[12px] leading-snug text-brand-caramel-text">
               {schema.max_bullets?.description ?? 'Number of key takeaway bullet points to extract.'}
             </p>
           </div>
@@ -190,7 +190,7 @@ export default function SummarizerPage({
             {execute.busy ? `Reading · ${execute.state.elapsedSeconds.toFixed(1)}s` : 'Read & summarise'}
           </button>
 
-          <dl className="space-y-1 border-t border-brand-sage pt-2 font-mono text-[11px] text-brand-caramel-text">
+          <dl className="space-y-1 border-t border-brand-sage pt-2 font-mono text-[12px] text-brand-caramel-text">
             <div className="flex justify-between">
               <dt>phase</dt>
               <dd className="font-bold text-brand-espresso">{execute.state.phase}</dd>
@@ -223,7 +223,7 @@ export default function SummarizerPage({
                 <Quote className="size-4 text-brand-caramel" />
                 {schema.text?.title ?? 'text'}
               </h2>
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-brand-caramel-text">
+              <span className="font-mono text-[12px] uppercase tracking-[0.2em] text-brand-caramel-text">
                 {sourceOrigin === 'typed' ? 'from your text' : sourceOrigin === 'file' ? 'from file' : 'no source yet'}
               </span>
             </header>
@@ -241,21 +241,21 @@ export default function SummarizerPage({
                 placeholder={schema.text?.placeholder ?? 'Paste transcript, lecture notes, or document excerpt here...'}
                 className="w-full resize-y rounded-xl border border-brand-sage bg-brand-cream/40 px-4 py-3 font-serif text-[15px] leading-[1.75] text-brand-espresso placeholder:text-brand-caramel-text/50 focus:border-brand-caramel focus:outline-none"
               />
-              <p className="font-mono text-[10px] text-brand-caramel-text">
+              <p className="font-mono text-[12px] text-brand-caramel-text">
                 {typedText.length} chars · {typedText.trim() ? typedText.trim().split(/\s+/).length : 0} words
               </p>
-              <p className="text-[11px] leading-snug text-brand-caramel-text">
+              <p className="text-[12px] leading-snug text-brand-caramel-text">
                 {schema.text?.description ?? 'Enter or paste raw text/transcript to summarize.'}
               </p>
             </div>
 
             {fileBody && (
               <div className="mt-4 rounded-xl border border-brand-sage bg-brand-cream-dark/40 p-3">
-                <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-brand-caramel-text">
+                <p className="flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.18em] text-brand-caramel-text">
                   <FileText className="size-3" /> {fileBody.path}
                 </p>
                 {fileBody.error && (
-                  <p className="mt-1 font-mono text-[11px] leading-snug text-accent-contrast">
+                  <p className="mt-1 font-mono text-[12px] leading-snug text-accent-contrast">
                     The file could not be read for preview: {fileBody.error}
                   </p>
                 )}
@@ -264,7 +264,7 @@ export default function SummarizerPage({
 
             {sourceOrigin === 'file' && (
               <section className="mt-4 max-h-72 overflow-y-auto border-t border-brand-sage pt-4">
-                <h3 className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-brand-caramel-text">
+                <h3 className="mb-2 font-mono text-[12px] uppercase tracking-[0.18em] text-brand-caramel-text">
                   Source read from disk
                 </h3>
                 <pre className="whitespace-pre-wrap font-serif text-sm leading-[1.7] text-brand-espresso">
@@ -282,7 +282,7 @@ export default function SummarizerPage({
                 {summaryTitle ?? 'Key takeaways'}
               </h2>
               {bulletCount !== null && (
-                <span className="rounded-full bg-brand-espresso px-2.5 py-0.5 font-mono text-[10px] font-bold text-brand-cream-light">
+                <span className="rounded-full bg-brand-espresso px-2.5 py-0.5 font-mono text-[12px] font-bold text-brand-cream-light">
                   {bulletCount} bullet{bulletCount === 1 ? '' : 's'}
                 </span>
               )}
@@ -340,7 +340,7 @@ export default function SummarizerPage({
                 <a
                   href={resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(artifact.path)}`)}
                   download={artifact.name}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1.5 font-mono text-[11px] text-brand-espresso hover:border-brand-caramel"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1.5 font-mono text-[12px] text-brand-espresso hover:border-brand-caramel"
                 >
                   <Download className="size-3" /> {artifact.name}
                 </a>
@@ -353,7 +353,7 @@ export default function SummarizerPage({
                   setCopied(true)
                 }}
                 disabled={takeaways.length === 0}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1.5 font-mono text-[11px] text-brand-espresso hover:border-brand-caramel disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1.5 font-mono text-[12px] text-brand-espresso hover:border-brand-caramel disabled:opacity-40"
               >
                 {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
                 {copied ? 'Copied' : 'Copy bullets'}

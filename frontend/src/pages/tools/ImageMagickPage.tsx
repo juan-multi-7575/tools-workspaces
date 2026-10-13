@@ -140,7 +140,7 @@ export default function ImageMagickPage({
     downloadName?: string,
   ) => (
     <figure className="space-y-2">
-      <figcaption className="flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.22em] text-brand-cream-dark/60">
+      <figcaption className="flex items-center justify-between gap-2 font-mono text-[12px] uppercase tracking-[0.22em] text-brand-cream-dark/60">
         <span>{caption}</span>
         <span className="rounded-sm border border-brand-cream-dark/25 px-1.5 py-0.5 text-brand-cream-dark/80">
           {badge}
@@ -159,7 +159,7 @@ export default function ImageMagickPage({
           </p>
         )}
       </div>
-      <div className="flex items-center justify-between gap-2 font-mono text-[10px] text-brand-cream-dark/70">
+      <div className="flex items-center justify-between gap-2 font-mono text-[12px] text-brand-cream-dark/70">
         <span className="truncate">{path ? path.split('/').pop() : '—'}</span>
         <span>{size === undefined ? 'size not indexed yet' : formatBytes(size)}</span>
       </div>
@@ -167,7 +167,7 @@ export default function ImageMagickPage({
         <a
           href={contentUrl(path)}
           download={downloadName}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-brand-cream-dark/30 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-brand-cream-dark hover:bg-brand-cream-dark/10"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-brand-cream-dark/30 px-2.5 py-1 font-mono text-[12px] uppercase tracking-wider text-brand-cream-dark hover:bg-brand-cream-dark/10"
         >
           <Download className="size-3" /> Download {downloadName}
         </a>
@@ -180,16 +180,16 @@ export default function ImageMagickPage({
       manifest={manifest}
       gate={<DependencyGate toolId="imagemagick" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-cream-light">
           <Images className="size-3" /> before / after
         </span>
       }
       aside={
         <div className="sticky top-4 space-y-4 rounded-2xl bg-brand-espresso p-4 text-brand-cream-light shadow-xl">
-          <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-brand-cream-dark/60">Tool rail</p>
+          <p className="font-mono text-[12px] uppercase tracking-[0.28em] text-brand-cream-dark/60">Tool rail</p>
 
           <div data-param-key="format" className="space-y-2">
-            <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-brand-cream-dark/70">
+            <span className="flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-wider text-brand-cream-dark/70">
               <ImageDown className="size-3" /> {schema.format?.title ?? 'format'}
             </span>
             <div className="grid grid-cols-3 gap-1 rounded-xl bg-brand-cream-dark/10 p-1">
@@ -211,7 +211,7 @@ export default function ImageMagickPage({
           </div>
 
           <div data-param-key="quality" className="space-y-2">
-            <label htmlFor="im-quality" className="flex items-center justify-between font-mono text-[10px] uppercase tracking-wider text-brand-cream-dark/70">
+            <label htmlFor="im-quality" className="flex items-center justify-between font-mono text-[12px] uppercase tracking-wider text-brand-cream-dark/70">
               <span className="flex items-center gap-1.5"><Ruler className="size-3" /> {schema.quality?.title ?? 'quality'}</span>
               <span className="rounded-sm bg-brand-caramel px-1.5 py-0.5 text-brand-cream-light">{quality}</span>
             </label>
@@ -227,7 +227,7 @@ export default function ImageMagickPage({
           </div>
 
           <div data-param-key="resize" className="space-y-2">
-            <label htmlFor="im-resize" className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-brand-cream-dark/70">
+            <label htmlFor="im-resize" className="flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-wider text-brand-cream-dark/70">
               <Crop className="size-3" /> {schema.resize?.title ?? 'resize'}
             </label>
             <input
@@ -244,7 +244,7 @@ export default function ImageMagickPage({
                   key={preset.value}
                   type="button"
                   onClick={() => setKey('resize', preset.value)}
-                  className="rounded-md border border-brand-cream-dark/20 px-1 py-1 font-mono text-[10px] text-brand-cream-dark/75 hover:border-brand-caramel hover:text-brand-cream-light"
+                  className="rounded-md border border-brand-cream-dark/20 px-1 py-1 font-mono text-[12px] text-brand-cream-dark/75 hover:border-brand-caramel hover:text-brand-cream-light"
                 >
                   {preset.label}
                 </button>
@@ -271,8 +271,8 @@ export default function ImageMagickPage({
           </button>
           {execute.state.error && (
             <div role="alert" className="rounded-xl border border-accent-contrast/60 bg-accent-contrast/15 p-3">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-accent-contrast">Backend said</p>
-              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-brand-cream-light">{execute.state.error}</pre>
+              <p className="font-mono text-[12px] uppercase tracking-wider text-accent-contrast">Backend said</p>
+              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-brand-cream-light">{execute.state.error}</pre>
             </div>
           )}
         </div>
@@ -283,7 +283,7 @@ export default function ImageMagickPage({
           <label htmlFor="im-input" className="flex items-center gap-2 text-xs font-bold text-brand-espresso">
             <UploadCloud className="size-3.5 text-brand-caramel" />
             {schema.input_path?.title ?? 'input_path'}
-            <span className="ml-1 rounded bg-brand-sage/30 px-1.5 py-0.5 font-mono text-[10px] text-brand-espresso">
+            <span className="ml-1 rounded bg-brand-sage/30 px-1.5 py-0.5 font-mono text-[12px] text-brand-espresso">
               {schema.input_path?.description ?? 'Path to input image file (PNG, JPG, WebP, etc.).'}
             </span>
           </label>

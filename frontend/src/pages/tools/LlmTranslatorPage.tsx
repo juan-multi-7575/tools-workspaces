@@ -298,7 +298,7 @@ export default function LlmTranslatorPage({
       manifest={manifest}
       gate={<DependencyGate toolId="text.translate.llm" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded-md border border-brand-caramel bg-brand-caramel-muted px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-espresso">
+        <span className="inline-flex items-center gap-1.5 rounded-md border border-brand-caramel bg-brand-caramel-muted px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-espresso">
           <FileDiff className="size-3" /> diff workbench
         </span>
       }
@@ -319,7 +319,7 @@ export default function LlmTranslatorPage({
 
           <div className="grid grid-cols-2 gap-2">
             <div data-param-key="source_lang" className="space-y-1">
-              <label htmlFor="llm-src-lang" className="block text-[11px] font-bold text-brand-espresso">
+              <label htmlFor="llm-src-lang" className="block text-[12px] font-bold text-brand-espresso">
                 {schema.source_lang?.title ?? 'source_lang'}
               </label>
               <select
@@ -337,7 +337,7 @@ export default function LlmTranslatorPage({
               </select>
             </div>
             <div data-param-key="target_lang" className="space-y-1">
-              <label htmlFor="llm-tgt-lang" className="block text-[11px] font-bold text-brand-espresso">
+              <label htmlFor="llm-tgt-lang" className="block text-[12px] font-bold text-brand-espresso">
                 {schema.target_lang?.title ?? 'target_lang'}
               </label>
               <select
@@ -381,7 +381,7 @@ export default function LlmTranslatorPage({
                 ))}
             </select>
             {providersError && (
-              <p className="font-mono text-[10px] leading-snug text-accent-contrast">
+              <p className="font-mono text-[12px] leading-snug text-accent-contrast">
                 Provider detection failed: {providersError}
               </p>
             )}
@@ -396,7 +396,7 @@ export default function LlmTranslatorPage({
                 type="button"
                 onClick={() => void loadModels(provider, apiKey || undefined)}
                 disabled={loadingModels || provider === 'auto'}
-                className="inline-flex items-center gap-1 rounded border border-brand-sage bg-surface-white px-1.5 py-0.5 font-mono text-[10px] text-brand-caramel-text disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded border border-brand-sage bg-surface-white px-1.5 py-0.5 font-mono text-[12px] text-brand-caramel-text disabled:opacity-40"
               >
                 <RefreshCw className={`size-2.5 ${loadingModels ? 'animate-spin' : ''}`} /> refresh
               </button>
@@ -415,7 +415,7 @@ export default function LlmTranslatorPage({
                 <option key={model} value={model} />
               ))}
             </datalist>
-            <p className="font-mono text-[10px] text-brand-caramel-text">
+            <p className="font-mono text-[12px] text-brand-caramel-text">
               {loadingModels
                 ? 'querying provider…'
                 : modelsSource
@@ -424,7 +424,7 @@ export default function LlmTranslatorPage({
                     ? 'auto — provider chosen server-side'
                     : 'no model list loaded'}
             </p>
-            {modelsError && <p className="font-mono text-[10px] text-accent-contrast">{modelsError}</p>}
+            {modelsError && <p className="font-mono text-[12px] text-accent-contrast">{modelsError}</p>}
           </div>
 
           <div className="space-y-1.5 border-t border-brand-sage pt-3">
@@ -443,7 +443,7 @@ export default function LlmTranslatorPage({
               <button
                 type="button"
                 onClick={() => setShowKey((v) => !v)}
-                className="rounded border border-brand-sage px-1.5 font-mono text-[10px] text-brand-caramel-text"
+                className="rounded border border-brand-sage px-1.5 font-mono text-[12px] text-brand-caramel-text"
               >
                 {showKey ? 'hide' : 'show'}
               </button>
@@ -451,14 +451,14 @@ export default function LlmTranslatorPage({
                 type="button"
                 onClick={() => void saveKeyNow()}
                 disabled={keyState === 'saving' || !apiKey.trim() || provider === 'auto'}
-                className="rounded bg-brand-espresso px-2 font-mono text-[10px] font-bold text-brand-cream-light disabled:opacity-40"
+                className="rounded bg-brand-espresso px-2 font-mono text-[12px] font-bold text-brand-cream-light disabled:opacity-40"
               >
                 {keyState === 'saving' ? '…' : 'save'}
               </button>
             </div>
             {keyMessage && (
               <p
-                className={`font-mono text-[10px] ${keyState === 'error' ? 'text-accent-contrast' : 'text-brand-espresso'}`}
+                className={`font-mono text-[12px] ${keyState === 'error' ? 'text-accent-contrast' : 'text-brand-espresso'}`}
               >
                 {keyMessage}
               </p>
@@ -475,7 +475,7 @@ export default function LlmTranslatorPage({
             {execute.busy ? `Translating · ${execute.state.elapsedSeconds.toFixed(1)}s` : `Run → ${targetLang}`}
           </button>
 
-          <dl className="space-y-1 border-t border-brand-sage pt-3 font-mono text-[11px] text-brand-caramel-text">
+          <dl className="space-y-1 border-t border-brand-sage pt-3 font-mono text-[12px] text-brand-caramel-text">
             <div className="flex justify-between">
               <dt>phase</dt>
               <dd className="font-bold text-brand-espresso">{execute.state.phase}</dd>
@@ -512,10 +512,10 @@ export default function LlmTranslatorPage({
           {/* ── EDITABLE SOURCE PANE ─────────────────────────────────── */}
           <section className="rounded-xl border-2 border-brand-espresso bg-surface-white">
             <header className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-brand-espresso bg-brand-espresso px-3 py-2">
-              <h2 className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-brand-cream-light">
+              <h2 className="flex items-center gap-1.5 font-mono text-[12px] font-bold uppercase tracking-[0.18em] text-brand-cream-light">
                 <Rows3 className="size-3" /> source · {sourceLang}
               </h2>
-              <span className="font-mono text-[10px] text-brand-cream-light/80">
+              <span className="font-mono text-[12px] text-brand-cream-light/80">
                 {sourcePaneText.length} chars · {countWords(sourcePaneText)} words
               </span>
             </header>
@@ -538,29 +538,29 @@ export default function LlmTranslatorPage({
                     type="button"
                     onClick={() => void pushDraft()}
                     disabled={uploading}
-                    className="inline-flex items-center gap-1.5 rounded bg-brand-caramel px-2 py-1 font-mono text-[10px] font-bold text-brand-cream-light disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 rounded bg-brand-caramel px-2 py-1 font-mono text-[12px] font-bold text-brand-cream-light disabled:opacity-40"
                   >
                     {uploading ? <Loader2 className="size-3 animate-spin" /> : <Save className="size-3" />}
                     {uploading ? 'uploading…' : 'push buffer as input file'}
                   </button>
-                  <span className="font-mono text-[10px] text-brand-caramel-text">
+                  <span className="font-mono text-[12px] text-brand-caramel-text">
                     unsaved edits — this tool reads a file, not a text field
                   </span>
                 </>
               )}
               {!draftDirty && inputPath && (
-                <span className="truncate font-mono text-[10px] text-brand-caramel-text" title={inputPath}>
+                <span className="truncate font-mono text-[12px] text-brand-caramel-text" title={inputPath}>
                   reading from {inputPath}
                 </span>
               )}
             </footer>
             {uploadError && (
-              <p className="border-t border-brand-sage px-3 py-1.5 font-mono text-[10px] text-accent-contrast">
+              <p className="border-t border-brand-sage px-3 py-1.5 font-mono text-[12px] text-accent-contrast">
                 Upload failed: {uploadError}
               </p>
             )}
             {sourceBody?.error && (
-              <p className="border-t border-brand-sage px-3 py-1.5 font-mono text-[10px] text-accent-contrast">
+              <p className="border-t border-brand-sage px-3 py-1.5 font-mono text-[12px] text-accent-contrast">
                 Source could not be read: {sourceBody.error}
               </p>
             )}
@@ -569,10 +569,10 @@ export default function LlmTranslatorPage({
           {/* ── REAL TRANSLATION PANE ───────────────────────────────── */}
           <section className="rounded-xl border-2 border-brand-caramel bg-surface-white">
             <header className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-brand-caramel bg-brand-caramel px-3 py-2">
-              <h2 className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-brand-cream-light">
+              <h2 className="flex items-center gap-1.5 font-mono text-[12px] font-bold uppercase tracking-[0.18em] text-brand-cream-light">
                 <ArrowRight className="size-3" /> target · {targetLang}
               </h2>
-              <span className="font-mono text-[10px] text-brand-cream-light/80">
+              <span className="font-mono text-[12px] text-brand-cream-light/80">
                 {targetBody?.content ? `${targetBody.content.length} chars · ${countWords(targetBody.content)} words` : '—'}
               </span>
             </header>
@@ -600,7 +600,7 @@ export default function LlmTranslatorPage({
                 <a
                   href={resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(artifact.path)}`)}
                   download={artifact.name}
-                  className="mt-2 inline-flex items-center gap-1.5 rounded border border-brand-sage px-2 py-1 font-mono text-[10px] text-brand-espresso hover:border-brand-caramel"
+                  className="mt-2 inline-flex items-center gap-1.5 rounded border border-brand-sage px-2 py-1 font-mono text-[12px] text-brand-espresso hover:border-brand-caramel"
                 >
                   <CloudDownload className="size-3" /> {artifact.name}
                 </a>
@@ -616,7 +616,7 @@ export default function LlmTranslatorPage({
               <h3 className="flex items-center gap-1.5 text-xs font-bold text-brand-espresso">
                 <Sigma className="size-3.5 text-brand-caramel" /> Sentence diff (real strings)
               </h3>
-              <div className="flex flex-wrap items-center gap-3 font-mono text-[10px] text-brand-caramel-text">
+              <div className="flex flex-wrap items-center gap-3 font-mono text-[12px] text-brand-caramel-text">
                 <span>{diffRows.length} aligned</span>
                 <span>{identical} identical</span>
                 <span>{sourceOnly} source-only</span>
@@ -644,7 +644,7 @@ export default function LlmTranslatorPage({
                 {visibleRows.map((row, index) => (
                   <div key={row.key} className={`grid grid-cols-2 border-b border-brand-sage/50 ${KIND_STYLE[row.kind]}`}>
                     <div className="border-r-2 border-brand-espresso px-3 py-2">
-                      <p className="mb-0.5 font-mono text-[10px] font-bold text-brand-caramel-text">
+                      <p className="mb-0.5 font-mono text-[12px] font-bold text-brand-caramel-text">
                         {index + 1}. {KIND_LABEL[row.kind]}
                       </p>
                       <p className="text-xs leading-relaxed text-brand-espresso">

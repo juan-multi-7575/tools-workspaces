@@ -93,14 +93,14 @@ function FieldGrid({
     <div className={`grid gap-px bg-[#232b35] ${columnClass}`}>
       {visible.map((row) => (
         <div key={row.key} className="flex flex-col gap-0.5 bg-[#12161c] px-3 py-2">
-          <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#5f7183]">{row.key}</span>
+          <span className="font-mono text-[12px] uppercase tracking-[0.14em] text-[#5f7183]">{row.key}</span>
           <span className="break-words font-mono text-xs leading-snug text-[#d7e3ee]">
             {row.value === '' ? <em className="text-[#44525f]">empty</em> : row.value}
           </span>
         </div>
       ))}
       {visible.length < rows.length && (
-        <div className="bg-[#12161c] px-3 py-2 font-mono text-[10px] text-[#5f7183]">
+        <div className="bg-[#12161c] px-3 py-2 font-mono text-[12px] text-[#5f7183]">
           {rows.length - visible.length} field(s) hidden by the filter
         </div>
       )}
@@ -170,13 +170,13 @@ export default function MediainfoPage({
       manifest={manifest}
       gate={<DependencyGate toolId="mediainfo" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded-md bg-[#12161c] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[#7cc4ff]">
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-[#12161c] px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.22em] text-[#7cc4ff]">
           <Database className="size-3" /> probe grid
         </span>
       }
       aside={
         <div className="sticky top-4 space-y-4 rounded-2xl border border-[#232b35] bg-[#12161c] p-4 font-mono text-[#d7e3ee]">
-          <p className="text-[10px] uppercase tracking-[0.28em] text-[#5f7183]">Probe status</p>
+          <p className="text-[12px] uppercase tracking-[0.28em] text-[#5f7183]">Probe status</p>
 
           <dl className="space-y-1 text-xs">
             {[
@@ -196,7 +196,7 @@ export default function MediainfoPage({
           </dl>
 
           <div data-param-key="input_path" className="space-y-2">
-            <label htmlFor="mediainfo-path" className="block text-[10px] uppercase tracking-[0.18em] text-[#7cc4ff]">
+            <label htmlFor="mediainfo-path" className="block text-[12px] uppercase tracking-[0.18em] text-[#7cc4ff]">
               {schema.input_path?.title ?? 'input_path'}
             </label>
             <UniversalFileInput
@@ -205,14 +205,14 @@ export default function MediainfoPage({
               placeholder="/absolute/path/to/movie.mkv"
               accept="video/*,audio/*"
             />
-            <p className="text-[10px] leading-snug text-[#5f7183]">
+            <p className="text-[12px] leading-snug text-[#5f7183]">
               {schema.input_path?.description ?? 'Path to the media file ffprobe should inspect.'} Dropping a file uploads
               it to the server first; the path sent to the backend is the one shown here.
             </p>
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="mediainfo-filter" className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-[#7cc4ff]">
+            <label htmlFor="mediainfo-filter" className="flex items-center gap-1.5 text-[12px] uppercase tracking-[0.18em] text-[#7cc4ff]">
               <Filter className="size-3" /> field filter
             </label>
             <input
@@ -223,7 +223,7 @@ export default function MediainfoPage({
               placeholder="codec_name, width, r_frame_rate…"
               className="w-full rounded border border-[#2f3b47] bg-[#0c1015] px-2 py-1.5 text-xs text-[#d7e3ee] placeholder-[#44525f] focus:border-[#7cc4ff] focus:outline-none"
             />
-            <p className="text-[10px] leading-snug text-[#5f7183]">
+            <p className="text-[12px] leading-snug text-[#5f7183]">
               Filters real keys and values out of the payload. It never adds a field that ffprobe did not report.
             </p>
           </div>
@@ -248,10 +248,10 @@ export default function MediainfoPage({
 
           {execute.state.error && (
             <div role="alert" className="rounded-lg border border-[#7a2f2f] bg-[#2a1215] p-3">
-              <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-[#ff9d9d]">
+              <p className="flex items-center gap-1.5 text-[12px] uppercase tracking-wider text-[#ff9d9d]">
                 <AlertTriangle className="size-3" /> backend reported
               </p>
-              <pre className="mt-1 whitespace-pre-wrap break-words text-[11px] leading-relaxed text-[#ffd7d7]">
+              <pre className="mt-1 whitespace-pre-wrap break-words text-[12px] leading-relaxed text-[#ffd7d7]">
                 {execute.state.error}
               </pre>
             </div>
@@ -287,10 +287,10 @@ export default function MediainfoPage({
         {format && (
           <section className="overflow-hidden rounded-2xl border border-[#232b35] bg-[#12161c]">
             <header className="flex items-center justify-between gap-2 border-b border-[#232b35] bg-[#0c1015] px-3.5 py-2">
-              <h2 className="font-mono text-[11px] font-bold uppercase tracking-[0.24em] text-[#7cc4ff]">
+              <h2 className="font-mono text-[12px] font-bold uppercase tracking-[0.24em] text-[#7cc4ff]">
                 format · container level
               </h2>
-              <span className="font-mono text-[10px] text-[#5f7183]">
+              <span className="font-mono text-[12px] text-[#5f7183]">
                 {Object.keys(format).length} key(s) reported
               </span>
             </header>
@@ -302,14 +302,14 @@ export default function MediainfoPage({
         {visibleGroups.map((group) => (
           <section key={group.type} className="overflow-hidden rounded-2xl border border-[#232b35] bg-[#12161c]">
             <header className="flex items-center justify-between gap-2 border-b border-[#232b35] bg-[#0c1015] px-3.5 py-2">
-              <h2 className={`font-mono text-[11px] font-bold uppercase tracking-[0.24em] ${STREAM_TINT[group.type] ?? 'text-[#9fb3c4]'}`}>
+              <h2 className={`font-mono text-[12px] font-bold uppercase tracking-[0.24em] ${STREAM_TINT[group.type] ?? 'text-[#9fb3c4]'}`}>
                 codec_type: {group.type} · {group.streams.length} stream(s)
               </h2>
               <button
                 type="button"
                 onClick={() => toggle(group.type)}
                 aria-expanded={!collapsed[group.type]}
-                className="inline-flex items-center gap-1 rounded border border-[#2f3b47] px-1.5 py-0.5 font-mono text-[10px] text-[#9fb3c4] hover:border-[#7cc4ff]"
+                className="inline-flex items-center gap-1 rounded border border-[#2f3b47] px-1.5 py-0.5 font-mono text-[12px] text-[#9fb3c4] hover:border-[#7cc4ff]"
               >
                 {collapsed[group.type] ? <ChevronDown className="size-3" /> : <ChevronUp className="size-3" />}
                 {collapsed[group.type] ? 'expand' : 'collapse'}
@@ -321,7 +321,7 @@ export default function MediainfoPage({
                   key={String(stream.index ?? position)}
                   className={`border-b border-[#1c242e] last:border-b-0 ${STREAM_EDGE[group.type] ?? ''} border-l-2 pl-0`}
                 >
-                  <div className="flex flex-wrap items-center gap-2 px-3.5 py-2 font-mono text-[10px] text-[#5f7183]">
+                  <div className="flex flex-wrap items-center gap-2 px-3.5 py-2 font-mono text-[12px] text-[#5f7183]">
                     <span className="rounded bg-[#0c1015] px-1.5 py-0.5 text-[#9fb3c4]">stream #{position}</span>
                     {typeof stream.index !== 'undefined' && (
                       <span>index {cellText(stream.index)}</span>
@@ -347,7 +347,7 @@ export default function MediainfoPage({
         )}
 
         {execute.state.result?.status === 'completed' && (
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#232b35] bg-[#0c1015] px-3.5 py-2 font-mono text-[10px] text-[#5f7183]">
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#232b35] bg-[#0c1015] px-3.5 py-2 font-mono text-[12px] text-[#5f7183]">
             <FileSearch className="size-3" />
             <span>raw ffprobe JSON is also available verbatim in the result panel below</span>
           </div>

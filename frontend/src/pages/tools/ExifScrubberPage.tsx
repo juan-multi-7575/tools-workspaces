@@ -177,7 +177,7 @@ export default function ExifScrubberPage({
       manifest={manifest}
       gate={<DependencyGate toolId="exif_scrubber" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-cream-light">
           <ShieldCheck className="size-3" /> audit console
         </span>
       }
@@ -211,7 +211,7 @@ export default function ExifScrubberPage({
                 }`}
               >
                 <span className="font-mono text-sm font-bold uppercase tracking-wider">{option}</span>
-                <span className="text-[11px] opacity-80">
+                <span className="text-[12px] opacity-80">
                   {option === 'inspect'
                     ? 'Run exiftool -j and render the real metadata'
                     : 'exiftool -all= to a clean copy, then re-inspect it'}
@@ -230,13 +230,13 @@ export default function ExifScrubberPage({
               {busy ? <Loader2 className="size-3.5 animate-spin" /> : mode === 'inspect' ? <ScanSearch className="size-3.5" /> : <Trash2 className="size-3.5" />}
               {busy ? `Running · ${elapsed.toFixed(1)}s measured` : `Run ${mode}`}
             </button>
-            {verify.busy && <span className="font-mono text-[11px] text-brand-caramel-text">re-inspecting the cleaned file with exiftool…</span>}
+            {verify.busy && <span className="font-mono text-[12px] text-brand-caramel-text">re-inspecting the cleaned file with exiftool…</span>}
           </div>
         </div>
 
         {phase.error && (
           <div role="alert" className="rounded-2xl border-2 border-accent-contrast/50 bg-accent-contrast/10 p-4">
-            <p className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-accent-contrast">
+            <p className="mb-1 flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.2em] text-accent-contrast">
               <FileWarning className="size-3.5" /> The backend reported — verbatim
             </p>
             <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-brand-espresso">{phase.error}</pre>
@@ -252,7 +252,7 @@ export default function ExifScrubberPage({
             <a
               href={resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(scrubbed.path)}`)}
               download={scrubbed.path.split('/').pop() ?? 'clean'}
-              className="rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1 font-mono text-[11px] text-brand-espresso"
+              className="rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1 font-mono text-[12px] text-brand-espresso"
             >
               download clean copy
             </a>
@@ -265,7 +265,7 @@ export default function ExifScrubberPage({
               <h2 className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.2em] text-brand-espresso">
                 <Eye className="size-4 text-brand-caramel" /> Metadata returned by exiftool
               </h2>
-              <span className="font-mono text-[11px] text-brand-caramel-text">
+              <span className="font-mono text-[12px] text-brand-caramel-text">
                 {Object.keys(before.fields).length} fields · source {before.path.split('/').pop()}
               </span>
             </header>
@@ -279,7 +279,7 @@ export default function ExifScrubberPage({
                 aria-label="Filter metadata fields"
                 className="min-w-56 flex-1 rounded-lg border border-brand-sage bg-surface-white px-3 py-1.5 font-mono text-xs text-brand-espresso focus:border-brand-caramel focus:outline-none"
               />
-              <label className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-brand-cream-dark/50 px-2.5 py-1.5 text-[11px] font-bold text-brand-espresso">
+              <label className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-brand-cream-dark/50 px-2.5 py-1.5 text-[12px] font-bold text-brand-espresso">
                 <input type="checkbox" checked={flaggedOnly} onChange={(e) => setFlaggedOnly(e.target.checked)} className="accent-brand-caramel" />
                 privacy-relevant only
               </label>
@@ -287,7 +287,7 @@ export default function ExifScrubberPage({
 
             <div className="overflow-x-auto rounded-2xl border border-brand-sage bg-brand-espresso">
               <table className="w-full text-left font-mono text-xs">
-                <thead className="bg-brand-espresso-muted text-[10px] uppercase tracking-[0.18em] text-brand-cream-dark/70">
+                <thead className="bg-brand-espresso-muted text-[12px] uppercase tracking-[0.18em] text-brand-cream-dark/70">
                   <tr>
                     <th scope="col" className="px-3 py-2 font-bold">Tag</th>
                     <th scope="col" className="px-3 py-2 font-bold">Value</th>
@@ -302,7 +302,7 @@ export default function ExifScrubberPage({
                       <td className="px-3 py-1.5 text-brand-cream-light">{row.key}</td>
                       <td className="max-w-md break-words px-3 py-1.5 text-brand-cream-dark/85">{row.b ?? '—'}</td>
                       <td className="px-3 py-1.5">
-                        <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${PRIVACY_TONE[row.privacy.kind]}`}>
+                        <span className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[12px] font-bold ${PRIVACY_TONE[row.privacy.kind]}`}>
                           {row.privacy.kind === 'gps' && <MapPin className="size-2.5" />}
                           {row.privacy.label}
                         </span>
@@ -326,7 +326,7 @@ export default function ExifScrubberPage({
               </table>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-brand-caramel-text">
+            <div className="flex flex-wrap items-center gap-2 font-mono text-[12px] text-brand-caramel-text">
               <Play className="size-3" />
               {after ? (
                 <>

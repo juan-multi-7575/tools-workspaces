@@ -85,7 +85,7 @@ export default function CodecToolPage({
       manifest={manifest}
       gate={<DependencyGate toolId="codec_tool" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.3em] text-brand-caramel-text">
+        <span className="inline-flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.3em] text-brand-caramel-text">
           codec / transformer
         </span>
       }
@@ -93,7 +93,7 @@ export default function CodecToolPage({
       <div className="mx-auto max-w-4xl space-y-8">
         {execute.state.error && (
           <div role="alert" className="border-l-2 border-accent-contrast pl-3">
-            <p className="flex items-center gap-1.5 font-mono text-[11px] font-bold text-accent-contrast">
+            <p className="flex items-center gap-1.5 font-mono text-[12px] font-bold text-accent-contrast">
               <AlertTriangle className="size-3" /> The backend reported:
             </p>
             <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-brand-espresso">
@@ -104,7 +104,7 @@ export default function CodecToolPage({
 
         {/* ── CODEC RAIL ─────────────────────────────────────────────── */}
         <section data-param-key="codec" className="space-y-2">
-          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-brand-caramel-text">
+          <p className="font-mono text-[12px] uppercase tracking-[0.3em] text-brand-caramel-text">
             {schema.codec?.title ?? 'codec'}
           </p>
           <div className="flex flex-wrap gap-px overflow-hidden rounded-lg border border-brand-espresso">
@@ -131,14 +131,14 @@ export default function CodecToolPage({
               )
             })}
           </div>
-          <p className="font-mono text-[11px] leading-relaxed text-brand-caramel-text">
+          <p className="font-mono text-[12px] leading-relaxed text-brand-caramel-text">
             {schema.codec?.description ?? 'Choose the transformation to apply.'}
           </p>
         </section>
 
         {/* ── INPUT ──────────────────────────────────────────────────── */}
         <section data-param-key="text" className="space-y-2">
-          <label htmlFor="codec-text" className="font-mono text-[10px] uppercase tracking-[0.3em] text-brand-caramel-text">
+          <label htmlFor="codec-text" className="font-mono text-[12px] uppercase tracking-[0.3em] text-brand-caramel-text">
             {schema.text?.title ?? 'text'}
           </label>
           <textarea
@@ -151,7 +151,7 @@ export default function CodecToolPage({
             placeholder={schema.text?.placeholder ?? 'Enter text to encode or decode...'}
             className="w-full resize-y rounded-lg border border-brand-sage bg-surface-white px-3 py-2.5 font-mono text-sm leading-relaxed text-brand-espresso placeholder:text-brand-caramel-text/40 focus:border-brand-espresso focus:outline-none"
           />
-          <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-brand-caramel-text">
+          <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[12px] text-brand-caramel-text">
             <span>
               {text.length} chars in the editor
               {text.trim() ? '' : ' · empty'}
@@ -169,7 +169,7 @@ export default function CodecToolPage({
 
         {/* ── OPTIONAL FILE ──────────────────────────────────────────── */}
         <section data-param-key="input_path" className="space-y-2">
-          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-brand-caramel-text">
+          <p className="font-mono text-[12px] uppercase tracking-[0.3em] text-brand-caramel-text">
             {schema.input_path?.title ?? 'input_path'}{' '}
             <span className="text-brand-sage">· optional, overrides the editor</span>
           </p>
@@ -179,7 +179,7 @@ export default function CodecToolPage({
             placeholder="/path/to/file.bin"
             accept=".txt,.bin,.dat"
           />
-          <p className="font-mono text-[11px] leading-relaxed text-brand-caramel-text">
+          <p className="font-mono text-[12px] leading-relaxed text-brand-caramel-text">
             {schema.input_path?.description ?? 'Path to file to encode or decode.'}
           </p>
         </section>
@@ -195,7 +195,7 @@ export default function CodecToolPage({
             {execute.busy ? `running · ${execute.state.elapsedSeconds.toFixed(1)}s` : 'transform'}
           </button>
           <ArrowDown className="size-4 text-brand-sage" />
-          <span className="font-mono text-[11px] text-brand-caramel-text">
+          <span className="font-mono text-[12px] text-brand-caramel-text">
             {completed ? 'server returned below' : execute.state.phase === 'executing' ? 'measuring…' : 'nothing sent yet'}
           </span>
         </div>
@@ -203,7 +203,7 @@ export default function CodecToolPage({
         {/* ── OUTPUT ─────────────────────────────────────────────────── */}
         {completed && (
           <section className="space-y-3 border-t border-brand-espresso pt-6">
-            <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 font-mono text-[11px] text-brand-caramel-text">
+            <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 font-mono text-[12px] text-brand-caramel-text">
               <span>
                 codec <span className="font-bold text-brand-espresso">{realCodec ?? '—'}</span>
               </span>
@@ -234,7 +234,7 @@ export default function CodecToolPage({
                   setCopied(true)
                 }}
                 disabled={output == null}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1.5 font-mono text-[11px] text-brand-espresso hover:border-brand-espresso disabled:opacity-30"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1.5 font-mono text-[12px] text-brand-espresso hover:border-brand-espresso disabled:opacity-30"
               >
                 {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
                 {copied ? 'copied' : 'copy output'}
@@ -243,7 +243,7 @@ export default function CodecToolPage({
                 <a
                   href={resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(artifact.path)}`)}
                   download={artifact.name}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1.5 font-mono text-[11px] text-brand-espresso hover:border-brand-espresso"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1.5 font-mono text-[12px] text-brand-espresso hover:border-brand-espresso"
                 >
                   <Download className="size-3" /> {artifact.name}
                 </a>

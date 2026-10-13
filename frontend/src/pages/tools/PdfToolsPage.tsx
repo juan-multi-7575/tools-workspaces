@@ -97,7 +97,7 @@ export default function PdfToolsPage({
 
   const metaRow = (key: string) => (
     <div key={key} className="flex items-baseline justify-between gap-4 border-b border-brand-sage/50 py-1.5 last:border-b-0">
-      <span className="font-mono text-[11px] uppercase tracking-wider text-brand-caramel-text">{humanise(key)}</span>
+      <span className="font-mono text-[12px] uppercase tracking-wider text-brand-caramel-text">{humanise(key)}</span>
       <span className="text-right font-mono text-xs break-all text-brand-espresso">{String(info?.[key])}</span>
     </div>
   )
@@ -107,7 +107,7 @@ export default function PdfToolsPage({
       manifest={manifest}
       gate={<DependencyGate toolId="pdf_tools" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-cream-light">
           <ScrollText className="size-3" /> reader
         </span>
       }
@@ -129,7 +129,7 @@ export default function PdfToolsPage({
         </div>
 
         <div data-param-key="action" className="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-sage bg-brand-cream-dark/40 p-3.5">
-          <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-brand-caramel-text">
+          <span className="font-mono text-[12px] uppercase tracking-[0.22em] text-brand-caramel-text">
             {schema.action?.title ?? 'action'}
           </span>
           <div className="flex gap-1.5">
@@ -162,7 +162,7 @@ export default function PdfToolsPage({
 
         {execute.state.error && (
           <div role="alert" className="rounded-2xl border-2 border-accent-contrast/50 bg-accent-contrast/10 p-4">
-            <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.2em] text-accent-contrast">The backend reported — verbatim</p>
+            <p className="mb-1 font-mono text-[12px] uppercase tracking-[0.2em] text-accent-contrast">The backend reported — verbatim</p>
             <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-brand-espresso">{execute.state.error}</pre>
           </div>
         )}
@@ -175,7 +175,7 @@ export default function PdfToolsPage({
               </h2>
               <div className="flex flex-wrap items-center gap-3">
                 {completed && (
-                  <span className="font-mono text-[11px] text-brand-caramel-text">
+                  <span className="font-mono text-[12px] text-brand-caramel-text">
                     <Hash className="mr-1 inline size-3" />
                     character_count = {characterCount ?? 'not reported'}
                   </span>
@@ -184,7 +184,7 @@ export default function PdfToolsPage({
                   <a
                     href={contentUrl(artifact.path)}
                     download={artifact.name}
-                    className="rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1 font-mono text-[11px] text-brand-espresso"
+                    className="rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1 font-mono text-[12px] text-brand-espresso"
                   >
                     download {artifact.name}
                   </a>
@@ -217,7 +217,7 @@ export default function PdfToolsPage({
               ) : (
                 <>
                   {needle && (
-                    <p className="mb-2 font-mono text-[11px] text-brand-caramel-text">
+                    <p className="mb-2 font-mono text-[12px] text-brand-caramel-text">
                       {matchCount} matching {matchCount === 1 ? 'occurrence' : 'occurrences'} of "{query}" across the whole document
                     </p>
                   )}
@@ -235,7 +235,7 @@ export default function PdfToolsPage({
                 <Info className="size-4 text-brand-caramel" /> pdfinfo payload
               </h2>
               {completed && (
-                <span className="font-mono text-[11px] text-brand-caramel-text">
+                <span className="font-mono text-[12px] text-brand-caramel-text">
                   {infoKeys.length} keys returned by the backend parser
                 </span>
               )}
@@ -247,7 +247,7 @@ export default function PdfToolsPage({
             ) : (
               <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr]">
                 <div className="rounded-2xl border border-brand-espresso bg-brand-espresso p-4">
-                  <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.22em] text-brand-cream-dark/60">Headline fields</p>
+                  <p className="mb-2 font-mono text-[12px] uppercase tracking-[0.22em] text-brand-cream-dark/60">Headline fields</p>
                   {headline.length === 0 ? (
                     <p className="font-mono text-xs text-brand-cream-dark/60">
                       None of the headline keys were present in this payload.
@@ -255,7 +255,7 @@ export default function PdfToolsPage({
                   ) : (
                     headline.map((key) => (
                       <div key={key} className="flex items-baseline justify-between gap-4 border-b border-brand-cream-dark/10 py-1.5 last:border-b-0">
-                        <span className="font-mono text-[11px] uppercase tracking-wider text-brand-cream-dark/60">{humanise(key)}</span>
+                        <span className="font-mono text-[12px] uppercase tracking-wider text-brand-cream-dark/60">{humanise(key)}</span>
                         <span className="text-right font-mono text-sm font-bold break-all text-brand-cream-light">{String(info?.[key])}</span>
                       </div>
                     ))
@@ -264,14 +264,14 @@ export default function PdfToolsPage({
                     <a
                       href={contentUrl(artifact.path)}
                       download={artifact.name}
-                      className="mt-3 inline-block rounded-lg border border-brand-cream-dark/25 px-2.5 py-1 font-mono text-[11px] text-brand-cream-dark/85"
+                      className="mt-3 inline-block rounded-lg border border-brand-cream-dark/25 px-2.5 py-1 font-mono text-[12px] text-brand-cream-dark/85"
                     >
                       download {artifact.name}
                     </a>
                   )}
                 </div>
                 <div className="rounded-2xl border border-brand-sage bg-surface-white p-4">
-                  <p className="mb-2 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-brand-caramel-text">
+                  <p className="mb-2 flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.22em] text-brand-caramel-text">
                     <Table2 className="size-3" /> Every returned key
                   </p>
                   {completed ? remainder.map(metaRow) : (

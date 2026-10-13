@@ -226,7 +226,7 @@ export default function SrtTranslatorPage({
       manifest={manifest}
       gate={<DependencyGate toolId="subtitle.translate.srt" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded-md bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-brand-espresso px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-cream-light">
           <SplitSquareHorizontal className="size-3" /> dual-pane cues
         </span>
       }
@@ -243,7 +243,7 @@ export default function SrtTranslatorPage({
             {execute.busy ? `Translating · ${execute.state.elapsedSeconds.toFixed(1)}s` : `Translate cues → ${targetLang}`}
           </button>
 
-          <dl className="space-y-1 border-t border-brand-sage pt-3 font-mono text-[11px] text-brand-caramel-text">
+          <dl className="space-y-1 border-t border-brand-sage pt-3 font-mono text-[12px] text-brand-caramel-text">
             <div className="flex justify-between">
               <dt>phase</dt>
               <dd className="font-bold text-brand-espresso">{execute.state.phase}</dd>
@@ -262,7 +262,7 @@ export default function SrtTranslatorPage({
             </div>
           </dl>
 
-          <label className="flex items-center gap-2 border-t border-brand-sage pt-3 font-mono text-[11px] text-brand-caramel-text">
+          <label className="flex items-center gap-2 border-t border-brand-sage pt-3 font-mono text-[12px] text-brand-caramel-text">
             <input
               type="checkbox"
               checked={onlyChanged}
@@ -313,7 +313,7 @@ export default function SrtTranslatorPage({
         {/* ── CUE TIMELINE (real timestamps only) ────────────────────────── */}
         {timeline.spans.length > 0 && (
           <section className="rounded-xl border border-brand-sage bg-brand-cream-dark/40 p-4">
-            <h3 className="mb-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-caramel-text">
+            <h3 className="mb-3 flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-caramel-text">
               <Clock3 className="size-3" /> cue timeline · {timeline.span.toFixed(2)}s of real cues
             </h3>
             <div className="flex h-16 items-end gap-[2px]">
@@ -336,22 +336,22 @@ export default function SrtTranslatorPage({
           <header className="grid grid-cols-2 border-b-2 border-brand-espresso bg-brand-cream-dark">
             <div className="flex items-center gap-1.5 border-r-2 border-brand-espresso px-3 py-2">
               <Captions className="size-3.5 text-brand-caramel" />
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-brand-espresso">
+              <span className="font-mono text-[12px] font-bold uppercase tracking-[0.18em] text-brand-espresso">
                 original
               </span>
               {original?.path && (
-                <span className="ml-auto truncate font-mono text-[10px] text-brand-caramel-text" title={original.path}>
+                <span className="ml-auto truncate font-mono text-[12px] text-brand-caramel-text" title={original.path}>
                   {original.path.split('/').pop()}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-1.5 px-3 py-2">
               <Languages className="size-3.5 text-brand-caramel" />
-              <span className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-brand-espresso">
+              <span className="font-mono text-[12px] font-bold uppercase tracking-[0.18em] text-brand-espresso">
                 {targetLang.toLowerCase()}
               </span>
               {translated?.path && (
-                <span className="ml-auto truncate font-mono text-[10px] text-brand-caramel-text" title={translated.path}>
+                <span className="ml-auto truncate font-mono text-[12px] text-brand-caramel-text" title={translated.path}>
                   {translated.path.split('/').pop()}
                 </span>
               )}
@@ -359,12 +359,12 @@ export default function SrtTranslatorPage({
           </header>
 
           {original?.error && (
-            <p className="border-b border-brand-sage px-3 py-2 font-mono text-[11px] text-accent-contrast">
+            <p className="border-b border-brand-sage px-3 py-2 font-mono text-[12px] text-accent-contrast">
               Original could not be read: {original.error}
             </p>
           )}
           {translated?.error && (
-            <p className="border-b border-brand-sage px-3 py-2 font-mono text-[11px] text-accent-contrast">
+            <p className="border-b border-brand-sage px-3 py-2 font-mono text-[12px] text-accent-contrast">
               Translated artifact could not be read: {translated.error}
             </p>
           )}
@@ -384,14 +384,14 @@ export default function SrtTranslatorPage({
               {visibleRows.map((row) => (
                 <div key={row.key} className="grid grid-cols-2">
                   <div className="border-r-2 border-brand-espresso px-3 py-2">
-                    <p className="mb-1 flex flex-wrap items-center gap-1.5 font-mono text-[10px] text-brand-caramel-text">
+                    <p className="mb-1 flex flex-wrap items-center gap-1.5 font-mono text-[12px] text-brand-caramel-text">
                       <span className="rounded bg-brand-espresso px-1.5 py-0.5 font-bold text-brand-cream-light">#{row.index}</span>
                       <span>{row.timing}</span>
                     </p>
                     <p className="text-[13px] leading-relaxed text-brand-espresso">{row.original}</p>
                   </div>
                   <div className={`px-3 py-2 ${row.changed === true ? 'bg-brand-caramel/10' : ''}`}>
-                    <p className="mb-1 flex flex-wrap items-center gap-1.5 font-mono text-[10px] text-brand-caramel-text">
+                    <p className="mb-1 flex flex-wrap items-center gap-1.5 font-mono text-[12px] text-brand-caramel-text">
                       {row.changed === null ? (
                         <span className="rounded border border-accent-contrast/50 px-1.5 py-0.5 font-bold text-accent-contrast">
                           no matching cue
@@ -416,14 +416,14 @@ export default function SrtTranslatorPage({
 
         {completed && rows.length > 0 && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-md border border-brand-sage bg-brand-cream-dark px-2 py-1 font-mono text-[11px] text-brand-espresso">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-brand-sage bg-brand-cream-dark px-2 py-1 font-mono text-[12px] text-brand-espresso">
               <CheckCircle2 className="size-3 text-brand-caramel" /> {changedCount} of {rows.length} cues differ
             </span>
             {artifact && (
               <a
                 href={resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(artifact.path)}`)}
                 download={artifact.name}
-                className="inline-flex items-center gap-1.5 rounded-md border border-brand-sage bg-surface-white px-2 py-1 font-mono text-[11px] text-brand-espresso hover:border-brand-caramel"
+                className="inline-flex items-center gap-1.5 rounded-md border border-brand-sage bg-surface-white px-2 py-1 font-mono text-[12px] text-brand-espresso hover:border-brand-caramel"
               >
                 <Download className="size-3" /> {artifact.name}
               </a>
@@ -436,7 +436,7 @@ export default function SrtTranslatorPage({
                 setCopied(true)
               }}
               disabled={!translated?.content}
-              className="inline-flex items-center gap-1.5 rounded-md border border-brand-sage bg-surface-white px-2 py-1 font-mono text-[11px] text-brand-espresso hover:border-brand-caramel disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 rounded-md border border-brand-sage bg-surface-white px-2 py-1 font-mono text-[12px] text-brand-espresso hover:border-brand-caramel disabled:opacity-40"
             >
               <Copy className="size-3" /> {copied ? 'Copied' : 'Copy artifact'}
             </button>

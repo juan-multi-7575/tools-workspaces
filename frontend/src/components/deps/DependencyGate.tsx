@@ -58,14 +58,14 @@ function MissingDepRow({ entry }: { entry: DepEntry }) {
         <span className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-xs font-semibold">{entry.dep_id}</span>
           <span
-            className="rounded-md border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-current/70"
+            className="rounded-md border px-1.5 py-0.5 font-mono text-[12px] uppercase tracking-wider text-current/70"
             style={{ borderColor: 'color-mix(in oklab, currentColor 22%, transparent)' }}
           >
             {entry.kind}
           </span>
           {entry.heavy && (
             <span
-              className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+              className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[12px] font-semibold uppercase tracking-wider"
               style={{
                 color: 'var(--dep-warn-text)',
                 borderColor: 'color-mix(in oklab, var(--dep-warn) 45%, transparent)',
@@ -232,7 +232,7 @@ export default function DependencyGate({ toolId, state, accent, onReadyChange }:
         <p className="mt-1.5 text-xs leading-relaxed text-current/70">
           Run stays disabled because the backend never confirmed this tool&apos;s dependencies.
         </p>
-        <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-current/70">
+        <pre className="mt-2 whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-current/70">
           {state.error ?? 'The dependency check returned no error message.'}
         </pre>
         <div className="mt-3">
@@ -288,7 +288,7 @@ export default function DependencyGate({ toolId, state, accent, onReadyChange }:
             )}
           </div>
 
-          <p className="mt-2 font-mono text-[11px] tabular-nums text-current/70">
+          <p className="mt-2 font-mono text-[12px] tabular-nums text-current/70">
             {byteProgress.totalBytes === 0 ? (
               'byte totals not reported for this job'
             ) : (
@@ -314,11 +314,11 @@ export default function DependencyGate({ toolId, state, accent, onReadyChange }:
                       {stage ? STAGE_LABEL[stage] : 'Queued'}
                     </span>
                   </span>
-                  <span className="font-mono text-[11px] tabular-nums text-current/70">
+                  <span className="font-mono text-[12px] tabular-nums text-current/70">
                     {bytes === null ? 'size unknown' : `${measured ? '' : 'about '}${formatBytes(bytes)}`}
                   </span>
                   {showMessage && (
-                    <pre className="w-full break-words whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-current/70">
+                    <pre className="w-full break-words whitespace-pre-wrap font-mono text-[12px] leading-relaxed text-current/70">
                       {message}
                     </pre>
                   )}
@@ -358,7 +358,7 @@ export default function DependencyGate({ toolId, state, accent, onReadyChange }:
             <CircleAlert className="size-3.5 shrink-0" style={{ color: 'var(--dep-bad)' }} aria-hidden="true" />
             {failedDepId ? `Install failed for ${failedDepId}` : 'The install did not complete'}
           </p>
-          <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-current/70">
+          <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-current/70">
             {jobError}
           </pre>
         </div>
@@ -373,7 +373,7 @@ export default function DependencyGate({ toolId, state, accent, onReadyChange }:
               ))}
             </ul>
           </div>
-          <p className="mt-2 font-mono text-[11px] tabular-nums text-current/70">
+          <p className="mt-2 font-mono text-[12px] tabular-nums text-current/70">
             {state.missingBytes === 0
               ? 'the backend reported no download size for these'
               : `about ${formatBytes(state.missingBytes)} to download`}

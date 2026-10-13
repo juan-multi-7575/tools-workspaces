@@ -88,11 +88,11 @@ export default function DemucsPage({
 
   const stamp =
     phase === 'completed'
-      ? { label: 'archived', ring: 'border-[#2e6b47] text-[#2e6b47] bg-[#e7f2e9]' }
+      ? { label: 'archived', ring: 'border-success text-success bg-[#e7f2e9]' }
       : phase === 'failed'
-        ? { label: 'not archived', ring: 'border-[#a83232] text-[#a83232] bg-[#fbeceb]' }
+        ? { label: 'not archived', ring: 'border-accent-contrast text-accent-contrast bg-[#fbeceb]' }
         : phase === 'executing'
-          ? { label: 'processing', ring: 'border-[#9d6638] text-[#9d6638] bg-[#f7efe2]' }
+          ? { label: 'processing', ring: 'border-brand-caramel text-brand-caramel bg-[#f7efe2]' }
           : phase === 'cancelled'
             ? { label: 'aborted', ring: 'border-[#7a7067] text-[#7a7067] bg-[#f1ede4]' }
             : { label: 'no record', ring: 'border-[#c9c0ae] text-[#9c948a] bg-transparent' }
@@ -102,13 +102,13 @@ export default function DemucsPage({
       manifest={manifest}
       gate={<DependencyGate toolId="demucs" state={deps} />}
       headerActions={
-        <span className={`inline-flex -rotate-3 items-center gap-1.5 rounded border-2 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] ${stamp.ring}`}>
+        <span data-run-status={phase} className={`inline-flex -rotate-3 items-center gap-1.5 rounded border-2 px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.22em] ${stamp.ring}`}>
           <Stamp className="size-3" /> {stamp.label}
         </span>
       }
       aside={
         <div className={`sticky top-4 space-y-4 rounded-2xl border ${RULE} ${PAPER} p-4 shadow-sm ${INK}`}>
-          <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.28em] text-brand-caramel-text">
+          <p className="flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.28em] text-brand-caramel-text">
             <Layers className="size-3" /> separation record
           </p>
 
@@ -129,7 +129,7 @@ export default function DemucsPage({
             ))}
           </dl>
 
-          <p className="font-mono text-[10px] leading-relaxed text-brand-caramel-text">
+          <p className="font-mono text-[12px] leading-relaxed text-brand-caramel-text">
             Only measured wall-clock seconds are shown. Demucs itself reports per-model progress on its own stderr,
             which this API does not forward, so no percentage is invented here.
           </p>
@@ -153,14 +153,14 @@ export default function DemucsPage({
           </button>
 
           {execute.state.error && (
-            <div role="alert" className="rounded-xl border-2 border-[#a83232] bg-[#fbeceb] p-3">
-              <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-[#a83232]">
+            <div role="alert" className="rounded-xl border-2 border-accent-contrast bg-[#fbeceb] p-3">
+              <p className="flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-wider text-accent-contrast">
                 <AlertTriangle className="size-3" /> demucs reported
               </p>
-              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-[#5c1d1d]">
+              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-[#5c1d1d]">
                 {execute.state.error}
               </pre>
-              <p className="mt-2 border-t border-[#e8cfcd] pt-2 font-mono text-[10px] leading-snug text-[#8a4a48]">
+              <p className="mt-2 border-t border-[#e8cfcd] pt-2 font-mono text-[12px] leading-snug text-[#8a4a48]">
                 A message of <code>demucs not installed</code> means the CLI is missing on the backend host, so nothing
                 was separated. Install it and run again — this page never substitutes a placeholder set of stems.
               </p>
@@ -174,17 +174,17 @@ export default function DemucsPage({
         <section className={`rounded-2xl border ${RULE} ${PAPER} p-5 shadow-sm ${INK}`}>
           <header className="flex flex-wrap items-start justify-between gap-3 border-b-2 border-[#2b2622] pb-3">
             <div>
-              <h2 className="font-mono text-[10px] uppercase tracking-[0.3em] text-brand-caramel-text">separation order</h2>
+              <h2 className="font-mono text-[12px] uppercase tracking-[0.3em] text-brand-caramel-text">separation order</h2>
               <p className="mt-1 font-mono text-lg font-bold leading-tight">Demucs stem extraction</p>
             </div>
-            <div className="text-right font-mono text-[10px] text-brand-caramel-text">
+            <div className="text-right font-mono text-[12px] text-brand-caramel-text">
               <p>tool · {manifest.id}</p>
               <p>manifest keys · {Object.keys(schema).join(', ')}</p>
             </div>
           </header>
 
           <div data-param-key="input_path" className="mt-4 space-y-2">
-            <label htmlFor="demucs-input" className="block font-mono text-[10px] uppercase tracking-[0.18em] text-brand-caramel-text">
+            <label htmlFor="demucs-input" className="block font-mono text-[12px] uppercase tracking-[0.18em] text-brand-caramel-text">
               {schema.input_path?.title ?? 'input_path'} — the mix to separate
             </label>
             <UniversalFileInput
@@ -194,7 +194,7 @@ export default function DemucsPage({
               accept="audio/*,video/*"
             />
             {schema.input_path?.description && (
-              <p className="font-mono text-[10px] leading-snug text-brand-caramel-text">{schema.input_path.description}</p>
+              <p className="font-mono text-[12px] leading-snug text-brand-caramel-text">{schema.input_path.description}</p>
             )}
           </div>
         </section>
@@ -222,10 +222,10 @@ export default function DemucsPage({
         {archive && (
           <section className="overflow-hidden rounded-2xl border-2 border-brand-espresso bg-brand-cream-light">
             <header className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-sage bg-brand-espresso px-4 py-2.5">
-              <h2 className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.24em] text-brand-cream-light">
+              <h2 className="flex items-center gap-2 font-mono text-[12px] font-bold uppercase tracking-[0.24em] text-brand-cream-light">
                 <PackageCheck className="size-4 text-success" /> archived result
               </h2>
-              <span className="font-mono text-[10px] text-brand-cream-dark">
+              <span className="font-mono text-[12px] text-brand-cream-dark">
                 completed in {execute.state.result?.durationSeconds?.toFixed(1) ?? `${execute.state.elapsedSeconds.toFixed(1)}s`}
               </span>
             </header>
@@ -236,8 +236,8 @@ export default function DemucsPage({
                   <p className="flex items-center gap-2 font-mono text-sm font-bold text-brand-espresso">
                     <FileArchive className="size-4 text-brand-caramel" /> {archive.name}
                   </p>
-                  <p className="mt-0.5 break-all font-mono text-[11px] text-brand-caramel-text">{archive.path}</p>
-                  <p className="mt-0.5 font-mono text-[11px] text-brand-caramel-text">
+                  <p className="mt-0.5 break-all font-mono text-[12px] text-brand-caramel-text">{archive.path}</p>
+                  <p className="mt-0.5 font-mono text-[12px] text-brand-caramel-text">
                     kind: {archive.kind ?? 'not reported'} · size: {formatBytes(indexedSizes[archive.path])}
                   </p>
                 </div>
@@ -251,7 +251,7 @@ export default function DemucsPage({
               </article>
 
               <div className="rounded-xl border border-brand-sage bg-brand-cream-dark/40 p-3.5">
-                <h3 className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-espresso">
+                <h3 className="flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-espresso">
                   <FolderTree className="size-3" /> what is inside
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed text-brand-espresso">
@@ -275,7 +275,7 @@ export default function DemucsPage({
                       <a
                         href={resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(artifact.path)}`)}
                         download={artifact.name}
-                        className="flex items-center justify-between gap-2 rounded-lg border border-brand-sage bg-surface-white px-3 py-2 font-mono text-[11px] text-brand-espresso hover:bg-brand-cream"
+                        className="flex items-center justify-between gap-2 rounded-lg border border-brand-sage bg-surface-white px-3 py-2 font-mono text-[12px] text-brand-espresso hover:bg-brand-cream"
                       >
                         <span className="truncate">{artifact.name}</span>
                         <span className="shrink-0 text-brand-caramel-text">{formatBytes(indexedSizes[artifact.path])}</span>

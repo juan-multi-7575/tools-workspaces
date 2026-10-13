@@ -86,13 +86,13 @@ export default function GalleryDlPage({
       manifest={manifest}
       gate={<DependencyGate toolId="gallery-dl" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded border border-[#3d3d4c] bg-[#1c1c26] px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-[#c9cbe0]">
+        <span className="inline-flex items-center gap-1.5 rounded border border-[#3d3d4c] bg-[#1c1c26] px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.22em] text-[#c9cbe0]">
           <Frame className="size-3" /> gallery wall
         </span>
       }
       aside={
         <div className="sticky top-4 space-y-4 rounded-2xl border border-[#33333f] bg-[#16161e] p-4 text-[#e6e6f0]">
-          <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.28em] text-[#8b8ca3]">
+          <p className="flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.28em] text-[#8b8ca3]">
             <Images className="size-3" /> exhibition record
           </p>
 
@@ -113,7 +113,7 @@ export default function GalleryDlPage({
             ))}
           </dl>
 
-          <p className="font-mono text-[10px] leading-relaxed text-[#8b8ca3]">
+          <p className="font-mono text-[12px] leading-relaxed text-[#8b8ca3]">
             gallery-dl gives no progress signal through this API, so the only figure reported is real measured elapsed
             time. No image count is estimated before the CLI has run.
           </p>
@@ -129,10 +129,10 @@ export default function GalleryDlPage({
 
           {execute.state.error && (
             <div role="alert" className="rounded-xl border border-[#7d3b3b] bg-[#2a1414] p-3">
-              <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-[#ff9d9d]">
+              <p className="flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-wider text-[#ff9d9d]">
                 <AlertTriangle className="size-3" /> gallery-dl reported
               </p>
-              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-[#ffd7d7]">
+              <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[12px] leading-relaxed text-[#ffd7d7]">
                 {execute.state.error}
               </pre>
             </div>
@@ -143,11 +143,11 @@ export default function GalleryDlPage({
       <div className="space-y-4">
         {/* ── WALL LABEL / SOURCE ───────────────────────────────────────────── */}
         <section className="rounded-2xl border border-[#33333f] bg-[#1c1c26] p-4 text-[#e6e6f0]">
-          <h2 className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.26em] text-[#8b8ca3]">
+          <h2 className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.26em] text-[#8b8ca3]">
             <Link2 className="size-3.5 text-[#c9cbe0]" /> source address
           </h2>
           <div data-param-key="url" className="mt-3 space-y-2">
-            <label htmlFor="gallery-url" className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#c9cbe0]">
+            <label htmlFor="gallery-url" className="block font-mono text-[12px] uppercase tracking-[0.18em] text-[#c9cbe0]">
               {schema.url?.title ?? 'url'} — gallery, album or image-set page
             </label>
 
@@ -173,7 +173,7 @@ export default function GalleryDlPage({
                 {execute.busy ? 'hanging' : 'hang the show'}
               </button>
             </div>
-            <p className="font-mono text-[10px] leading-relaxed text-[#8b8ca3]">
+            <p className="font-mono text-[12px] leading-relaxed text-[#8b8ca3]">
               {schema.url?.description ?? 'Page or album URL to scrape.'} Passed verbatim as <code>url</code>. If the
               address is not one gallery-dl supports, the run fails and that message is shown here in full — no sample
               gallery is ever substituted.
@@ -187,7 +187,7 @@ export default function GalleryDlPage({
                   <button
                     type="button"
                     onClick={() => setParams((prev) => ({ ...prev, url: entry }))}
-                    className="max-w-[22rem] truncate rounded border border-[#33333f] px-2 py-0.5 font-mono text-[10px] text-[#a8a9bd] hover:border-[#c9cbe0] hover:text-[#e6e6f0]"
+                    className="max-w-[22rem] truncate rounded border border-[#33333f] px-2 py-0.5 font-mono text-[12px] text-[#a8a9bd] hover:border-[#c9cbe0] hover:text-[#e6e6f0]"
                   >
                     {entry}
                   </button>
@@ -225,7 +225,7 @@ export default function GalleryDlPage({
             <pre className="mt-3 whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-[#ffd9d7]">
               {execute.state.error}
             </pre>
-            <p className="mt-4 border-t border-[#4a2222] pt-3 font-mono text-[11px] leading-relaxed text-[#c98b87]">
+            <p className="mt-4 border-t border-[#4a2222] pt-3 font-mono text-[12px] leading-relaxed text-[#c98b87]">
               gallery-dl exits non-zero for an address it does not support, so the backend returns no archive at all. This
               is the tool&apos;s own stderr. No placeholder wall of images is shown for a failed run.
             </p>
@@ -241,7 +241,7 @@ export default function GalleryDlPage({
         {/* ── ARCHIVE MAT ────────────────────────────────────────────────────── */}
         {archive && (
           <section className="rounded-2xl border border-[#33333f] bg-[#1c1c26] p-4">
-            <h2 className="mb-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.26em] text-[#8b8ca3]">
+            <h2 className="mb-3 flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.26em] text-[#8b8ca3]">
               <Download className="size-3.5" /> delivery
             </h2>
             <figure className="mx-auto max-w-2xl">
@@ -249,13 +249,13 @@ export default function GalleryDlPage({
                 <div className="flex min-h-40 flex-col items-center justify-center gap-2 border border-dashed border-[#c9c4b6] px-4 py-8 text-center">
                   <Download className="size-7 text-[#8d8778]" />
                   <p className="font-mono text-sm font-bold text-[#2b2622]">{archive.name}</p>
-                  <p className="break-all font-mono text-[11px] text-[#6f6a5f]">{archive.path}</p>
-                  <p className="font-mono text-[11px] text-[#6f6a5f]">
+                  <p className="break-all font-mono text-[12px] text-[#6f6a5f]">{archive.path}</p>
+                  <p className="font-mono text-[12px] text-[#6f6a5f]">
                     kind: {archive.kind ?? 'not reported'} · {formatBytes(indexedSizes[archive.path])}
                   </p>
                 </div>
               </div>
-              <figcaption className="mt-2 flex flex-wrap items-center justify-between gap-2 font-mono text-[10px] text-[#8b8ca3]">
+              <figcaption className="mt-2 flex flex-wrap items-center justify-between gap-2 font-mono text-[12px] text-[#8b8ca3]">
                 <span>the backend zips every file it scraped into this one archive</span>
                 <a
                   href={contentUrl(archive.path)}
@@ -272,7 +272,7 @@ export default function GalleryDlPage({
         {/* ── IMAGE WALL (only when real image artifacts exist) ───────────────── */}
         {images.length > 0 && (
           <section className="rounded-2xl border border-[#33333f] bg-[#1c1c26] p-4">
-            <h2 className="mb-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.26em] text-[#8b8ca3]">
+            <h2 className="mb-3 flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.26em] text-[#8b8ca3]">
               <ImageIcon className="size-3.5" /> image wall · {images.length} file(s)
             </h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -286,7 +286,7 @@ export default function GalleryDlPage({
                       className="aspect-square w-full object-cover"
                     />
                   </a>
-                  <figcaption className="mt-1.5 flex items-center justify-between gap-1 font-mono text-[10px] text-[#6f6a5f]">
+                  <figcaption className="mt-1.5 flex items-center justify-between gap-1 font-mono text-[12px] text-[#6f6a5f]">
                     <span className="truncate" title={image.path}>{image.name}</span>
                     <a href={contentUrl(image.path)} download={image.name} aria-label={`Download ${image.name}`}>
                       <Download className="size-3" />
@@ -299,7 +299,7 @@ export default function GalleryDlPage({
         )}
 
         {execute.state.result?.status === 'completed' && images.length === 0 && (
-          <p className="rounded-xl border border-[#33333f] bg-[#13131a] px-3 py-2.5 font-mono text-[11px] leading-relaxed text-[#a8a9bd]">
+          <p className="rounded-xl border border-[#33333f] bg-[#13131a] px-3 py-2.5 font-mono text-[12px] leading-relaxed text-[#a8a9bd]">
             No image files came back as separate artifacts, so there is no thumbnail wall to draw. The grid above this
             note only ever renders real image artifacts; the scraped files are inside{' '}
             {archive?.name ?? 'the returned archive'}.

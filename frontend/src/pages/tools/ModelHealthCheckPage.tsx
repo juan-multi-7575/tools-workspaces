@@ -167,7 +167,7 @@ export default function ModelHealthCheckPage({
       manifest={manifest}
       gate={<DependencyGate toolId="sys.health.check" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
+        <span className="inline-flex items-center gap-1.5 rounded border border-sky-500/40 bg-sky-500/10 px-2 py-0.5 font-mono text-[12px] uppercase tracking-[0.2em] text-sky-300">
           <Radar className="size-3" /> fleet telemetry
         </span>
       }
@@ -175,7 +175,7 @@ export default function ModelHealthCheckPage({
       <div className="space-y-4">
         {execute.state.error && (
           <div role="alert" className="rounded-lg border border-red-500/50 bg-red-500/10 p-3">
-            <p className="mb-1 flex items-center gap-1.5 font-mono text-[11px] font-bold text-red-300">
+            <p className="mb-1 flex items-center gap-1.5 font-mono text-[12px] font-bold text-red-300">
               <AlertTriangle className="size-3.5" /> The backend reported:
             </p>
             <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-neutral-200">
@@ -196,7 +196,7 @@ export default function ModelHealthCheckPage({
           {/* TARGET SELECTION */}
           <div className="min-w-0 space-y-4">
             <section className="min-w-0 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
-              <h2 className="mb-2.5 mt-3 flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
+              <h2 className="mb-2.5 mt-3 flex min-w-0 items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.2em] text-sky-300">
                 <Activity className="size-3 shrink-0" /> probe target
               </h2>
               <div className="min-w-0">
@@ -211,7 +211,7 @@ export default function ModelHealthCheckPage({
 
               {Object.keys(complementSchema).length > 0 && (
                 <div className="mt-3 border-t border-neutral-800 pt-3">
-                  <h3 className="mb-2.5 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">
+                  <h3 className="mb-2.5 flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.2em] text-neutral-500">
                     <TerminalSquare className="size-3 shrink-0" /> remaining manifest keys
                   </h3>
                   <fieldset disabled={execute.busy} className="min-w-0">
@@ -234,7 +234,7 @@ export default function ModelHealthCheckPage({
                   <div key={tile.label} className="min-w-0 bg-neutral-950 px-3 py-2.5">
                     <p
                       title={tile.label}
-                      className="truncate font-mono text-[9px] uppercase tracking-[0.18em] text-neutral-600"
+                      className="truncate font-mono text-[12px] uppercase tracking-[0.18em] text-neutral-600"
                     >
                       {tile.label}
                     </p>
@@ -254,18 +254,18 @@ export default function ModelHealthCheckPage({
                 it is the action that fills the matrix directly underneath it.
               */}
               <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-neutral-800 bg-neutral-900 px-3 py-2">
-                <h2 className="flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-sky-300">
+                <h2 className="flex min-w-0 items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.2em] text-sky-300">
                   <Gauge className="size-3 shrink-0" /> probe matrix
                 </h2>
                 <div className="flex shrink-0 items-center gap-2">
-                  <span className="font-mono text-[10px] text-neutral-500">
+                  <span className="font-mono text-[12px] text-neutral-500">
                     {completed ? `${rows.length} rows returned` : execute.state.phase === 'executing' ? 'sweeping…' : 'no run yet'}
                   </span>
                   <button
                     type="button"
                     onClick={() => void run()}
                     disabled={execute.busy || !deps.ready}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded bg-sky-500/20 px-2.5 py-1 font-mono text-[11px] font-bold text-sky-300 hover:bg-sky-500/30 disabled:opacity-40"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded bg-sky-500/20 px-2.5 py-1 font-mono text-[12px] font-bold text-sky-300 hover:bg-sky-500/30 disabled:opacity-40"
                   >
                     {execute.busy ? <Loader2 className="size-3 animate-spin" /> : <Play className="size-3" />}
                     {execute.busy ? `sweeping · ${execute.state.elapsedSeconds.toFixed(1)}s` : 'run sweep'}
@@ -285,9 +285,9 @@ export default function ModelHealthCheckPage({
                 </p>
               ) : (
                 <div className="min-w-0 overflow-x-auto">
-                  <table className="w-full min-w-[560px] border-collapse font-mono text-[11px]">
+                  <table className="w-full min-w-[560px] border-collapse font-mono text-[12px]">
                     <thead>
-                      <tr className="border-b border-neutral-800 text-left text-[9px] uppercase tracking-[0.18em] text-neutral-600">
+                      <tr className="border-b border-neutral-800 text-left text-[12px] uppercase tracking-[0.18em] text-neutral-600">
                         <th className="px-3 py-1.5 font-normal">model</th>
                         <th className="px-3 py-1.5 font-normal">provider</th>
                         <th className="px-3 py-1.5 font-normal">status</th>
@@ -374,24 +374,24 @@ export default function ModelHealthCheckPage({
             {/* CREDENTIAL REGISTRY */}
             <section className="min-w-0 rounded-lg border border-neutral-800 bg-neutral-950 p-3">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-                <h2 className="flex min-w-0 items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-500">
+                <h2 className="flex min-w-0 items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.2em] text-neutral-500">
                   <KeyRound className="size-3 shrink-0" /> stored keys
                 </h2>
                 <button
                   type="button"
                   onClick={() => void loadCredentials()}
-                  className="shrink-0 font-mono text-[10px] text-sky-400 hover:text-sky-300"
+                  className="shrink-0 font-mono text-[12px] text-sky-400 hover:text-sky-300"
                 >
                   refresh
                 </button>
               </div>
 
-              {credsError && <p className="break-words font-mono text-[10px] leading-relaxed text-red-300">{credsError}</p>}
-              {!credentials && !credsError && <p className="font-mono text-[10px] text-neutral-600">loading…</p>}
+              {credsError && <p className="break-words font-mono text-[12px] leading-relaxed text-red-300">{credsError}</p>}
+              {!credentials && !credsError && <p className="font-mono text-[12px] text-neutral-600">loading…</p>}
 
               {credentials && (
                 <>
-                  <p className="mb-2 font-mono text-[10px] text-neutral-500">
+                  <p className="mb-2 font-mono text-[12px] text-neutral-500">
                     {credentials.providers.length} provider{credentials.providers.length === 1 ? '' : 's'} hold a
                     stored key
                     {catalog ? ` · ${Object.keys(catalog.providers).length} in catalog` : ''}
@@ -402,7 +402,7 @@ export default function ModelHealthCheckPage({
                       <li key={providerId} className="flex min-w-0 items-center gap-1.5">
                         <span
                           title={providerId}
-                          className="inline-flex min-w-0 shrink items-center gap-1 truncate rounded border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-300"
+                          className="inline-flex min-w-0 shrink items-center gap-1 truncate rounded border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[12px] text-emerald-300"
                         >
                           <CheckCircle2 className="size-2.5 shrink-0" /> {providerId}
                         </span>
@@ -411,20 +411,20 @@ export default function ModelHealthCheckPage({
                           value={keyDrafts[providerId] ?? ''}
                           onChange={(e) => setKeyDrafts((prev) => ({ ...prev, [providerId]: e.target.value }))}
                           placeholder="replace…"
-                          className="min-w-0 flex-1 rounded border border-neutral-800 bg-neutral-900 px-1.5 py-0.5 font-mono text-[10px] text-neutral-200 focus:border-sky-500/60 focus:outline-none"
+                          className="min-w-0 flex-1 rounded border border-neutral-800 bg-neutral-900 px-1.5 py-0.5 font-mono text-[12px] text-neutral-200 focus:border-sky-500/60 focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={() => void saveKey(providerId)}
                           disabled={keyState[providerId] === 'saving' || !(keyDrafts[providerId] ?? '').trim()}
-                          className="shrink-0 rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-[10px] text-neutral-300 hover:bg-sky-500/30 disabled:opacity-30"
+                          className="shrink-0 rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-[12px] text-neutral-300 hover:bg-sky-500/30 disabled:opacity-30"
                         >
                           {keyState[providerId] === 'saving' ? '…' : 'save'}
                         </button>
                       </li>
                     ))}
                     {credentials.providers.length === 0 && (
-                      <li className="flex items-center gap-1.5 font-mono text-[10px] text-amber-300">
+                      <li className="flex items-center gap-1.5 font-mono text-[12px] text-amber-300">
                         <ShieldAlert className="size-3 shrink-0" /> no stored keys — providers will report UNCONFIGURED
                       </li>
                     )}
@@ -432,7 +432,7 @@ export default function ModelHealthCheckPage({
                   {Object.entries(keyErrors)
                     .filter(([, message]) => message)
                     .map(([providerId, message]) => (
-                      <p key={providerId} className="mt-1 break-words font-mono text-[10px] text-red-300">
+                      <p key={providerId} className="mt-1 break-words font-mono text-[12px] text-red-300">
                         {providerId}: {message}
                       </p>
                     ))}
@@ -442,7 +442,7 @@ export default function ModelHealthCheckPage({
 
             {/* Run state for the matrix above: which phase it is in, how long the
                 last sweep took, and when its report was produced. */}
-            <dl className="min-w-0 space-y-1 rounded-lg border border-neutral-800 bg-neutral-950 p-3 font-mono text-[11px] text-neutral-500">
+            <dl className="min-w-0 space-y-1 rounded-lg border border-neutral-800 bg-neutral-950 p-3 font-mono text-[12px] text-neutral-500">
               <div className="flex min-w-0 items-baseline justify-between gap-3">
                 <dt className="shrink-0">phase</dt>
                 <dd className="min-w-0 truncate text-right font-bold text-neutral-200">{execute.state.phase}</dd>

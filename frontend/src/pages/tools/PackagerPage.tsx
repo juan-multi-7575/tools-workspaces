@@ -148,9 +148,9 @@ export default function PackagerPage({
           <input type="checkbox" checked={checked} onChange={() => toggle(entry.path)} className="accent-brand-caramel" />
           {checked ? <CheckSquare className="size-3.5 text-success" /> : <Square className="size-3.5 text-brand-caramel-text" />}
           <FileBox className="size-3.5 shrink-0 text-brand-caramel-text" />
-          <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-brand-espresso" title={entry.path}>{entry.name}</span>
-          <span className="shrink-0 font-mono text-[10px] text-brand-caramel-text">{entry.kind}</span>
-          <span className="shrink-0 font-mono text-[10px] text-brand-caramel-text">{formatBytes(entry.size)}</span>
+          <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-brand-espresso" title={entry.path}>{entry.name}</span>
+          <span className="shrink-0 font-mono text-[12px] text-brand-caramel-text">{entry.kind}</span>
+          <span className="shrink-0 font-mono text-[12px] text-brand-caramel-text">{formatBytes(entry.size)}</span>
         </label>
       </li>
     )
@@ -161,7 +161,7 @@ export default function PackagerPage({
       manifest={manifest}
       gate={<DependencyGate toolId="packager" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-cream-light">
           <Package className="size-3" /> zip builder
         </span>
       }
@@ -180,9 +180,9 @@ export default function PackagerPage({
                   onChange={(e) => setFilter(e.target.value)}
                   placeholder="Filter files…"
                   aria-label="Filter the file tree"
-                  className="w-40 rounded-lg border border-brand-sage bg-brand-cream-light px-2.5 py-1 font-mono text-[11px] text-brand-espresso focus:border-brand-caramel focus:outline-none"
+                  className="w-40 rounded-lg border border-brand-sage bg-brand-cream-light px-2.5 py-1 font-mono text-[12px] text-brand-espresso focus:border-brand-caramel focus:outline-none"
                 />
-                <button type="button" onClick={() => void refresh()} className="rounded-lg border border-brand-sage bg-brand-cream-light px-2 py-1 font-mono text-[11px] text-brand-espresso">
+                <button type="button" onClick={() => void refresh()} className="rounded-lg border border-brand-sage bg-brand-cream-light px-2 py-1 font-mono text-[12px] text-brand-espresso">
                   <RefreshCw className="size-3" />
                 </button>
               </div>
@@ -196,7 +196,7 @@ export default function PackagerPage({
                 if (file) void upload(file)
               }}
               onClick={() => fileRef.current?.click()}
-              className="cursor-pointer rounded-xl border-2 border-dashed border-brand-sage bg-brand-cream/40 px-3 py-2 text-center text-[11px] text-brand-caramel-text hover:border-brand-caramel"
+              className="cursor-pointer rounded-xl border-2 border-dashed border-brand-sage bg-brand-cream/40 px-3 py-2 text-center text-[12px] text-brand-caramel-text hover:border-brand-caramel"
             >
               <input
                 ref={fileRef}
@@ -224,15 +224,15 @@ export default function PackagerPage({
 
             <div className="max-h-[24rem] overflow-y-auto rounded-xl border border-brand-sage bg-brand-cream-light p-2">
               {loading ? (
-                <p className="p-2 font-mono text-[11px] text-brand-caramel-text">Loading the artifact index…</p>
+                <p className="p-2 font-mono text-[12px] text-brand-caramel-text">Loading the artifact index…</p>
               ) : tree.length === 0 ? (
-                <p className="p-2 font-mono text-[11px] text-brand-caramel-text">
+                <p className="p-2 font-mono text-[12px] text-brand-caramel-text">
                   {entries.length === 0 ? 'The backend reports no artifacts yet.' : 'No file matches this filter.'}
                 </p>
               ) : (
                 tree.map((node) => (
                   <div key={node.dir} className="mb-2 last:mb-0">
-                    <p className="px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-brand-caramel-text" title={node.dir}>
+                    <p className="px-2 py-1 font-mono text-[12px] uppercase tracking-wider text-brand-caramel-text" title={node.dir}>
                       {node.dir}
                     </p>
                     <ul className="space-y-0.5">{node.files.map(fileRow)}</ul>
@@ -252,16 +252,16 @@ export default function PackagerPage({
               </p>
               <div className="max-h-56 overflow-y-auto rounded-xl border border-brand-sage bg-brand-cream-light p-2">
                 {selected.length === 0 ? (
-                  <p className="p-2 font-mono text-[11px] text-brand-caramel-text">
+                  <p className="p-2 font-mono text-[12px] text-brand-caramel-text">
                     Nothing selected — the backend rejects an empty <code>paths</code> with &ldquo;paths is required&rdquo;.
                   </p>
                 ) : (
                   <ul className="space-y-1">
                     {selected.map((path) => (
                       <li key={path} className="flex items-center gap-2 rounded-lg bg-brand-cream-dark/40 px-2 py-1">
-                        <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-brand-espresso" title={path}>{path}</span>
+                        <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-brand-espresso" title={path}>{path}</span>
                         {missing.includes(path) && (
-                          <span className="shrink-0 rounded bg-accent-contrast/15 px-1.5 py-0.5 font-mono text-[10px] text-accent-contrast">
+                          <span className="shrink-0 rounded bg-accent-contrast/15 px-1.5 py-0.5 font-mono text-[12px] text-accent-contrast">
                             not in the index
                           </span>
                         )}
@@ -286,7 +286,7 @@ export default function PackagerPage({
                   }}
                   placeholder="Add a server path the index does not list"
                   aria-label="Add a path to the archive"
-                  className="flex-1 rounded-lg border border-brand-sage bg-brand-cream-light px-2.5 py-1.5 font-mono text-[11px] text-brand-espresso focus:border-brand-caramel focus:outline-none"
+                  className="flex-1 rounded-lg border border-brand-sage bg-brand-cream-light px-2.5 py-1.5 font-mono text-[12px] text-brand-espresso focus:border-brand-caramel focus:outline-none"
                 />
                 <button
                   type="button"
@@ -295,7 +295,7 @@ export default function PackagerPage({
                     if (value) setSelected((prev) => (prev.includes(value) ? prev : [...prev, value]))
                     setManual('')
                   }}
-                  className="inline-flex items-center gap-1 rounded-lg border border-brand-sage bg-brand-cream-light px-2.5 py-1.5 font-mono text-[11px] font-bold text-brand-espresso"
+                  className="inline-flex items-center gap-1 rounded-lg border border-brand-sage bg-brand-cream-light px-2.5 py-1.5 font-mono text-[12px] font-bold text-brand-espresso"
                 >
                   <Plus className="size-3" /> add
                 </button>
@@ -314,7 +314,7 @@ export default function PackagerPage({
                 <button
                   type="button"
                   onClick={() => setSelected([])}
-                  className="rounded-lg border border-brand-sage bg-brand-cream-light px-2.5 py-1.5 font-mono text-[11px] text-brand-espresso"
+                  className="rounded-lg border border-brand-sage bg-brand-cream-light px-2.5 py-1.5 font-mono text-[12px] text-brand-espresso"
                 >
                   clear selection
                 </button>
@@ -323,7 +323,7 @@ export default function PackagerPage({
 
             {execute.state.error && (
               <div role="alert" className="rounded-2xl border-2 border-accent-contrast/50 bg-accent-contrast/10 p-4">
-                <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.2em] text-accent-contrast">The backend reported — verbatim</p>
+                <p className="mb-1 font-mono text-[12px] uppercase tracking-[0.2em] text-accent-contrast">The backend reported — verbatim</p>
                 <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-brand-espresso">{execute.state.error}</pre>
               </div>
             )}
@@ -333,7 +333,7 @@ export default function PackagerPage({
                 <h3 className="flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.2em]">
                   <Package className="size-4" /> {artifact.name}
                 </h3>
-                <p className="font-mono text-[11px] text-brand-cream-dark/70">
+                <p className="font-mono text-[12px] text-brand-cream-dark/70">
                   {artifactSize === undefined ? 'size not indexed yet' : formatBytes(artifactSize)} ·
                   {' '}built from {selected.length} real {selected.length === 1 ? 'path' : 'paths'} sent as <code>paths</code>
                 </p>
@@ -344,7 +344,7 @@ export default function PackagerPage({
                 >
                   <Download className="size-3.5" /> download {artifact.name}
                 </a>
-                <p className="font-mono text-[10px] leading-relaxed text-brand-cream-dark/60">
+                <p className="font-mono text-[12px] leading-relaxed text-brand-cream-dark/60">
                   The backend returns only the archive path — it ships no entry manifest, so the archive contents are not
                   listed here. Nothing is invented to fill the gap.
                 </p>
@@ -363,7 +363,7 @@ export default function PackagerPage({
           </section>
         </div>
 
-        <p className="font-mono text-[10px] text-brand-caramel-text">
+        <p className="font-mono text-[12px] text-brand-caramel-text">
           {Object.keys(schema).length} manifest {Object.keys(schema).length === 1 ? 'key' : 'keys'} on this page:{' '}
           {Object.keys(schema).join(', ')}
         </p>

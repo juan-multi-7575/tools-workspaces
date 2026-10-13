@@ -102,7 +102,7 @@ export default function StreamlinkPage({
       gate={<DependencyGate toolId="streamlink" state={deps} />}
       headerActions={
         <span
-          className={`inline-flex items-center gap-2 rounded-md px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.24em] ${tally.plate} ${tally.text}`}
+          className={`inline-flex items-center gap-2 rounded-md px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.24em] ${tally.plate} ${tally.text}`}
         >
           <span className={`inline-block size-2 rounded-full ring-2 ${tally.lamp}`} aria-hidden="true" />
           {tally.label}
@@ -110,7 +110,7 @@ export default function StreamlinkPage({
       }
       aside={
         <div className="sticky top-4 space-y-4 rounded-2xl border border-[#2b3238] bg-[#0d1116] p-4 font-mono text-[#c7d1d9]">
-          <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.28em] text-[#6c7a86]">
+          <p className="flex items-center gap-1.5 text-[12px] uppercase tracking-[0.28em] text-[#6c7a86]">
             <Signal className="size-3" /> desk meters
           </p>
 
@@ -129,7 +129,7 @@ export default function StreamlinkPage({
             ))}
           </dl>
 
-          <p className="text-[10px] leading-relaxed text-[#6c7a86]">
+          <p className="text-[12px] leading-relaxed text-[#6c7a86]">
             The only live figure here is measured wall-clock time from <code>Date.now()</code>. There is no progress
             percentage, because the backend does not report one for a single capture command.
           </p>
@@ -148,11 +148,11 @@ export default function StreamlinkPage({
       <div className="space-y-4">
         {/* ── PATCH BAY ──────────────────────────────────────────────────────── */}
         <section className="rounded-2xl border border-[#2b3238] bg-[#0d1116] p-4">
-          <h2 className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.26em] text-[#6c7a86]">
+          <h2 className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.26em] text-[#6c7a86]">
             <RadioTower className="size-3.5 text-[#f0b429]" /> source feed
           </h2>
           <div data-param-key="url" className="mt-3 space-y-2">
-            <label htmlFor="streamlink-url" className="block font-mono text-[10px] uppercase tracking-[0.18em] text-[#f0b429]">
+            <label htmlFor="streamlink-url" className="block font-mono text-[12px] uppercase tracking-[0.18em] text-[#f0b429]">
               {schema.url?.title ?? 'url'} — live HLS/DASH stream address
             </label>
 
@@ -178,7 +178,7 @@ export default function StreamlinkPage({
                 {execute.busy ? 'capturing' : 'go live'}
               </button>
             </div>
-            <p className="font-mono text-[10px] leading-relaxed text-[#6c7a86]">
+            <p className="font-mono text-[12px] leading-relaxed text-[#6c7a86]">
               {schema.url?.description ?? 'Direct stream URL to capture.'} Entered verbatim as the{' '}
               <code>url</code> parameter. No rewriting, no probing, no defaults.
             </p>
@@ -186,14 +186,14 @@ export default function StreamlinkPage({
 
           {recentUrls.length > 0 && (
             <div className="mt-3 space-y-1">
-              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#6c7a86]">this session&apos;s attempts</p>
+              <p className="font-mono text-[12px] uppercase tracking-[0.18em] text-[#6c7a86]">this session&apos;s attempts</p>
               <ul className="flex flex-wrap gap-1.5">
                 {recentUrls.map((entry) => (
                   <li key={entry}>
                     <button
                       type="button"
                       onClick={() => setParams((prev) => ({ ...prev, url: entry }))}
-                      className="max-w-[22rem] truncate rounded border border-[#2b3238] px-2 py-0.5 font-mono text-[10px] text-[#9aa7b2] hover:border-[#f0b429] hover:text-[#f0b429]"
+                      className="max-w-[22rem] truncate rounded border border-[#2b3238] px-2 py-0.5 font-mono text-[12px] text-[#9aa7b2] hover:border-[#f0b429] hover:text-[#f0b429]"
                     >
                       {entry}
                     </button>
@@ -234,7 +234,7 @@ export default function StreamlinkPage({
             <pre className="mt-3 whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-[#ffd9d7]">
               {execute.state.error}
             </pre>
-            <p className="mt-4 border-t border-[#4a1c1c] pt-3 font-mono text-[11px] leading-relaxed text-[#c98b87]">
+            <p className="mt-4 border-t border-[#4a1c1c] pt-3 font-mono text-[12px] leading-relaxed text-[#c98b87]">
               The backend runs the <code>streamlink</code> CLI first and falls back to <code>yt-dlp</code> when it
               produces no file. This failure text is what that fallback reported. No partial capture exists, so nothing is
               shown as captured here.
@@ -261,7 +261,7 @@ export default function StreamlinkPage({
               </div>
               <div className="flex flex-col gap-0.5">
                 <dt className="text-[#6c7a86]">path</dt>
-                <dd className="break-all font-mono text-[11px]">{captured.path}</dd>
+                <dd className="break-all font-mono text-[12px]">{captured.path}</dd>
               </div>
               {captured.kind && (
                 <div className="flex items-center justify-between gap-2">

@@ -151,7 +151,7 @@ export default function PandocPage({
       manifest={manifest}
       gate={<DependencyGate toolId="pandoc" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-cream-light">
           <Quote className="size-3" /> editorial desk
         </span>
       }
@@ -216,8 +216,8 @@ export default function PandocPage({
         <div className="grid gap-4 lg:grid-cols-2">
           <section className="flex min-h-[22rem] flex-col overflow-hidden rounded-2xl border border-brand-sage bg-brand-cream-light">
             <header className="flex items-center justify-between gap-2 border-b border-brand-sage bg-brand-cream-dark/60 px-4 py-2.5">
-              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-brand-caramel-text">Source</span>
-              <span className="font-mono text-[10px] text-brand-caramel-text">{sourceNote ?? ''}</span>
+              <span className="font-mono text-[12px] uppercase tracking-[0.22em] text-brand-caramel-text">Source</span>
+              <span className="font-mono text-[12px] text-brand-caramel-text">{sourceNote ?? ''}</span>
             </header>
             <div className="flex-1 overflow-auto p-4">
               {reading ? (
@@ -234,12 +234,12 @@ export default function PandocPage({
 
           <section className="flex min-h-[22rem] flex-col overflow-hidden rounded-2xl border border-brand-espresso bg-brand-espresso">
             <header className="flex flex-wrap items-center justify-between gap-2 border-b border-brand-cream-dark/15 px-4 py-2.5">
-              <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-brand-cream-dark/70">
+              <span className="font-mono text-[12px] uppercase tracking-[0.22em] text-brand-cream-dark/70">
                 Converted · {target}
               </span>
               <span className="flex items-center gap-2">
                 {producedName && (
-                  <span className="font-mono text-[10px] text-brand-cream-dark/60">
+                  <span className="font-mono text-[12px] text-brand-cream-dark/60">
                     {producedName}
                     {producedSize === undefined ? '' : ` · ${producedSize} bytes`}
                   </span>
@@ -248,7 +248,7 @@ export default function PandocPage({
                   type="button"
                   onClick={() => void copy()}
                   disabled={!produced}
-                  className="inline-flex items-center gap-1 rounded-md border border-brand-cream-dark/25 px-2 py-1 font-mono text-[10px] text-brand-cream-dark/85 disabled:opacity-40"
+                  className="inline-flex items-center gap-1 rounded-md border border-brand-cream-dark/25 px-2 py-1 font-mono text-[12px] text-brand-cream-dark/85 disabled:opacity-40"
                 >
                   {copied ? <Check className="size-3 text-success" /> : <ClipboardCopy className="size-3" />} copy
                 </button>
@@ -256,7 +256,7 @@ export default function PandocPage({
                   href={producedPath ? contentUrl(producedPath) : undefined}
                   download={producedName || undefined}
                   aria-disabled={!produced}
-                  className={`inline-flex items-center gap-1 rounded-md bg-brand-caramel px-2 py-1 font-mono text-[10px] font-bold text-brand-cream-light ${produced ? '' : 'pointer-events-none opacity-40'}`}
+                  className={`inline-flex items-center gap-1 rounded-md bg-brand-caramel px-2 py-1 font-mono text-[12px] font-bold text-brand-cream-light ${produced ? '' : 'pointer-events-none opacity-40'}`}
                 >
                   <Download className="size-3" /> download
                 </a>

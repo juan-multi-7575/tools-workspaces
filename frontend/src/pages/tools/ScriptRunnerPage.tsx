@@ -93,7 +93,7 @@ export default function ScriptRunnerPage({
       manifest={manifest}
       gate={<DependencyGate toolId="script_runner" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.2em] text-emerald-300">
+        <span className="inline-flex items-center gap-1.5 rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 font-mono text-[12px] uppercase tracking-[0.2em] text-emerald-300">
           <Terminal className="size-3" /> terminal
         </span>
       }
@@ -107,7 +107,7 @@ export default function ScriptRunnerPage({
               <span className="size-2.5 rounded-full bg-amber-500/70" />
               <span className="size-2.5 rounded-full bg-emerald-500/70" />
             </div>
-            <span className="font-mono text-[11px] text-neutral-500">
+            <span className="font-mono text-[12px] text-neutral-500">
               {manifest.id} — session {String(manifest.id).slice(0, 8)}
             </span>
 
@@ -119,7 +119,7 @@ export default function ScriptRunnerPage({
                   onClick={() => setKey('language', option)}
                   disabled={execute.busy}
                   aria-pressed={language === option}
-                  className={`px-3 py-1 font-mono text-[11px] transition-colors ${
+                  className={`px-3 py-1 font-mono text-[12px] transition-colors ${
                     language === option
                       ? 'bg-emerald-500/20 text-emerald-300'
                       : 'bg-neutral-900 text-neutral-500 hover:text-neutral-300'
@@ -136,7 +136,7 @@ export default function ScriptRunnerPage({
             <span className={`font-mono text-sm ${activeLang.accent}`}>{activeLang.prompt}</span>
 
             <div data-param-key="custom_args" className="flex min-w-[180px] flex-1 items-center gap-2">
-              <label htmlFor="sr-args" className="font-mono text-[11px] text-neutral-500">
+              <label htmlFor="sr-args" className="font-mono text-[12px] text-neutral-500">
                 args
               </label>
               <input
@@ -151,7 +151,7 @@ export default function ScriptRunnerPage({
             </div>
 
             <div data-param-key="timeout" className="flex items-center gap-2">
-              <label htmlFor="sr-timeout" className="flex items-center gap-1 font-mono text-[11px] text-neutral-500">
+              <label htmlFor="sr-timeout" className="flex items-center gap-1 font-mono text-[12px] text-neutral-500">
                 <Timer className="size-3" /> timeout
               </label>
               <input
@@ -164,14 +164,14 @@ export default function ScriptRunnerPage({
                 disabled={execute.busy}
                 className="w-20 rounded border border-neutral-800 bg-neutral-950 px-2 py-1 font-mono text-xs text-neutral-200 focus:border-emerald-500/60 focus:outline-none"
               />
-              <span className="font-mono text-[11px] text-neutral-600">s</span>
+              <span className="font-mono text-[12px] text-neutral-600">s</span>
             </div>
 
             {execute.busy ? (
               <button
                 type="button"
                 onClick={execute.cancel}
-                className="inline-flex items-center gap-1.5 rounded bg-red-500/20 px-3 py-1.5 font-mono text-[11px] font-bold text-red-300 hover:bg-red-500/30"
+                className="inline-flex items-center gap-1.5 rounded bg-red-500/20 px-3 py-1.5 font-mono text-[12px] font-bold text-red-300 hover:bg-red-500/30"
               >
                 <Square className="size-3" /> cancel
               </button>
@@ -180,7 +180,7 @@ export default function ScriptRunnerPage({
                 type="button"
                 onClick={() => void run()}
                 disabled={!canRun || !deps.ready}
-                className="inline-flex items-center gap-1.5 rounded bg-emerald-500/20 px-3 py-1.5 font-mono text-[11px] font-bold text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30"
+                className="inline-flex items-center gap-1.5 rounded bg-emerald-500/20 px-3 py-1.5 font-mono text-[12px] font-bold text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-30"
               >
                 <Play className="size-3" /> run
               </button>
@@ -211,7 +211,7 @@ export default function ScriptRunnerPage({
 
           {/* ── OUTPUT ───────────────────────────────────────────────── */}
           <div className="border-t border-neutral-800">
-            <div className="flex flex-wrap items-center gap-3 bg-neutral-900/60 px-4 py-2 font-mono text-[11px]">
+            <div className="flex flex-wrap items-center gap-3 bg-neutral-900/60 px-4 py-2 font-mono text-[12px]">
               <span className="text-neutral-500">output</span>
               {execute.state.phase === 'executing' && (
                 <span className="flex items-center gap-1.5 text-amber-300">
@@ -237,7 +237,7 @@ export default function ScriptRunnerPage({
 
             {failed && (
               <div className="border-t border-red-500/30 bg-red-950/40 px-4 py-3">
-                <p className="mb-1.5 flex items-center gap-1.5 font-mono text-[11px] font-bold text-red-300">
+                <p className="mb-1.5 flex items-center gap-1.5 font-mono text-[12px] font-bold text-red-300">
                   <AlertTriangle className="size-3.5" /> Run failed — backend text verbatim
                 </p>
                 <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-red-100">
@@ -249,13 +249,13 @@ export default function ScriptRunnerPage({
             {completed && (
               <div className="grid gap-px bg-neutral-800 sm:grid-cols-2">
                 <div className="bg-neutral-950 px-4 py-3">
-                  <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">stdout</p>
+                  <p className="mb-1 font-mono text-[12px] uppercase tracking-[0.2em] text-neutral-600">stdout</p>
                   <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-neutral-200">
                     {stdout ?? ''}
                   </pre>
                 </div>
                 <div className="bg-neutral-950 px-4 py-3">
-                  <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">stderr</p>
+                  <p className="mb-1 font-mono text-[12px] uppercase tracking-[0.2em] text-neutral-600">stderr</p>
                   <pre
                     className={`max-h-72 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed ${
                       stderr ? 'text-red-300' : 'text-neutral-600'
@@ -270,13 +270,13 @@ export default function ScriptRunnerPage({
 
           {result?.artifacts.length ? (
             <div className="flex flex-wrap items-center gap-2 border-t border-neutral-800 bg-neutral-900/40 px-4 py-2">
-              <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-neutral-600">files written</span>
+              <span className="font-mono text-[12px] uppercase tracking-[0.2em] text-neutral-600">files written</span>
               {result.artifacts.map((file) => (
                 <a
                   key={file.path}
                   href={resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(file.path)}`)}
                   download={file.name}
-                  className="inline-flex items-center gap-1.5 rounded border border-neutral-700 px-2 py-1 font-mono text-[11px] text-neutral-300 hover:border-emerald-500/50 hover:text-emerald-300"
+                  className="inline-flex items-center gap-1.5 rounded border border-neutral-700 px-2 py-1 font-mono text-[12px] text-neutral-300 hover:border-emerald-500/50 hover:text-emerald-300"
                 >
                   <Download className="size-3" /> {file.name}
                 </a>

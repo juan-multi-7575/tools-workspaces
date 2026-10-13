@@ -283,7 +283,7 @@ export default function TranscriberPage({
       gate={<DependencyGate toolId="transcriber" state={deps} />}
       aside={
         <div className="space-y-3 rounded-2xl border border-[#C9C0AC] bg-[#FBF8F1] p-3.5 font-mono text-xs text-[#171512]">
-          <h2 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[#6B6255]">
+          <h2 className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.2em] text-[#6B6255]">
             <Clock className="size-3.5" /> Measured run
           </h2>
           <dl className="space-y-1.5">
@@ -336,7 +336,7 @@ export default function TranscriberPage({
       <div className="grid gap-4 xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         {/* ── SOURCE COLUMN ──────────────────────────────────────────────────── */}
         <section className="space-y-3 rounded-2xl border border-[#C9C0AC] bg-[#FBF8F1] p-3.5">
-          <h2 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[#6B6255]">
+          <h2 className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.2em] text-[#6B6255]">
             <Play className="size-3.5" /> Source
           </h2>
           <div data-param-key="input_path">
@@ -392,7 +392,7 @@ export default function TranscriberPage({
         {/* ── TRANSCRIPT COLUMN ──────────────────────────────────────────────── */}
         <section className="space-y-3 rounded-2xl border border-[#C9C0AC] bg-[#FBF8F1] p-3.5">
           <header className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-[#6B6255]">
+            <h2 className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.2em] text-[#6B6255]">
               <Subtitles className="size-3.5" /> Transcript
             </h2>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -401,7 +401,7 @@ export default function TranscriberPage({
                   key={entry.path}
                   type="button"
                   onClick={() => setSelectedPath(entry.path)}
-                  className={`rounded-full border px-2.5 py-0.5 font-mono text-[11px] ${
+                  className={`rounded-full border px-2.5 py-0.5 font-mono text-[12px] ${
                     selectedText?.path === entry.path
                       ? 'border-[#171512] bg-[#171512] text-[#FBF8F1]'
                       : 'border-[#C9C0AC] text-[#3A342C] hover:border-[#171512]'
@@ -415,7 +415,7 @@ export default function TranscriberPage({
                 target="_blank"
                 rel="noreferrer"
                 aria-disabled={!selectedText}
-                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[11px] ${
+                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[12px] ${
                   selectedText ? 'border-[#C9C0AC] text-[#3A342C] hover:border-[#171512]' : 'pointer-events-none opacity-40'
                 }`}
               >
@@ -429,7 +429,7 @@ export default function TranscriberPage({
                   setCopied(true)
                 }}
                 disabled={!selectedText}
-                className="inline-flex items-center gap-1 rounded-full border border-[#C9C0AC] px-2.5 py-0.5 font-mono text-[11px] text-[#3A342C] hover:border-[#171512] disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-full border border-[#C9C0AC] px-2.5 py-0.5 font-mono text-[12px] text-[#3A342C] hover:border-[#171512] disabled:opacity-40"
               >
                 {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
                 {copied ? 'Copied' : 'Copy'}
@@ -476,7 +476,7 @@ export default function TranscriberPage({
           {activeCueFile && cues.length > 0 && (
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
               <div className="space-y-1.5">
-                <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-widest text-[#6B6255]">
+                <h3 className="flex items-center gap-1.5 font-mono text-[12px] font-bold uppercase tracking-widest text-[#6B6255]">
                   <FileText className="size-3" /> Cues ({cues.length})
                 </h3>
                 <ul className="max-h-[28rem] space-y-1 overflow-y-auto pr-1">
@@ -489,9 +489,9 @@ export default function TranscriberPage({
                           selectedCue === cue.index ? 'border-[#171512] bg-[#E6DFCD]' : 'border-[#DED6C4] hover:border-[#6B6255]'
                         }`}
                       >
-                        <span className="mt-0.5 font-mono text-[10px] text-[#6B6255]">{cue.index}</span>
+                        <span className="mt-0.5 font-mono text-[12px] text-[#6B6255]">{cue.index}</span>
                         <span className="min-w-0 flex-1">
-                          <span className="block font-mono text-[10px] text-[#6B6255]">
+                          <span className="block font-mono text-[12px] text-[#6B6255]">
                             {toTimecode(cue.start)} → {toTimecode(cue.end)}
                           </span>
                           <span className="block text-xs whitespace-pre-wrap text-[#171512]">{cue.text}</span>
@@ -503,7 +503,7 @@ export default function TranscriberPage({
               </div>
 
               <div className="space-y-2">
-                <h3 className="flex items-center gap-1.5 font-mono text-[11px] font-bold uppercase tracking-widest text-[#6B6255]">
+                <h3 className="flex items-center gap-1.5 font-mono text-[12px] font-bold uppercase tracking-widest text-[#6B6255]">
                   <PenLine className="size-3" /> Cue editor
                 </h3>
                 {selectedCue === null ? (
@@ -518,7 +518,7 @@ export default function TranscriberPage({
                     return (
                       <div className="space-y-2">
                         <div className="grid grid-cols-2 gap-2">
-                          <label className="font-mono text-[11px] text-[#6B6255]">
+                          <label className="font-mono text-[12px] text-[#6B6255]">
                             <span className="block">start (s)</span>
                             <input
                               type="number"
@@ -535,7 +535,7 @@ export default function TranscriberPage({
                               className="w-full rounded border border-[#C9C0AC] bg-[#FBF8F1] px-2 py-1 text-xs text-[#171512]"
                             />
                           </label>
-                          <label className="font-mono text-[11px] text-[#6B6255]">
+                          <label className="font-mono text-[12px] text-[#6B6255]">
                             <span className="block">end (s)</span>
                             <input
                               type="number"
@@ -553,7 +553,7 @@ export default function TranscriberPage({
                             />
                           </label>
                         </div>
-                        <label className="block font-mono text-[11px] text-[#6B6255]">
+                        <label className="block font-mono text-[12px] text-[#6B6255]">
                           <span className="block">text</span>
                           <textarea
                             rows={4}
@@ -584,7 +584,7 @@ export default function TranscriberPage({
                             <SkipBack className="size-3" /> Reset to file
                           </button>
                         </div>
-                        <p className="font-mono text-[11px] leading-snug text-[#6B6255]">
+                        <p className="font-mono text-[12px] leading-snug text-[#6B6255]">
                           {toTimecode(cue.start)} → {toTimecode(cue.end)} · {(cue.end - cue.start).toFixed(3)}s
                         </p>
                       </div>

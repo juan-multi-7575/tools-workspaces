@@ -124,7 +124,7 @@ export default function AudioProcessorPage({
       <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-[#06080c] text-slate-200">
         {/* ── FULL-BLEED WAVEFORM ────────────────────────────────────────────── */}
         <div className="relative px-4 pt-4 pb-28 xl:pb-4 xl:pr-[21rem]">
-          <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">
+          <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[12px] uppercase tracking-[0.2em] text-slate-500">
             <span className="flex items-center gap-1.5">
               <Radio className="size-3.5 text-fuchsia-400" /> Waveform workbench
             </span>
@@ -194,9 +194,9 @@ export default function AudioProcessorPage({
         </div>
 
         {/* ── FLOATING CONTROL RAIL ──────────────────────────────────────────── */}
-        <div className="absolute inset-x-4 bottom-4 z-10 space-y-3 rounded-2xl border border-slate-700 bg-slate-950/90 p-3 backdrop-blur xl:inset-y-4 xl:left-auto xl:right-4 xl:w-[19rem] xl:overflow-y-auto">
+        <div className="absolute inset-x-4 bottom-4 z-panel space-y-3 rounded-2xl border border-slate-700 bg-slate-950/90 p-3 backdrop-blur xl:inset-y-4 xl:left-auto xl:right-4 xl:w-[19rem] xl:overflow-y-auto">
           <section className="space-y-1.5" data-param-key="input_path">
-            <label htmlFor="audio-processor-source" className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            <label htmlFor="audio-processor-source" className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400">
               <Layers className="size-3.5" /> Source
             </label>
             <UniversalFileInput
@@ -209,7 +209,7 @@ export default function AudioProcessorPage({
 
           {enumValues('format').length > 0 && (
             <section className="space-y-1.5" data-param-key="format">
-              <span className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">format</span>
+              <span className="block text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400">format</span>
               <div className="flex flex-wrap gap-1.5">
                 {enumValues('format').map((option) => (
                   <button
@@ -232,7 +232,7 @@ export default function AudioProcessorPage({
 
           {enumValues('sample_rate').length > 0 && (
             <section className="space-y-1.5" data-param-key="sample_rate">
-              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              <span className="flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400">
                 <Gauge className="size-3.5" /> sample_rate
               </span>
               <div className="flex flex-wrap gap-1.5">
@@ -253,7 +253,7 @@ export default function AudioProcessorPage({
                   </button>
                 ))}
               </div>
-              <p className="font-mono text-[11px] leading-snug text-slate-500">
+              <p className="font-mono text-[12px] leading-snug text-slate-500">
                 Sends sample_rate exactly as the manifest enum declares it. The backend additionally forces{' '}
                 <span className="text-slate-300">-vn</span> (video stripped) and{' '}
                 <span className="text-slate-300">-ac 2</span> (stereo).
@@ -263,7 +263,7 @@ export default function AudioProcessorPage({
 
           {Object.keys(uncoveredSchema).length > 0 && (
             <section className="space-y-1.5">
-              <span className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">
+              <span className="block text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400">
                 Other manifest parameters
               </span>
               <ToolForm
@@ -309,7 +309,7 @@ export default function AudioProcessorPage({
 
           {artifacts.length > 0 && (
             <section className="space-y-1.5">
-              <span className="block text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Produced</span>
+              <span className="block text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400">Produced</span>
               {artifacts.map((artifact) => (
                 <div key={artifact.path} className="flex items-center justify-between gap-2 rounded-lg border border-slate-800 px-2 py-1">
                   <span className="truncate font-mono text-xs text-slate-200">{artifact.name}</span>
@@ -324,14 +324,14 @@ export default function AudioProcessorPage({
                         }
                         onOpenAudioPlayer?.(media)
                       }}
-                      className="rounded border border-slate-700 px-1.5 py-0.5 font-mono text-[11px] text-slate-200 hover:border-fuchsia-400"
+                      className="rounded border border-slate-700 px-1.5 py-0.5 font-mono text-[12px] text-slate-200 hover:border-fuchsia-400"
                     >
                       <Play className="size-3" />
                     </button>
                     <a
                       href={contentUrl(artifact.path)}
                       download={artifact.name}
-                      className="rounded border border-slate-700 px-1.5 py-0.5 font-mono text-[11px] text-slate-200 hover:border-fuchsia-400"
+                      className="rounded border border-slate-700 px-1.5 py-0.5 font-mono text-[12px] text-slate-200 hover:border-fuchsia-400"
                     >
                       <Download className="size-3" />
                     </a>

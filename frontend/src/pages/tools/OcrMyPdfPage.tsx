@@ -160,7 +160,7 @@ export default function OcrMyPdfPage({
       manifest={manifest}
       gate={<DependencyGate toolId="ocrmypdf" state={deps} />}
       headerActions={
-        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-cream-light">
+        <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand-espresso px-2.5 py-1 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-cream-light">
           <ScanText className="size-3" /> ocr pipeline
         </span>
       }
@@ -175,7 +175,7 @@ export default function OcrMyPdfPage({
               <UploadCloud className="size-3.5 text-brand-caramel" />
               {schema.input_pdf?.title ?? 'input_pdf'}
             </label>
-            <span className="rounded bg-brand-sage/30 px-1.5 py-0.5 font-mono text-[10px] text-brand-espresso">input_pdf</span>
+            <span className="rounded bg-brand-sage/30 px-1.5 py-0.5 font-mono text-[12px] text-brand-espresso">input_pdf</span>
             <span className="text-xs text-brand-caramel-text">
               {schema.input_pdf?.description ?? 'Scanned PDF or image to OCR.'}
             </span>
@@ -224,7 +224,7 @@ export default function OcrMyPdfPage({
         </div>
 
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-brand-sage bg-brand-cream-dark/40 p-3.5">
-          <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-brand-caramel-text">
+          <span className="font-mono text-[12px] uppercase tracking-[0.22em] text-brand-caramel-text">
             {Object.keys(schema).length} manifest {Object.keys(schema).length === 1 ? 'key' : 'keys'} · the only one this tool declares is <code>input_pdf</code>
           </span>
           <button
@@ -240,7 +240,7 @@ export default function OcrMyPdfPage({
 
         {ocrError && (
           <div role="alert" className="rounded-2xl border-2 border-accent-contrast/50 bg-accent-contrast/10 p-4">
-            <p className="mb-1 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-accent-contrast">
+            <p className="mb-1 flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.2em] text-accent-contrast">
               <TriangleAlert className="size-3.5" /> ocrmypdf said — verbatim
             </p>
             <pre className="whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-brand-espresso">{ocrError}</pre>
@@ -266,13 +266,13 @@ export default function OcrMyPdfPage({
                 <BookMarked className="size-4 text-brand-caramel" /> OCR result
               </h2>
               <div className="flex flex-wrap items-center gap-3">
-                <span className="font-mono text-[11px] text-brand-caramel-text">
+                <span className="font-mono text-[12px] text-brand-caramel-text">
                   {runInfo.size === undefined ? 'size not indexed yet' : `${runInfo.size} bytes`} · ocr {runInfo.ocrElapsed.toFixed(1)}s · text read {runInfo.readElapsed.toFixed(1)}s
                 </span>
                 <a
                   href={contentUrl(runInfo.path)}
                   download={runInfo.name}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1 font-mono text-[11px] text-brand-espresso"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-brand-sage bg-surface-white px-2.5 py-1 font-mono text-[12px] text-brand-espresso"
                 >
                   <Download className="size-3" /> {runInfo.name}
                 </a>
@@ -282,7 +282,7 @@ export default function OcrMyPdfPage({
             {runInfo.pages.length > 0 ? (
               <div className="grid gap-4 lg:grid-cols-[230px_1fr]">
                 <aside className="max-h-[30rem] space-y-1.5 overflow-y-auto rounded-2xl border border-brand-sage bg-brand-cream-dark/30 p-3">
-                  <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-caramel-text">
+                  <p className="flex items-center gap-1.5 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-caramel-text">
                     <Layers className="size-3" /> {runInfo.pages.length} {runInfo.pages.length === 1 ? 'page' : 'pages'}
                   </p>
                   {runInfo.pages.map((_page, index) => {
@@ -298,11 +298,11 @@ export default function OcrMyPdfPage({
                           isActive ? 'border-brand-espresso bg-brand-espresso text-brand-cream-light' : 'border-brand-sage bg-surface-white text-brand-espresso hover:border-brand-caramel'
                         }`}
                       >
-                        <span className="flex items-center gap-1.5 font-mono text-[11px] font-bold">
+                        <span className="flex items-center gap-1.5 font-mono text-[12px] font-bold">
                           <FileText className="size-3" /> p{index + 1}
                         </span>
                         {needle && (
-                          <span className={`font-mono text-[10px] ${hit ? 'font-bold text-brand-caramel' : 'opacity-50'}`}>
+                          <span className={`font-mono text-[12px] ${hit ? 'font-bold text-brand-caramel' : 'opacity-50'}`}>
                             {hit} hit{hit === 1 ? '' : 's'}
                           </span>
                         )}
@@ -325,13 +325,13 @@ export default function OcrMyPdfPage({
                       />
                     </div>
                     {totalHits !== null && (
-                      <span className="font-mono text-[11px] text-brand-caramel-text">
+                      <span className="font-mono text-[12px] text-brand-caramel-text">
                         {totalHits} matching {totalHits === 1 ? 'occurrence' : 'occurrences'} across the document
                       </span>
                     )}
                   </div>
                   <div className="min-h-[20rem] rounded-2xl border border-brand-sage bg-brand-cream-light p-4">
-                    <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-brand-caramel-text">
+                    <p className="mb-2 font-mono text-[12px] uppercase tracking-[0.2em] text-brand-caramel-text">
                       page {activePage + 1} of {runInfo.pages.length} · read from {runInfo.name} with the backend pdftotext extractor
                     </p>
                     {visiblePage === undefined || visiblePage.trim() === '' ? (

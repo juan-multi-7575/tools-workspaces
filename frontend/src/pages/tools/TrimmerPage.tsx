@@ -317,7 +317,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
       <div className="space-y-4 rounded-2xl border border-slate-800 bg-[#0a0e14] p-4 font-mono text-slate-200 shadow-[0_0_0_1px_rgba(148,163,184,0.06)]">
         {/* ── SOURCE ─────────────────────────────────────────────────────────── */}
         <section className="space-y-3" data-param-key="input_path">
-          <header className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-400">
+          <header className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.2em] text-sky-400">
             <Waves className="size-3.5" /> Source
           </header>
           <label htmlFor="trimmer-source" className="block text-xs font-semibold text-slate-300">
@@ -391,7 +391,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
         {/* ── TIMELINE ───────────────────────────────────────────────────────── */}
         <section className="space-y-2">
           <header className="flex flex-wrap items-center justify-between gap-2">
-            <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-sky-400">
+            <span className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.2em] text-sky-400">
               <Scissors className="size-3.5" /> Timeline
             </span>
             <span className="text-xs text-slate-400">
@@ -437,7 +437,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
               [0, 0.25, 0.5, 0.75, 1].map((ratio) => (
                 <span
                   key={ratio}
-                  className="pointer-events-none absolute top-1 font-mono text-[10px] text-slate-600"
+                  className="pointer-events-none absolute top-1 font-mono text-[12px] text-slate-600"
                   style={{ left: `${ratio * 100}%` }}
                 >
                   {clock(round3(ratio * duration))}
@@ -460,7 +460,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
                       setActiveIndex(index)
                       dragRef.current = { kind: 'move', index, offset: time - region.start }
                     }}
-                    className={`absolute top-6 flex h-9 items-stretch overflow-hidden rounded-md border text-[10px] font-bold ${
+                    className={`absolute top-6 flex h-9 items-stretch overflow-hidden rounded-md border text-[12px] font-bold ${
                       active
                         ? 'border-sky-300 bg-sky-500/80 text-slate-950'
                         : 'border-sky-800 bg-sky-900/70 text-sky-200'
@@ -497,7 +497,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
         {/* ── REGION LIST ────────────────────────────────────────────────────── */}
         <section className="space-y-2" data-param-key="regions">
           <header className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-400">
+            <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-sky-400">
               Regions ({regions.length})
             </span>
             <div className="flex items-center gap-1.5">
@@ -538,7 +538,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
                   }`}
                 >
                   <span className="font-mono text-xs font-bold text-sky-300">#{index + 1}</span>
-                  <label className="text-[11px] text-slate-400">
+                  <label className="text-[12px] text-slate-400">
                     <span className="block">start (s)</span>
                     <input
                       type="number"
@@ -549,7 +549,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
                       className="w-24 rounded border border-slate-700 bg-slate-950 px-1.5 py-0.5 text-xs text-slate-100"
                     />
                   </label>
-                  <label className="text-[11px] text-slate-400">
+                  <label className="text-[12px] text-slate-400">
                     <span className="block">end (s)</span>
                     <input
                       type="number"
@@ -641,7 +641,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
           ) : (
             <div className="space-y-2">
               <div className="grid gap-2 sm:grid-cols-3">
-                <label className="text-[11px] text-slate-400">
+                <label className="text-[12px] text-slate-400">
                   <span className="mb-1 block">Workspace</span>
                   <select
                     value={workspaceId}
@@ -660,7 +660,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
                     ))}
                   </select>
                 </label>
-                <label className="text-[11px] text-slate-400">
+                <label className="text-[12px] text-slate-400">
                   <span className="mb-1 block">Run</span>
                   <select
                     value={runId}
@@ -680,7 +680,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
                     ))}
                   </select>
                 </label>
-                <label className="text-[11px] text-slate-400">
+                <label className="text-[12px] text-slate-400">
                   <span className="mb-1 block">Artifact</span>
                   <select
                     value={artifactName}
@@ -747,7 +747,7 @@ export default function TrimmerPage({ manifest, initialParams, initialInputPath,
 
         {Object.keys(uncoveredSchema).length > 0 && (
           <section className="space-y-2 border-t border-slate-800 pt-3">
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-400">Other manifest parameters</h3>
+            <h3 className="text-[12px] font-bold uppercase tracking-[0.2em] text-sky-400">Other manifest parameters</h3>
             <ToolForm
               toolId={manifest.id}
               schema={uncoveredSchema}

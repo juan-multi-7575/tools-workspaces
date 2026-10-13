@@ -1,4 +1,122 @@
-# Independent implementation review
+# Task 5 — Integration and Review
+
+Final integration/verification pass over the UI/UX backlog (`UI_UX_ARCHITECTURE_ISSUES.md`, corrected by `STATUS_REVIEW.md`). Companion to **`design-tokens-report.md`** (Task 4).
+
+## ⚠ Correction note — an initial pass verified the wrong worktree
+
+Task 4 (design tokens / typography / #6 focus / #15 Option-A) was executed in the **main checkout** (`tools-workspaces`) as **uncommitted working-tree changes** (the plan says "no push or commit"). An initial Task 5 pass ran the #14/#15 greps against the `wt-batch-E` worktree, which **does not contain Task 4's edits** — so that pass mistakenly reported #14 as "200 sub-12px sites", #15 as "407 hex / problem", and `design-tokens-report.md` as "missing". Those statements were artifacts of the wrong tree and are **retracted**. All #14/#15 facts below were re-verified **first-hand in the main checkout**. Only the automated gate commands were run in `wt-batch-E` (that worktree holds the merged Tasks 1–3 + 4.5 code), and those gate results are valid and unchanged.
+
+## Tree provenance
+
+| What | Where verified | Note |
+|---|---|---|
+| Frontend `verify` / `build`, backend suite | **wt-batch-E** (merged Tasks 1–3 + 4.5) | Valid for merged work; corroborated by Task 4's independent `verify`/`build` in the main checkout (also 305 tests / exit 0). |
+| #14 (12px floor), #15 (hex/z), Task 4 edits | **main checkout** (`tools-workspaces`, uncommitted) | Task 4's source of truth. `wt-batch-E` lacks these edits, so `wt-batch-E` still shows the pre-Task-4 counts. |
+
+## Automated gate results
+
+### 1. Frontend `npm run verify` — PASS (exit 0)
+
+`cd frontend && npm run verify` (= `npm run test && tsc -b && oxlint`):
+
+| Stage | Result |
+|---|---|
+| Tests | **305 passed, 0 failed** across 40 test files (baseline was 214) |
+| `tsc -b` | clean |
+| `oxlint` | **0 errors**, 34 warnings (pre-existing Fast-Refresh + `exhaustive-deps` advisories) |
+
+### 2. Backend suite — PASS from repo root (239 passed, 1 skipped)
+
+`PYTHONPATH=backend python3 -m pytest backend/tests/ --ignore=backend/tests/test_09_cli.py -q` → **239 passed, 1 skipped, 0 failed** (13.8 s).
+
+- The 1 skip is environmental: `test_11_catalog.py:60 "sox binary not installed"`.
+- `test_09_cli.py` excluded as directed: `backend/app/cli.py:11` imports `NoArgsIsHelpError`, absent from the environment's system `click` 8.1.8. Pre-existing dependency-version mismatch in the CLI import path; the FastAPI app (and the other 239 tests) are unaffected.
+- `test_29_make_tool.py` is **invocation-sensitive**: it hardcodes `cwd=Path(".")` + `"backend/tools/make-tool.py"`, so it **passes from the repo root** (canonical `PYTHONPATH=backend … pytest backend/tests`) and fails only under the `cd backend && pytest tests/` invocation. Under the canonical invocation the suite is fully green.
+
+### 3. Frontend `npm run build` — PASS (exit 0)
+
+`cd frontend && npm run build` → built in 1.66 s. **Exactly one warning**, the accepted >500 kB chunk notice (`index-*.js` 1,117.73 kB / gzip 287 kB). No other warnings/errors.
+
+---
+
+## Acceptance criteria — verified verdicts
+
+"Met (code)" = source-verified + covered by automated tests. Browser/pixel gates are called out explicitly.
+
+| # | Criterion | Verdict | Evidence |
+|---|---|---|---|
+| #1 | Wire up test/verify gate | Met (deviation) | `test` + `verify` scripts wired; 305 assertions run. Deviation (per STATUS_REVIEW): `node:test` runner preserved, Vitest **not** adopted; `_dbg.test.ts` excluded. `WALKTHROUGH_UI_UX.md` absent from these checkouts, so its §4 note wasn't updated. |
+| #2 | Tool→form registry | Met (functional) | `lib/toolForms.tsx` (`TOOL_FORMS`, `getToolForm`, schema-aware `<ToolForm>` → `DynamicForm` fallback) + pure `lib/toolIds.ts` (`canonicalId`). Catalog, inspector (`NodeInspectorPanel.tsx:266`), `ToolPageRouter`, `WorkspaceDetailPage`, `PipelineCanvas` all resolve through the registry; no inline `=== 'downloader'` matches. `toolForms.test.tsx` regression. API naming (`getToolForm`/`ToolForm`) differs from the issue's proposed `resolveForm`. |
+| #3 | SSE drops not silent | Met (code) | `apiTransport.ts`: `{signal, idleTimeoutMs}`; AbortSignal fused; SSE comments as heartbeats; terminal gating on `pipeline_finished`/`pipeline_error`; `STREAM_STALLED` (default **45 s**, deviation from ~30 s), `STREAM_INTERRUPTED`; reader cleanup; only pending/running nodes interrupted. Deviation: **no SSE replay** (Reconnect reconciles status/outputs). Manual check: kill backend mid-run. |
+| #4 | No raw `str(e)`; `{code,message}` | Met (code) | `grep "str(e)" backend/app/main.py` = 0; `stream_public_data` applied at every public boundary incl. non-SSE tool exec (`main.py:242`), DAG/chain (`364,371,408`), tool result (`819,879,885`), SSE (`398,847`). `ApiError(status,code,message)` exported. No Python-substring matching in the run modal (only test fixtures mention `ModuleNotFoundError`). Route tests assert codes + no private paths. |
+| #5 | Error boundaries | Met (code) | `ErrorBoundary` (Reload view + Copy diagnostics, sanitized) wraps ToolsPage, ToolPageRouter, WorkspaceDetailPage/studio, run modal, PipelineCanvas (narrower Graph-renderer boundary preserves the toolbar), `sites/App` + `AppShell`. Manual check: browser render-throw recovery. |
+| #6 | Visible focus | Met (code) | `index.css`: global `:focus-visible { outline: 2px solid var(--color-focus-ring) !important; outline-offset: 3px }` backs all 51 `focus:outline-none` sites. Prior CDP audit: 18/18 sampled Tab stops render the caramel ring. Full keyboard pass remains a coordinator browser check. |
+| #7 | Real health | Met (code + audited) | `/api/health` → `{status,version}` (`main.py:101`); shared `useHealth` poller drives `sites/AppShell` + `WorkspaceDetailPage`; host from `API_BASE`. Prior CDP audit verified OFFLINE→retry→ONLINE. |
+| #8 | Extract canvas | Met (functional) | `PipelineCanvas.tsx` = 616 lines (< 900). Extracted + tested: `lib/canvasGraph.ts` (bounded Kahn + DFS cycles + reducer/history), `lib/canvasPersistence.ts`/`hooks/useCanvasPersistence.ts`, `hooks/useCanvasGraph.ts`/`useCanvasRun.ts`. Module names differ from the issue's proposed `dagLayout.ts`/`useCanvasHistory.ts`. |
+| #9 | One graph/selection owner | Met | Single reducer/hook owns graph+selection+history; `addToolRef`/`external*Ref` mirrors and the `selectedNodeId ?? externalSelectedNodeId` merge removed; atomic `graph.replace` for clear/load/branch; `canvasGraph.test.ts`. |
+| #10 | No refetch races | Met | `refreshRuns` deps `[id]` only → changing `selectedRun` = **zero requests**; workspace reads abort on switch/unmount; catalog fetched once per session via `api.ts` module-level promise; `activityStore` untouched. No server-state lib (per STATUS_REVIEW). |
+| #11 | Run gated on validity | Met | Debounced (400 ms) auto-validation (`PipelineCanvas.tsx:135-143`); Run `disabled={!valid \|\| !canRun}` with inline reason; invalid/cycle edges highlighted; manual Validate retained. Interop note: local check uses exact-kind equality vs backend MIME/wildcard `is_assignable` — no current manifest exercises MIME kinds, forward-looking only. |
+| #12 | Cycles detected | Met | Bounded Kahn + DFS back-edge detection returns `{positions, cycle, cycleEdgeIds}`; cycle edges marked; Run blocked with `Cycle: a → b → a`. Unit tests: self-loop, pure/reachable cycles, diamond (no false positive). |
+| #13 | `branchRun` wired | Met (code) | `WorkspaceDetailPage.tsx:428` → `api.branchRun`; node matching, params restored, artifacts routed downstream, source/upstream excluded, `RUN_NOT_FOUND` 404. Deviation: multi-parent resume reported unsupported. Manual check: real failed 3-step branch rerun. |
+| #14 | 12px text floor | Met (code) — pixel gate UNVERIFIED | **Main checkout: 0** `text-[9/10/11]px` sites (Task 4 raised 373 → 0; wide-tracked uppercase mono labels widened ~10–20%). `index.html` has `description` + `theme-color`. **Unverifiable without a browser:** the "no layout overflow introduced" + 1440×900 / 768×1024 / 390×844 legibility spot-checks (see `design-tokens-report.md` §1). |
+| #15 | Zero raw hex / z-index scale | Hex UNMET **by design**; z-index **Met** | **Main checkout: 406** six-digit hex outside `index.css` (non-test) remain under supervisor-approved **Option A** (exact brand-token matches only). Reason: the redesign made hex an **intentional system** — per-site registry accents (`sites/registry.ts`, e.g. `#0A7C7C`), JS/canvas contrast + `fillStyle` (`lib/hostSkin.ts`), per-page dark palettes, and literal SVG/QR-safe consumers. Converting all would collapse 22 site accents to one and violate "preserve visual colors". z-index sub-criterion **fully met**: `--z-panel/sticky/overlay/drawer/modal` documented + utilities, **0** ad-hoc `z-[n]` utilities remain. Before/after screenshot gate for the 11 converted matches still owed. |
+| #16 | Remove dead `setArtifacts` | Met | Dead state + fetch paths removed; dock/media consumers refresh via `mediaRefreshKey`. |
+
+---
+
+## Findings
+
+### F1 — #14 & #15 drift is real and now reconciled (doc-hygiene)
+The batch A–E redesign merge (`b8234442`) reintroduced sub-12px text and raw hex **after** `STATUS_REVIEW.md`'s grep-verified "Fixed" claims were written. Task 4 re-landed the pass on the main checkout (main, uncommitted) and `design-tokens-report.md` records the reconciliation. **Action for coordinator:** the committed `STATUS_REVIEW.md` in these checkouts still predates `b8234442`/Task 4 and is now stale; refresh it against the main checkout before any push so the record doesn't re-introduce the earlier grep-verified claim as truth.
+
+### F2 — #15 acceptance criterion, as literally written, is unmet by design
+Not a defect: the strict "zero raw hex outside `index.css`" line in `UI_UX_ARCHITECTURE_ISSUES.md` #15 conflicts with the redesign's intentional per-site palette + the "preserve visual colors" constraint. Supervisor-approved Option A governs (11 exact brand matches tokenized; ~406/601 remainder left). z-index scale is fully landed. The residual acceptance owes a human before/after screenshot comparison of the 11 converted matches.
+
+### F3 — Pixel/a11y gates rely on a human browser pass
+#14 overflow/legibility and #15 screenshot equivalence can't be closed by source scans or this role. Coordinator browser checks remain the acceptance evidence.
+
+## Outstanding manual checks (not claimed as passed)
+
+1. #3 — kill the backend mid-run; disconnect surfaces within the idle window (Stop + reconnect).
+2. #5 — induce a browser render-throw; confirm pane recovery and toolbar survival.
+3. #13 — real failed 3-step branch → rerun.
+4. #14 — pixel overflow + legibility at 1440×900 / 768×1024 / 390×844 (wide uppercase labels + 3-pane studio).
+5. #15 — before/after screenshot of the 11 tokenized hex.
+6. #6 — full keyboard-only pass (prior CDP audit covered catalog/tool-modal/health + 18 Tab stops, not a complete pass, and predates Task 4).
+7. From the prior CDP audit (not re-verified here): tool-modal focus trap, canvas-node accessible names, unlabeled Settings inputs — out of Task-4 file scope, still open.
+
+## Residual risks
+
+- **`test_09_cli.py` cannot run** in this environment (system `click` 8.1.8 lacks `NoArgsIsHelpError`). A pinned/newer `click` in a project venv would likely collect it; excluded as directed and disclosed.
+- **`test_29_make_tool.py` is invocation-sensitive** — always invoke pytest from the repo root (`PYTHONPATH=backend … pytest backend/tests/`) to keep it green.
+- **`frontend/package-lock.json` is modified** in `wt-batch-E` (unrelated optional-dependency `libc` metadata from env setup). Left untouched (no commit requested).
+- **`STATUS_REVIEW.md` is stale** vs the main checkout (F1).
+
+## Reproduce
+
+```bash
+# Gates — in wt-batch-E (merged Tasks 1-3 + 4.5)
+cd frontend && npm run verify          # 305 passed / tsc clean / oxlint 0 errors
+cd frontend && npm run build           # exit 0; only >500 kB chunk warning
+cd <repo-root> && PYTHONPATH=backend python3 -m pytest backend/tests/ --ignore=backend/tests/test_09_cli.py -q
+# 239 passed, 1 skipped (sox), 0 failed
+
+# #14 / #15 + Task 4 — in the main checkout (tools-workspaces) where Task 4's uncommitted edits live
+cd tools-workspaces
+grep -rohE 'text-\[(9|10|11)px\]' frontend/src --include='*.tsx' | wc -l        # 0  -> #14 met on code
+grep -rEn '#[0-9A-Fa-f]{6}\b' frontend/src --include='*.ts' --include='*.tsx' | grep -v '\.test\.' | grep -vc '\.css'   # 406 -> #15 hex unmet by design
+grep -rnE '\bz-\[?[0-9]{2,3}\]?' frontend/src --include='*.ts' --include='*.tsx' | grep -v '\.test\.' | grep -vcE 'z-(panel|sticky|overlay|drawer|modal)'  # 0 -> z-index met
+ls -la docs/issues/fix-work/design-tokens-report.md     # exists (Task 4 evidence)
+```
+
+---
+---
+
+# Independent implementation review (prior — superseded findings preserved as history)
+
+> Superseded by the Task 5 section above; retained for provenance. Its five findings were all
+> subsequently ADDRESSED (see the scoped re-review at the end). Its "#6/#14/#15: no remaining raw hex"
+> line predates the `b8234442` redesign merge and Task 4; see the Correction note and F1/F2 above.
 
 Reviewed the current source and focused tests against the 16 issue criteria, PLAN.md, STATUS_REVIEW.md, forms-report.md and canvas-report.md. transport-report.md was not present at review time. No source changes, commits, nested agents or routine full test reruns were made. Coordinator owns browser checks and color screenshot comparison.
 

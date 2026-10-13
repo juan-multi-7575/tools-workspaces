@@ -145,14 +145,14 @@ function ProgressReadout({
 
   if (empty) {
     return (
-      <span className="text-[11px] text-slate-500">
+      <span className="text-[12px] text-slate-500">
         no progress fields reported{status === 'queued' ? ' while queued' : ''}
       </span>
     )
   }
 
   return (
-    <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400">
+    <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-slate-400">
       {percent !== null ? (
         <>
           <span className="tabular-nums text-emerald-300">{percent.toFixed(1)}%</span>
@@ -194,7 +194,7 @@ function ConsoleFrame({
   return (
     <section className={`border ${accent} bg-[#0d131b]`}>
       <header className="flex items-center justify-between gap-2 border-b border-slate-800 bg-[#111a24] px-3 py-2">
-        <h2 className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-300">
+        <h2 className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.18em] text-slate-300">
           <span className="text-emerald-400">{icon}</span>
           {title}
         </h2>
@@ -238,21 +238,21 @@ function HelperSection({
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-2 border-b border-slate-800 bg-[#111a24] px-3 py-2 text-left"
       >
-        <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-300">
+        <span className="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.18em] text-slate-300">
           {open ? <ChevronDown className="size-3.5 text-emerald-400" /> : <ChevronRight className="size-3.5 text-emerald-400" />}
           <span className="text-slate-500">helper</span>
           <span className="normal-case tracking-normal text-slate-200">{helperManifest?.name ?? helperId}</span>
         </span>
-        <span className="font-mono text-[10px] text-slate-500">{helperId}</span>
+        <span className="font-mono text-[12px] text-slate-500">{helperId}</span>
       </button>
 
       {open && (
         <div className="space-y-3 p-3">
-          <p className="font-mono text-[11px] text-slate-500">
+          <p className="font-mono text-[12px] text-slate-500">
             {helperManifest?.description ?? (helperError ? '' : 'loading manifest…')}
           </p>
           {helperError && (
-            <p role="alert" className="border border-rose-800 bg-rose-950/40 p-2 text-[11px] text-rose-300">
+            <p role="alert" className="border border-rose-800 bg-rose-950/40 p-2 text-[12px] text-rose-300">
               {helperError}
             </p>
           )}
@@ -270,12 +270,12 @@ function HelperSection({
               type="button"
               onClick={onRun}
               disabled={busy || !helperManifest}
-              className="inline-flex items-center gap-1.5 border border-emerald-500/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-300 disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 border border-emerald-500/50 bg-emerald-500/10 px-3 py-1.5 text-[12px] font-bold uppercase tracking-wider text-emerald-300 disabled:opacity-40"
             >
               {busy ? <Loader2 className="size-3 animate-spin" /> : <Play className="size-3 fill-current" />}
               {busy ? `running ${executeState.elapsedSeconds.toFixed(1)}s` : 'run helper'}
             </button>
-            <span className="font-mono text-[10px] text-slate-600">
+            <span className="font-mono text-[12px] text-slate-600">
               posts {'{ kind: "standalone", destination: "", params }'} to /api/tools/{helperId}/execute
             </span>
           </div>
@@ -674,10 +674,10 @@ export default function DownloaderPage({
             </span>
             <div>
               <h1 className="text-base font-bold uppercase tracking-[0.2em] text-emerald-300">transfer console</h1>
-              <p className="text-[11px] text-slate-500">{manifest.name}</p>
+              <p className="text-[12px] text-slate-500">{manifest.name}</p>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-widest text-slate-500">
+          <div className="flex flex-wrap items-center gap-2 text-[12px] uppercase tracking-widest text-slate-500">
             <span className="border border-slate-800 px-2 py-1">{DOWNLOADER_ID}</span>
             <span className="border border-slate-800 px-2 py-1">{manifest.category || 'General'}</span>
             {hasActive && (
@@ -694,7 +694,7 @@ export default function DownloaderPage({
             <ConsoleFrame title="intake" icon={<Link2 className="size-3.5" />}>
               <div className="space-y-3">
                 <label className="block">
-                  <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                  <span className="text-[12px] uppercase tracking-[0.18em] text-slate-500">
                     media url <span className="text-rose-400">*</span>
                   </span>
                   <input
@@ -718,7 +718,7 @@ export default function DownloaderPage({
                     const file = event.dataTransfer?.files?.[0]
                     if (file) void readDroppedFile(file)
                   }}
-                  className={`border border-dashed px-3 py-4 text-center text-[11px] ${
+                  className={`border border-dashed px-3 py-4 text-center text-[12px] ${
                     dragOver ? 'border-emerald-400 bg-emerald-500/10 text-emerald-200' : 'border-slate-700 text-slate-500'
                   }`}
                 >
@@ -727,14 +727,14 @@ export default function DownloaderPage({
                   <br />
                   <span className="text-slate-600">the file is read in the browser; nothing is uploaded</span>
                 </div>
-                {dropNote && <p className="text-[11px] text-slate-400">{dropNote}</p>}
+                {dropNote && <p className="text-[12px] text-slate-400">{dropNote}</p>}
 
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={() => void runProbe()}
                     disabled={!canProbe || probe.state === 'probing'}
-                    className="inline-flex items-center gap-1.5 border border-slate-600 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-200 hover:border-emerald-500/60 hover:text-emerald-300 disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 border border-slate-600 px-3 py-1.5 text-[12px] font-bold uppercase tracking-wider text-slate-200 hover:border-emerald-500/60 hover:text-emerald-300 disabled:opacity-40"
                   >
                     {probe.state === 'probing' ? <Loader2 className="size-3 animate-spin" /> : <Search className="size-3" />}
                     probe
@@ -743,25 +743,25 @@ export default function DownloaderPage({
                     type="button"
                     onClick={() => void enqueue()}
                     disabled={!urlValue.trim() || queueBusy}
-                    className="inline-flex items-center gap-1.5 border border-emerald-500/60 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-300 disabled:opacity-40"
+                    className="inline-flex items-center gap-1.5 border border-emerald-500/60 bg-emerald-500/10 px-3 py-1.5 text-[12px] font-bold uppercase tracking-wider text-emerald-300 disabled:opacity-40"
                   >
                     <Play className="size-3 fill-current" /> enqueue download
                   </button>
-                  <span className="text-[10px] text-slate-600">POST /api/downloads</span>
+                  <span className="text-[12px] text-slate-600">POST /api/downloads</span>
                 </div>
-                {!urlValue.trim() && <p className="text-[11px] text-slate-600">a url is required before the backend will accept the task</p>}
-                {enqueueNote && <p className="text-[11px] text-emerald-300">{enqueueNote}</p>}
+                {!urlValue.trim() && <p className="text-[12px] text-slate-600">a url is required before the backend will accept the task</p>}
+                {enqueueNote && <p className="text-[12px] text-emerald-300">{enqueueNote}</p>}
 
                 {/* Probe result: only the fields the endpoint actually sent. */}
                 <div className="border border-slate-800 bg-[#05090e] p-2.5">
                   {probe.state === 'idle' && (
-                    <p className="text-[11px] text-slate-600">
+                    <p className="text-[12px] text-slate-600">
                       no probe yet — GET /api/tools/downloader/info returns only what the backend can resolve
                     </p>
                   )}
-                  {probe.state === 'probing' && <p className="text-[11px] text-slate-400">probing…</p>}
+                  {probe.state === 'probing' && <p className="text-[12px] text-slate-400">probing…</p>}
                   {probe.state === 'error' && (
-                    <p role="alert" className="text-[11px] text-rose-300">
+                    <p role="alert" className="text-[12px] text-rose-300">
                       {probe.error}
                     </p>
                   )}
@@ -774,7 +774,7 @@ export default function DownloaderPage({
                           <Video className="size-5" />
                         </div>
                       )}
-                      <dl className="min-w-0 flex-1 space-y-0.5 text-[11px]">
+                      <dl className="min-w-0 flex-1 space-y-0.5 text-[12px]">
                         <div className="flex gap-2">
                           <dt className="w-16 shrink-0 text-slate-600">title</dt>
                           <dd className="min-w-0 truncate text-slate-100">{probe.title ?? <span className="text-slate-600">null</span>}</dd>
@@ -797,7 +797,7 @@ export default function DownloaderPage({
                     </div>
                   )}
                   {probe.keys.length > 0 && (
-                    <p className="mt-2 border-t border-slate-800 pt-1.5 text-[10px] text-slate-600">
+                    <p className="mt-2 border-t border-slate-800 pt-1.5 text-[12px] text-slate-600">
                       response keys: {probe.keys.join(', ')}
                       {!probe.title && ' — title was null, so this url could not be resolved'}
                     </p>
@@ -808,17 +808,17 @@ export default function DownloaderPage({
 
             <ConsoleFrame title="yt-dlp controls" icon={<Gauge className="size-3.5" />}>
               <DownloaderForm value={params} onChange={setParams} />
-              <p className="mt-3 border-t border-slate-800 pt-2 text-[10px] text-slate-600">
+              <p className="mt-3 border-t border-slate-800 pt-2 text-[12px] text-slate-600">
                 DownloaderForm writes these {DOWNLOADER_FORM_KEYS.size} keys: {[...DOWNLOADER_FORM_KEYS].join(', ')}
               </p>
             </ConsoleFrame>
 
             <ConsoleFrame title={`remaining manifest parameters (${complementKeys.length})`} icon={<FileUp className="size-3.5" />}>
               {complementKeys.length === 0 ? (
-                <p className="text-[11px] text-slate-500">every manifest key is already bound above</p>
+                <p className="text-[12px] text-slate-500">every manifest key is already bound above</p>
               ) : (
                 <>
-                  <p className="mb-2 text-[10px] text-slate-600">
+                  <p className="mb-2 text-[12px] text-slate-600">
                     schema-driven fields for the keys DownloaderForm has no control for: {complementKeys.join(', ')}
                   </p>
                   <div className="border border-slate-800 bg-[#05090e] p-3">
@@ -831,7 +831,7 @@ export default function DownloaderPage({
             <ConsoleFrame title="queue concurrency" icon={<Gauge className="size-3.5" />}>
               <div className="flex flex-wrap items-end gap-2">
                 <label className="block">
-                  <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500">max_concurrent</span>
+                  <span className="text-[12px] uppercase tracking-[0.18em] text-slate-500">max_concurrent</span>
                   <input
                     type="number"
                     min={1}
@@ -843,27 +843,27 @@ export default function DownloaderPage({
                 <button
                   type="button"
                   onClick={() => void saveSettings()}
-                  className="border border-slate-600 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-200 hover:border-emerald-500/60 hover:text-emerald-300"
+                  className="border border-slate-600 px-3 py-1.5 text-[12px] font-bold uppercase tracking-wider text-slate-200 hover:border-emerald-500/60 hover:text-emerald-300"
                 >
                   save
                 </button>
                 {settings && (
-                  <span className="text-[10px] text-slate-600">
+                  <span className="text-[12px] text-slate-600">
                     backend reports max_concurrent {settings.max_concurrent} (persisted {settings.persisted})
                   </span>
                 )}
               </div>
               {settingsError && (
-                <p role="alert" className="mt-2 text-[11px] text-rose-300">
+                <p role="alert" className="mt-2 text-[12px] text-rose-300">
                   {settingsError}
                 </p>
               )}
-              {settingsNote && <p className="mt-2 text-[11px] text-emerald-300">{settingsNote}</p>}
+              {settingsNote && <p className="mt-2 text-[12px] text-emerald-300">{settingsNote}</p>}
             </ConsoleFrame>
 
             <ConsoleFrame title="standalone execute" icon={<Play className="size-3.5" />}>
               <div className="space-y-2">
-                <p className="text-[10px] text-slate-600">
+                <p className="text-[12px] text-slate-600">
                   bypasses the queue and calls POST /api/tools/{DOWNLOADER_ID}/execute with the same {allKeys.length} params
                 </p>
 
@@ -871,7 +871,7 @@ export default function DownloaderPage({
                   type="button"
                   onClick={() => void runStandalone()}
                   disabled={standalone.busy || !deps.ready}
-                  className="inline-flex w-full items-center justify-center gap-1.5 border border-slate-600 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-200 hover:border-emerald-500/60 hover:text-emerald-300 disabled:opacity-40"
+                  className="inline-flex w-full items-center justify-center gap-1.5 border border-slate-600 px-3 py-2 text-[12px] font-bold uppercase tracking-wider text-slate-200 hover:border-emerald-500/60 hover:text-emerald-300 disabled:opacity-40"
                 >
                   {standalone.busy ? <Loader2 className="size-3 animate-spin" /> : <Play className="size-3 fill-current" />}
                   {standalone.busy ? `running ${standalone.state.elapsedSeconds.toFixed(1)}s measured` : 'run standalone'}
@@ -904,24 +904,24 @@ export default function DownloaderPage({
                     setQueueBusy(true)
                     void refreshQueue().finally(() => setQueueBusy(false))
                   }}
-                  className="border border-slate-700 px-2 py-1 text-[10px] uppercase tracking-widest text-slate-400 hover:border-emerald-500/60 hover:text-emerald-300"
+                  className="border border-slate-700 px-2 py-1 text-[12px] uppercase tracking-widest text-slate-400 hover:border-emerald-500/60 hover:text-emerald-300"
                 >
                   refresh
                 </button>
               }
             >
               {queueError && (
-                <p role="alert" className="mb-2 border border-rose-800 bg-rose-950/40 p-2 text-[11px] text-rose-300">
+                <p role="alert" className="mb-2 border border-rose-800 bg-rose-950/40 p-2 text-[12px] text-rose-300">
                   {queueError}
                 </p>
               )}
               {tasks.length === 0 ? (
-                <p className="text-[11px] text-slate-600">GET /api/downloads returned an empty queue</p>
+                <p className="text-[12px] text-slate-600">GET /api/downloads returned an empty queue</p>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[640px] border-collapse text-left text-[11px]">
+                  <table className="w-full min-w-[640px] border-collapse text-left text-[12px]">
                     <thead>
-                      <tr className="border-b border-slate-800 text-[10px] uppercase tracking-widest text-slate-600">
+                      <tr className="border-b border-slate-800 text-[12px] uppercase tracking-widest text-slate-600">
                         <th className="py-1.5 pr-3 font-normal">task</th>
                         <th className="py-1.5 pr-3 font-normal">status</th>
                         <th className="py-1.5 pr-3 font-normal">progress (as sent by the backend)</th>
@@ -967,12 +967,12 @@ export default function DownloaderPage({
                                 {task.status}
                               </span>
                               {task.error && (
-                                <pre className="mt-1 max-w-[260px] whitespace-pre-wrap break-words text-[10px] text-rose-300">{task.error}</pre>
+                                <pre className="mt-1 max-w-[260px] whitespace-pre-wrap break-words text-[12px] text-rose-300">{task.error}</pre>
                               )}
                               {task.result?.artifacts?.length ? (
                                 <ul className="mt-1 space-y-0.5">
                                   {task.result.artifacts.map((artifact) => (
-                                    <li key={artifact.path} className="max-w-[260px] truncate text-[10px] text-slate-500" title={artifact.path}>
+                                    <li key={artifact.path} className="max-w-[260px] truncate text-[12px] text-slate-500" title={artifact.path}>
                                       {artifact.name}
                                     </li>
                                   ))}
@@ -992,7 +992,7 @@ export default function DownloaderPage({
                                   onClick={() => void cancelTask(task.id)}
                                   disabled={!ACTIVE_STATUSES.has(task.status)}
                                   title="POST /api/downloads/{id}/cancel"
-                                  className="inline-flex items-center gap-1 border border-slate-700 px-2 py-1 text-[10px] uppercase tracking-widest text-slate-300 hover:border-rose-400 hover:text-rose-300 disabled:opacity-30"
+                                  className="inline-flex items-center gap-1 border border-slate-700 px-2 py-1 text-[12px] uppercase tracking-widest text-slate-300 hover:border-rose-400 hover:text-rose-300 disabled:opacity-30"
                                 >
                                   <Square className="size-2.5" /> cancel
                                 </button>
@@ -1000,7 +1000,7 @@ export default function DownloaderPage({
                                   type="button"
                                   onClick={() => void removeTask(task.id)}
                                   title="DELETE /api/downloads/{id}"
-                                  className="inline-flex items-center gap-1 border border-slate-700 px-2 py-1 text-[10px] uppercase tracking-widest text-slate-300 hover:border-rose-400 hover:text-rose-300"
+                                  className="inline-flex items-center gap-1 border border-slate-700 px-2 py-1 text-[12px] uppercase tracking-widest text-slate-300 hover:border-rose-400 hover:text-rose-300"
                                 >
                                   <Trash2 className="size-2.5" /> remove
                                 </button>
@@ -1016,7 +1016,7 @@ export default function DownloaderPage({
             </ConsoleFrame>
 
             <ConsoleFrame title={`console log (${log.length})`} icon={<Terminal className="size-3.5" />}>
-              <div className="max-h-56 overflow-y-auto border border-slate-800 bg-[#05090e] p-2 text-[11px] leading-relaxed">
+              <div className="max-h-56 overflow-y-auto border border-slate-800 bg-[#05090e] p-2 text-[12px] leading-relaxed">
                 {log.length === 0 ? (
                   <p className="text-slate-700">no requests issued yet</p>
                 ) : (
@@ -1038,12 +1038,12 @@ export default function DownloaderPage({
                   ))
                 )}
               </div>
-              <p className="mt-2 text-[10px] text-slate-600">
+              <p className="mt-2 text-[12px] text-slate-600">
                 every line is a real request or SSE frame from this session — nothing here is generated
               </p>
             </ConsoleFrame>
 
-            <p className="px-1 text-[10px] uppercase tracking-[0.18em] text-slate-600">atomic media helpers</p>
+            <p className="px-1 text-[12px] uppercase tracking-[0.18em] text-slate-600">atomic media helpers</p>
 
             <HelperSection
               helperId={RESOLVE_ID}
@@ -1058,8 +1058,8 @@ export default function DownloaderPage({
               onRun={() => void runHelper(RESOLVE_ID, resolveExec)}
               renderResult={() => (
                 <div className="space-y-2">
-                  <div className="border border-slate-800 bg-[#05090e] p-2 text-[11px]">
-                    <p className="mb-1 text-[10px] uppercase tracking-widest text-slate-600">
+                  <div className="border border-slate-800 bg-[#05090e] p-2 text-[12px]">
+                    <p className="mb-1 text-[12px] uppercase tracking-widest text-slate-600">
                       resolve-url response (POST /api/workspaces/{RESOLVE_SCOPE_ID}/pipeline/resolve-url)
                     </p>
                     {resolveProbeError && <p className="text-rose-300">{resolveProbeError}</p>}
@@ -1124,8 +1124,8 @@ export default function DownloaderPage({
               renderResult={() => (
                 <div className="space-y-2">
                   <div className="border border-slate-800 bg-[#05090e] p-2">
-                    <p className="mb-1 text-[10px] uppercase tracking-widest text-slate-600">format lines returned by the backend</p>
-                    <pre className="whitespace-pre-wrap break-all text-[11px] text-slate-200">
+                    <p className="mb-1 text-[12px] uppercase tracking-widest text-slate-600">format lines returned by the backend</p>
+                    <pre className="whitespace-pre-wrap break-all text-[12px] text-slate-200">
                       {formatExec.state.result?.outputText ?? 'no output_text in this response'}
                     </pre>
                   </div>
@@ -1152,8 +1152,8 @@ export default function DownloaderPage({
               onRun={() => void runHelper(SUBTITLE_ID, subtitleExec)}
               renderResult={() => (
                 <div className="space-y-2">
-                  <div className="border border-slate-800 bg-[#05090e] p-2 text-[11px]">
-                    <p className="mb-1 text-[10px] uppercase tracking-widest text-slate-600">fetched artifact</p>
+                  <div className="border border-slate-800 bg-[#05090e] p-2 text-[12px]">
+                    <p className="mb-1 text-[12px] uppercase tracking-widest text-slate-600">fetched artifact</p>
                     {subtitleExec.state.result?.artifacts?.length ? (
                       <ul className="space-y-0.5">
                         {subtitleExec.state.result.artifacts.map((artifact) => (
@@ -1168,7 +1168,7 @@ export default function DownloaderPage({
                     <p className="mt-1.5 break-all text-slate-400">
                       output_text: {subtitleExec.state.result?.outputText ?? 'null'}
                     </p>
-                    <p className="mt-1.5 border-t border-slate-800 pt-1.5 text-[10px] text-amber-300/80">
+                    <p className="mt-1.5 border-t border-slate-800 pt-1.5 text-[12px] text-amber-300/80">
                       this build&apos;s media.subtitle.fetch returns no language list, so none is shown here
                     </p>
                   </div>
@@ -1204,8 +1204,8 @@ export default function DownloaderPage({
                 const previewUrl = artifact ? resolveUrl(`/api/artifacts/content?path=${encodeURIComponent(artifact.path)}`) : null
                 return (
                   <div className="space-y-2">
-                    <div className="border border-slate-800 bg-[#05090e] p-2 text-[11px]">
-                      <p className="mb-1 text-[10px] uppercase tracking-widest text-slate-600">thumbnail preview</p>
+                    <div className="border border-slate-800 bg-[#05090e] p-2 text-[12px]">
+                      <p className="mb-1 text-[12px] uppercase tracking-widest text-slate-600">thumbnail preview</p>
                       {!artifact && <p className="text-slate-600">no artifact path to preview yet</p>}
                       {artifact && (
                         <>
@@ -1238,7 +1238,7 @@ export default function DownloaderPage({
               }}
             />
 
-            <footer className="flex flex-wrap items-center gap-2 px-1 pb-6 text-[10px] uppercase tracking-[0.18em] text-slate-700">
+            <footer className="flex flex-wrap items-center gap-2 px-1 pb-6 text-[12px] uppercase tracking-[0.18em] text-slate-700">
               <span>input {manifest.input_kinds.join(', ') || 'any'}</span>
               <ChevronRight className="size-3" />
               <span>output {manifest.output_kinds.join(', ') || 'any'}</span>
