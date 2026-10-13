@@ -1,0 +1,111 @@
+{
+  "tokenVals": {
+    "--color-accent-contrast": "#A83232",
+    "--color-success": "#2E6B47",
+    "--color-brand-caramel": "#9D6638"
+  },
+  "results": [
+    {
+      "label": "sox alert border",
+      "page": "SoxPage",
+      "cls": "border-accent-contrast",
+      "prop": "borderColor",
+      "before": "rgb(168, 50, 50)",
+      "after": "rgb(168, 50, 50)",
+      "equal": true
+    },
+    {
+      "label": "sox invalid-stage border",
+      "page": "SoxPage",
+      "cls": "border-accent-contrast",
+      "prop": "borderColor",
+      "before": "rgb(168, 50, 50)",
+      "after": "rgb(168, 50, 50)",
+      "equal": true
+    },
+    {
+      "label": "sox remove-btn hover border",
+      "page": "SoxPage",
+      "cls": "border-accent-contrast",
+      "prop": "borderColor",
+      "before": "rgb(168, 50, 50)",
+      "after": "rgb(168, 50, 50)",
+      "equal": true
+    },
+    {
+      "label": "demucs archived border",
+      "page": "DemucsPage",
+      "cls": "border-success",
+      "prop": "borderColor",
+      "before": "rgb(46, 107, 71)",
+      "after": "rgb(46, 107, 71)",
+      "equal": true
+    },
+    {
+      "label": "demucs archived text",
+      "page": "DemucsPage",
+      "cls": "text-success",
+      "prop": "color",
+      "before": "rgb(46, 107, 71)",
+      "after": "rgb(46, 107, 71)",
+      "equal": true
+    },
+    {
+      "label": "demucs not-archived border",
+      "page": "DemucsPage",
+      "cls": "border-accent-contrast",
+      "prop": "borderColor",
+      "before": "rgb(168, 50, 50)",
+      "after": "rgb(168, 50, 50)",
+      "equal": true
+    },
+    {
+      "label": "demucs not-archived text",
+      "page": "DemucsPage",
+      "cls": "text-accent-contrast",
+      "prop": "color",
+      "before": "rgb(168, 50, 50)",
+      "after": "rgb(168, 50, 50)",
+      "equal": true
+    },
+    {
+      "label": "demucs processing border",
+      "page": "DemucsPage",
+      "cls": "border-brand-caramel",
+      "prop": "borderColor",
+      "before": "rgb(157, 102, 56)",
+      "after": "rgb(157, 102, 56)",
+      "equal": true
+    },
+    {
+      "label": "demucs processing text",
+      "page": "DemucsPage",
+      "cls": "text-brand-caramel",
+      "prop": "color",
+      "before": "rgb(157, 102, 56)",
+      "after": "rgb(157, 102, 56)",
+      "equal": true
+    },
+    {
+      "label": "demucs alert border (border-2)",
+      "page": "DemucsPage",
+      "cls": "border-accent-contrast",
+      "prop": "borderColor",
+      "before": "rgb(168, 50, 50)",
+      "after": "rgb(168, 50, 50)",
+      "equal": true
+    },
+    {
+      "label": "demucs alert text",
+      "page": "DemucsPage",
+      "cls": "text-accent-contrast",
+      "prop": "color",
+      "before": "rgb(168, 50, 50)",
+      "after": "rgb(168, 50, 50)",
+      "equal": true
+    }
+  ],
+  "allEqual": true,
+  "title": "Tools Garage \u2014 Sound Effects & DSP Filter (SoX)",
+  "shot": "docs/research/2026-10-13-a11y-gates/shots/gate2/sox__1440x900.png"
+}
