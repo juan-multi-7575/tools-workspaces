@@ -234,7 +234,7 @@ export default function ModelHealthCheckForm({
                   <div className="flex items-center gap-1 min-w-0">
                     <span className="font-bold text-xs truncate">{p.name}</span>
                     {p.is_custom && (
-                      <span className={`font-mono text-[8px] px-1 py-0.2 rounded ${
+                      <span className={`font-mono text-[12px] px-1 py-0.2 rounded shrink-0 ${
                         isSelected ? 'opacity-75' : 'tool-accent-chip border'
                       }`}>
                         Env
@@ -266,7 +266,9 @@ export default function ModelHealthCheckForm({
                   )}
 
                   {p.env_vars && p.env_vars.length > 0 && (
-                    <span className={`font-mono text-[8px] truncate max-w-[95px] ${
+                    /* Raised to the 12px floor with the rest of the app; the cap is scaled
+                       from 95px so the same run of the env-var name stays visible. */
+                    <span className={`font-mono text-[12px] truncate max-w-[142px] ${
                       isSelected ? 'opacity-70' : 'tool-muted'
                     }`} title={p.env_vars.join(', ')}>
                       {p.env_vars[0]}

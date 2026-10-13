@@ -189,7 +189,7 @@
 .im-bar__id {
   margin-left: auto;
   font-family: var(--im-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.02em;
   color: var(--im-ink-58);
   white-space: nowrap;
@@ -296,7 +296,7 @@
 .im-hero__note {
   margin: 20px 0 0;
   font-family: var(--im-mono);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   color: var(--im-ink-58);
 }
@@ -359,8 +359,8 @@
 
 .im-panel__label {
   font-family: var(--im-mono);
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 12px;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--im-ink-58);
 }
@@ -434,8 +434,8 @@
 
 .im-mini__label {
   font-family: var(--im-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-size: 12px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--im-ink-58);
   text-align: center;
@@ -444,7 +444,7 @@
 .im-panel__foot {
   margin: 10px 0 0;
   font-family: var(--im-mono);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.55;
   color: rgba(0, 0, 0, 0.82);
 }
@@ -504,8 +504,8 @@
   padding: 10px 14px;
   border-bottom: 1px solid var(--im-hair);
   font-family: var(--im-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
+  font-size: 12px;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--im-ink-58);
 }
@@ -595,7 +595,7 @@
   padding-top: 12px;
   border-top: 1px solid var(--im-hair);
   font-family: var(--im-mono);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   color: var(--im-ink-62);
 }
@@ -608,7 +608,7 @@
   padding: 10px 14px;
   border-top: 1px solid var(--im-hair);
   font-family: var(--im-mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--im-ink-62);
 }
 
@@ -636,8 +636,8 @@
 .im-keyfold__summary {
   padding: 7px 10px;
   font-family: var(--im-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
+  font-size: 12px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--im-ink-62);
   cursor: pointer;
@@ -672,7 +672,7 @@
   gap: 3px 12px;
   margin: 0;
   font-family: var(--im-mono);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -728,8 +728,8 @@
   border-bottom: 1px solid var(--im-hair);
   background: none;
   font-family: var(--im-mono);
-  font-size: 10px;
-  letter-spacing: 0.18em;
+  font-size: 12px;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
   color: var(--im-ink-58);
   text-align: left;
@@ -784,7 +784,7 @@
 
 .im-field__key {
   font-family: var(--im-mono);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 400;
   letter-spacing: 0.06em;
   color: var(--im-ink-58);
@@ -792,14 +792,14 @@
 
 .im-field__hint {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--im-ink-62);
 }
 
 .im-field__error {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--im-bad);
 }
@@ -846,7 +846,7 @@ select.im-input {
   border-radius: 6px;
   background: none;
   font-family: var(--im-mono);
-  font-size: 11px;
+  font-size: 12px;
   letter-spacing: 0.04em;
   color: var(--im-ink-62);
   cursor: pointer;
@@ -872,7 +872,7 @@ select.im-input {
 
 .im-value {
   font-family: var(--im-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: var(--im-ink);
 }
@@ -910,7 +910,7 @@ select.im-input {
   border-radius: 999px;
   background-color: var(--im-panel);
   font-family: var(--im-mono);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--im-ink-62);
   cursor: pointer;
   transition: border-color 120ms ease, color 120ms ease;
@@ -929,7 +929,7 @@ select.im-input {
 
 .im-dock__key {
   font-family: var(--im-mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--im-ink-62);
 }
 
@@ -992,7 +992,7 @@ select.im-input {
   margin: 0;
   padding: 8px 0;
   font-family: var(--im-mono);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--im-ink-62);
   overflow-wrap: anywhere;
@@ -1047,7 +1047,7 @@ select.im-input {
 
 .im-timer {
   font-family: var(--im-mono);
-  font-size: 11px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: var(--im-ink-62);
   white-space: nowrap;
@@ -1254,7 +1254,7 @@ select.im-input {
   /* The gate carries three paragraphs and a control; at phone sizes it is
      compacted so the canvas still gets a usable share of the screen. */
   .im-root .dep-gate {
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .im-root .dep-gate__scroll {
