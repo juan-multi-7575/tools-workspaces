@@ -1,0 +1,25 @@
+{
+  "note": "Page-level pixel diff on DemucsPage at 1440x900. after = natural tokenized render; sentinel = tokens overridden to #ff00ff/#00ffff/#00ff00; before_literal = tokens set to the exact old literal hex (#a83232/#2e6b47/#9d6638). Threshold: a channel diff > 2 counts as changed.",
+  "after_vs_sentinel": {
+    "purpose": "proves the three tokens are load-bearing for demucs UI colour",
+    "size": "1440x900",
+    "changedPixels": 4300,
+    "totalPixels": 1296000,
+    "changedPct": 0.3318,
+    "diffBBox": [
+      24,
+      21,
+      1264,
+      870
+    ]
+  },
+  "after_vs_before_literal": {
+    "purpose": "tokenised render vs old-literal render must be identical => rendered colour unchanged",
+    "size": "1440x900",
+    "changedPixels": 0,
+    "totalPixels": 1296000,
+    "changedPct": 0.0,
+    "note": "0 pixels differ beyond threshold. getbbox() shows a thin 13px strip (282-295 x) with channel deltas of 1-2 (sub-threshold edge anti-aliasing), not a colour change.",
+    "method": "captured back-to-back with NO user interaction to exclude the live 'measured elapsed' timer as a temporal differential (an earlier post-click capture showed 2357 px of timer/chrome drift from that timer, not from colour)."
+  }
+}

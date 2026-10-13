@@ -1,0 +1,333 @@
+{
+  "gate": "GATE 1",
+  "method": "CDP Emulation viewport override at 1440x900 / 768x1024 / 390x844; per-element scan for text-overflows-box, escapes-viewport-right (non-scroller), text-clipped-vertical; plus document.scrollWidth-vs-viewport horizontal overflow and .font-mono font-size histogram.",
+  "anyMonoBelow12px": 0,
+  "totalCombos": 24,
+  "combosWithDefects": 0,
+  "rows": [
+    {
+      "site": "codec_tool",
+      "route": "/tools/codec_tool",
+      "viewport": "1440x900",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 32,
+        "14px": 1
+      },
+      "monoTotal": 33,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "codec_tool",
+      "route": "/tools/codec_tool",
+      "viewport": "390x844",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 32,
+        "14px": 1
+      },
+      "monoTotal": 33,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "codec_tool",
+      "route": "/tools/codec_tool",
+      "viewport": "768x1024",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 32,
+        "14px": 1
+      },
+      "monoTotal": 33,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "downloader",
+      "route": "/tools/downloader",
+      "viewport": "1440x900",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 41,
+        "16px": 1
+      },
+      "monoTotal": 42,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "downloader",
+      "route": "/tools/downloader",
+      "viewport": "390x844",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 41,
+        "16px": 1
+      },
+      "monoTotal": 42,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "downloader",
+      "route": "/tools/downloader",
+      "viewport": "768x1024",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 41,
+        "16px": 1
+      },
+      "monoTotal": 42,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "imagemagick",
+      "route": "/tools/imagemagick",
+      "viewport": "1440x900",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 45
+      },
+      "monoTotal": 45,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "imagemagick",
+      "route": "/tools/imagemagick",
+      "viewport": "390x844",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 45
+      },
+      "monoTotal": 45,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "imagemagick",
+      "route": "/tools/imagemagick",
+      "viewport": "768x1024",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 45
+      },
+      "monoTotal": 45,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "pdf_tools",
+      "route": "/tools/pdf_tools",
+      "viewport": "1440x900",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 29
+      },
+      "monoTotal": 29,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "pdf_tools",
+      "route": "/tools/pdf_tools",
+      "viewport": "390x844",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 29
+      },
+      "monoTotal": 29,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "pdf_tools",
+      "route": "/tools/pdf_tools",
+      "viewport": "768x1024",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 29
+      },
+      "monoTotal": 29,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "script_runner",
+      "route": "/tools/script_runner",
+      "viewport": "1440x900",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 28,
+        "14px": 1
+      },
+      "monoTotal": 29,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "script_runner",
+      "route": "/tools/script_runner",
+      "viewport": "390x844",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 28,
+        "14px": 1
+      },
+      "monoTotal": 29,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "script_runner",
+      "route": "/tools/script_runner",
+      "viewport": "768x1024",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 28,
+        "14px": 1
+      },
+      "monoTotal": 29,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "summarizer",
+      "route": "/tools/summarizer",
+      "viewport": "1440x900",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 26
+      },
+      "monoTotal": 26,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "summarizer",
+      "route": "/tools/summarizer",
+      "viewport": "390x844",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 26
+      },
+      "monoTotal": 26,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "summarizer",
+      "route": "/tools/summarizer",
+      "viewport": "768x1024",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 26
+      },
+      "monoTotal": 26,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "text-translator",
+      "route": "/tools/text.translate.llm",
+      "viewport": "1440x900",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 36
+      },
+      "monoTotal": 36,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "text-translator",
+      "route": "/tools/text.translate.llm",
+      "viewport": "390x844",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 36
+      },
+      "monoTotal": 36,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "text-translator",
+      "route": "/tools/text.translate.llm",
+      "viewport": "768x1024",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 36
+      },
+      "monoTotal": 36,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "trimmer",
+      "route": "/tools/trimmer",
+      "viewport": "1440x900",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 23,
+        "16px": 1
+      },
+      "monoTotal": 24,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "trimmer",
+      "route": "/tools/trimmer",
+      "viewport": "390x844",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 23,
+        "16px": 1
+      },
+      "monoTotal": 24,
+      "layoutDefectCount": 0,
+      "defects": []
+    },
+    {
+      "site": "trimmer",
+      "route": "/tools/trimmer",
+      "viewport": "768x1024",
+      "pageOverflowX_px": 0,
+      "documentCanScrollHorizontally": false,
+      "monoFontSizeHistogram": {
+        "12px": 23,
+        "16px": 1
+      },
+      "monoTotal": 24,
+      "layoutDefectCount": 0,
+      "defects": []
+    }
+  ]
+}
