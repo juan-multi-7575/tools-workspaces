@@ -81,7 +81,10 @@ function DeletableEdge({
               e.stopPropagation()
               setEdges((es) => es.filter((edge) => edge.id !== id))
             }}
-            className="group flex size-5 items-center justify-center rounded-full bg-surface-white border-2 border-brand-sage text-brand-caramel-text hover:bg-accent-contrast hover:text-surface-white hover:border-accent-contrast shadow-sm transition-all duration-150 active:scale-90"
+            /* WCAG 2.5.8: the wrapper is centred on the edge midpoint, so
+               growing the circle grows the hit area without moving it. The
+               node delete button beside it was raised to the same 24px. */
+            className="group flex size-6 items-center justify-center rounded-full bg-surface-white border-2 border-brand-sage text-brand-caramel-text hover:bg-accent-contrast hover:text-surface-white hover:border-accent-contrast shadow-sm transition-all duration-150 active:scale-90"
             title="Disconnect this link (or press Delete)"
           >
             <span className="text-xs font-extrabold leading-none select-none group-hover:scale-110 transition-transform">
